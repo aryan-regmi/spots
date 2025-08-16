@@ -1,20 +1,14 @@
-import { useState } from "react";
 import { LoginForm, LoginFormData } from "../components/LoginForm";
 import { useNavigate } from "react-router-dom";
 
+/** The login page component. */
 export function LoginPage() {
   const navigate = useNavigate();
-  // const [loginInfo, setLoginInfo] = useState({ username: "", password: "" });
 
-  // FIXME: Remove this and add validation to `LoginForm` instead.
-  // 
-  /** Handles logging in. */
+  /** Handles logging in by navigating to the home page. */
   function loginHandler(data: LoginFormData) {
-    // setLoginInfo(data);
     navigate('/home', {
-      state: {
-        data
-      }
+      state: data
     });
   }
 

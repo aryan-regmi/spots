@@ -1,4 +1,4 @@
-import { FormEvent, FormEventHandler, useState } from "react";
+import { FormEvent, useState } from "react";
 
 /** The data returned by the `LoginForm` component. */
 export type LoginFormData = {
@@ -9,6 +9,8 @@ export type LoginFormData = {
 /** The type of the function that handles the data returned by the `LoginForm` component. */
 export type LoginDataHandlerFn = (data: LoginFormData) => void;
 
+// FIXME: Add validation.
+// 
 /** The component responsible for handling user logins. */
 export function LoginForm(props: { loginDataHandler: LoginDataHandlerFn }) {
   const { loginDataHandler } = props;

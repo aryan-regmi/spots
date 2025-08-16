@@ -3,7 +3,7 @@ import { LoginFormData } from "../components/LoginForm";
 
 export function HomePage() {
   const location = useLocation();
-  const loginInfo: LoginFormData = location.state.data;
+  const loginInfo: LoginFormData = location.state;
   let username = loginInfo.username;
 
   return (
