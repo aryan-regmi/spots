@@ -8,12 +8,14 @@ export function loadDatabase(dbName: string) {
         const loadDb = async () => {
             setDb(await Database.load(`sqlite:${dbName}`));
         };
-        if (db == null) {
+        while (db == null) {
             loadDb();
+        }
+        if (db != null) {
             console.log('Database loaded!');
         }
-    }, []);
-    return db;
+    });
+    return db!;
 }
 
 /** Checks if the username exists in the database. */

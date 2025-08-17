@@ -8,3 +8,9 @@ export function assert(
         throw new Error(message);
     }
 }
+
+/** The data returned by the `LoginForm` component. */
+export type UserData = {
+    username: string;
+    password: string;
+};

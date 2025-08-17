@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LoginFormData } from '../components/LoginForm';
 import './pages.css';
+import { UserData } from '../utils/common';
 
 export function HomePage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const loginInfo: LoginFormData = location.state;
+    const loginInfo: UserData = location.state;
     let username = loginInfo.username;
 
     /** Redirects to the login page. */

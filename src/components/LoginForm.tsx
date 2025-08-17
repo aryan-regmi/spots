@@ -1,15 +1,10 @@
 import Database from '@tauri-apps/plugin-sql';
 import { FormEvent, useState } from 'react';
 import { passwordIsCorrect, usernameExists } from '../utils/sql';
-
-/** The data returned by the `LoginForm` component. */
-export type LoginFormData = {
-    username: string;
-    password: string;
-};
+import { UserData } from '../utils/common';
 
 /** The type of the function that handles the data returned by the `LoginForm` component. */
-export type LoginDataHandlerFn = (data: LoginFormData) => void;
+export type LoginDataHandlerFn = (data: UserData) => void;
 
 /** Checks the username and password against the database. */
 async function validateLogin(db: Database, username: string, password: string) {
