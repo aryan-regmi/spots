@@ -6,7 +6,7 @@ import './pages.css';
 import { assert } from '../utils/common';
 
 /** The signup page component. */
-export function SignupPage(props: { db: Database }) {
+export function SignupPage(props: { db: Database | null }) {
     return (
         <div className="col">
             <SignupForm db={props.db} />
@@ -17,7 +17,7 @@ export function SignupPage(props: { db: Database }) {
 // FIXME: Setup database in App.tsx and pass to all pages!
 
 /** The form responsible for handling user signups. */
-function SignupForm(props: { db: Database }) {
+function SignupForm(props: { db: Database | null }) {
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');

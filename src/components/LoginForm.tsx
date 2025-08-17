@@ -16,7 +16,7 @@ async function validateLogin(db: Database, username: string, password: string) {
 
 /** The component responsible for handling user logins. */
 export function LoginForm(props: {
-    db: Database;
+    db: Database | null;
     loginHandler: LoginDataHandlerFn;
 }) {
     const { loginHandler: loginDataHandler } = props;

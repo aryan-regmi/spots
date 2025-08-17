@@ -5,7 +5,7 @@ import Database from '@tauri-apps/plugin-sql';
 import { UserData } from '../utils/common';
 
 /** The login page component. */
-export function LoginPage(props: { db: Database }) {
+export function LoginPage(props: { db: Database | null }) {
     const navigate = useNavigate();
 
     /** Handles logging in by navigating to the home page. */
