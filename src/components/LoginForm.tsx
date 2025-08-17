@@ -1,5 +1,5 @@
 import Database from '@tauri-apps/plugin-sql';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { passwordIsCorrect, usernameExists } from '../utils/sql';
 
 /** The data returned by the `LoginForm` component. */
@@ -20,18 +20,14 @@ async function validateLogin(db: Database, username: string, password: string) {
 }
 
 /** The component responsible for handling user logins. */
-export function LoginForm(props: { loginHandler: LoginDataHandlerFn }) {
+export function LoginForm(props: {
+    db: Database;
+    loginHandler: LoginDataHandlerFn;
+}) {
     const { loginHandler: loginDataHandler } = props;
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [db, setDb] = useState<Database | null>(null);
-    useEffect(() => {
-        const loadDb = async () => {
-            setDb(await Database.load('sqlite:test.db'));
-            console.log('Database loaded!');
-        };
-        loadDb();
-    }, []);
+    const db = props.db;
 
     /** Validates the login (username and password). */
     function handleSubmit(event: FormEvent) {

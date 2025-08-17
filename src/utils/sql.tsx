@@ -6,7 +6,6 @@ export async function usernameExists(db: Database, username: string) {
         `SELECT id FROM users WHERE username = $1`,
         [username]
     );
-    console.log(foundIds);
     return foundIds.length > 0;
 }
 
@@ -19,9 +18,6 @@ export async function passwordIsCorrect(
     const dbPassword = await db.select<{ password: string }[]>(
         `SELECT password FROM users WHERE username = $1 LIMIT 1`,
         [username]
-    );
-    console.log(
-        `${dbPassword[0].password}: ${password} ==> ${dbPassword[0].password === password}`
     );
     return dbPassword[0].password === password;
 }

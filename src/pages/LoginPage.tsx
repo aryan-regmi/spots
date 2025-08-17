@@ -1,9 +1,10 @@
 import { LoginForm, LoginFormData } from '../components/LoginForm';
 import { useNavigate } from 'react-router-dom';
 import './pages.css';
+import Database from '@tauri-apps/plugin-sql';
 
 /** The login page component. */
-export function LoginPage() {
+export function LoginPage(props: { db: Database }) {
     const navigate = useNavigate();
 
     /** Handles logging in by navigating to the home page. */
@@ -17,7 +18,7 @@ export function LoginPage() {
         <main className="container">
             <h1>Spots: A Spotify Alternative</h1>
             <div className="col">
-                <LoginForm loginHandler={loginHandler} />
+                <LoginForm db={props.db} loginHandler={loginHandler} />
                 <a
                     onClick={(_) => {
                         navigate('/signup');

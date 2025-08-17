@@ -4,6 +4,7 @@ export function assert(
     message = 'Assertion failed'
 ): asserts condtion {
     if (!condtion) {
+        // alert(message);
         throw new Error(message);
     }
 }

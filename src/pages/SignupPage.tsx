@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usernameExists } from '../utils/sql';
 import Database from '@tauri-apps/plugin-sql';
@@ -6,10 +6,10 @@ import './pages.css';
 import { assert } from '../utils/common';
 
 /** The signup page component. */
-export function SignupPage() {
+export function SignupPage(props: { db: Database }) {
     return (
         <div className="col">
-            <SignupForm />
+            <SignupForm db={props.db} />
         </div>
     );
 }
@@ -17,19 +17,11 @@ export function SignupPage() {
 // FIXME: Setup database in App.tsx and pass to all pages!
 
 /** The form responsible for handling user signups. */
-function SignupForm() {
+function SignupForm(props: { db: Database }) {
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [db, setDb] = useState<Database | null>(null);
-
-    useEffect(() => {
-        const loadDb = async () => {
-            setDb(await Database.load('sqlite:test.db'));
-            console.log('Database loaded!');
-        };
-        loadDb();
-    }, []);
+    const db = props.db;
 
     /** Checks if the username is available in the database. */
     async function validateLogin(db: Database, username: string) {
