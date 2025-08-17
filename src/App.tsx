@@ -10,22 +10,15 @@ import { HomePage } from './pages/HomePage';
 import { SignupPage } from './pages/SignupPage';
 import { useEffect, useState } from 'react';
 import Database from '@tauri-apps/plugin-sql';
+import { loadDatabase } from './utils/sql';
 
 /** The main component of the application. */
 function App() {
     // Load database
     const dbName = 'test.db';
-    const [db, setDb] = useState<Database | null>(null);
-    useEffect(() => {
-        const loadDb = async () => {
-            setDb(await Database.load(`sqlite:${dbName}`));
-        };
-        if (db == null) {
-            loadDb();
-            console.log('Database loaded!');
-        }
-    }, []);
+    const db = loadDatabase(dbName);
 
+    // Setup routes
     return (
         <Router>
             <Routes>
