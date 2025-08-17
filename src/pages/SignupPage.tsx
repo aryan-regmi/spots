@@ -1,8 +1,8 @@
-
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usernameExists } from "../utils/sql";
 import Database from "@tauri-apps/plugin-sql";
+import "./pages.css";
 
 /** The signup page component. */
 export function SignupPage() {
@@ -59,7 +59,11 @@ function SignupForm() {
   }
 
   return (
-    <form className="login-form col" onSubmit={signupHandler}>
+    <form
+      className="col"
+      id="login-form"
+      onSubmit={signupHandler}
+    >
       <div className="row">
         Username:
         <input

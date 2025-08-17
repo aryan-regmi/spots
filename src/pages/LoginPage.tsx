@@ -1,5 +1,6 @@
 import { LoginForm, LoginFormData } from "../components/LoginForm";
 import { useNavigate } from "react-router-dom";
+import "./pages.css";
 
 /** The login page component. */
 export function LoginPage() {

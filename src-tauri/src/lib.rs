@@ -6,7 +6,7 @@ pub fn run() {
         .plugin(
             tauri_plugin_sql::Builder::new()
                 .add_migrations(
-                    "sqlite:test.db",
+                    "sqlite:test.db", // TODO: Change to prod database (change name everywhere!)
                     vec![Migration {
                         version: 1,
                         description: "create users table",
