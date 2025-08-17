@@ -15,6 +15,9 @@ export function LoginPage() {
   return (
     <main className="container">
       <h1>Spots: A Spotify Alternative</h1>
-      <LoginForm loginDataHandler={loginHandler} />
+      <div className="col">
+        <LoginForm loginHandler={loginHandler} />
+        <a onClick={(_) => { navigate('/signup') }} className="text-link">Sign Up</a>
+      </div>
     </main>);
 }
