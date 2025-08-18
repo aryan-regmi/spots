@@ -11,7 +11,7 @@ export function LoginPage(props: { db: Database | null }) {
 
     /** Handles logging in by navigating to the home page. */
     function loginHandler(data: UserData) {
-        navigate('/home', {
+        navigate(`/home/${data.username}`, {
             state: data,
         });
     }

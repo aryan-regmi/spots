@@ -16,7 +16,7 @@ function newMockPlaylist(title: string) {
 export function HomePage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const loginInfo: UserData = location.state;
+    const loginInfo: UserData = location.state!;
     let username = loginInfo.username;
 
     /** Redirects to the login page. */
@@ -26,7 +26,7 @@ export function HomePage() {
 
     /** Opens the specified playlist with the given title. */
     function openPlaylist(playlist: MockPlaylist) {
-        navigate(`${username}/playlists/${playlist.id}`, {
+        navigate(`./playlists/${playlist.id}`, {
             state: playlist.title,
         });
     }

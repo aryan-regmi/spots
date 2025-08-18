@@ -11,6 +11,7 @@ import { SignupPage } from './pages/SignupPage';
 import { loadDatabase } from './utils/sql';
 import { PlaylistPage } from './pages/PlaylistPage';
 import Database from '@tauri-apps/plugin-sql';
+import { useRouteTracker } from './utils/hooks/useRouteTracker';
 
 /** The main component of the application. */
 function App() {
@@ -28,18 +29,18 @@ function App() {
 
 function AppRoutes(props: { db: Database | null }) {
     let { db } = props;
-    // useRouteTracker();
+    useRouteTracker();
 
     return (
         <Routes>
             <Route path="/" element={<LoginPage db={db} />}></Route>
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/signup" element={<SignupPage db={db} />} />
-            <Route path="/login" element={<Navigate to="/" replace />} />
+            <Route path="/home/:username" element={<HomePage />} />
             <Route
                 path="/home/:username/playlists/:playlistId"
                 element={<PlaylistPage />}
             />
+            <Route path="/signup" element={<SignupPage db={db} />} />
+            <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
