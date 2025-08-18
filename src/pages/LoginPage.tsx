@@ -4,6 +4,7 @@ import Database from '@tauri-apps/plugin-sql';
 import { UserData } from '../utils/common';
 import { FormEvent, useState } from 'react';
 import { passwordIsCorrect, usernameExists } from '../utils/sql';
+import { useAuth } from '../components/Authenticator';
 
 /** The login page component. */
 export function LoginPage(props: { db: Database | null }) {
@@ -51,6 +52,7 @@ export function LoginForm(props: {
     db: Database | null;
     loginHandler: LoginDataHandlerFn;
 }) {
+    const { login } = useAuth();
     const { loginHandler: loginDataHandler } = props;
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -60,8 +62,9 @@ export function LoginForm(props: {
     function handleSubmit(event: FormEvent) {
         event.preventDefault();
         if (db != null) {
-            validateLogin(db, username, password).then((valid) => {
+            validateLogin(db, username, password).then(async (valid) => {
                 if (valid) {
+                    await login();
                     loginDataHandler({
                         username: username,
                         password: password,

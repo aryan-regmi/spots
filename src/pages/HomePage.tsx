@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import './pages.css';
 import { UserData } from '../utils/common';
 import { Card } from '../components/Card';
-import { useEffect } from 'react';
+import { useAuth } from '../components/Authenticator';
 
 type MockPlaylist = {
     id: string;
@@ -15,19 +15,22 @@ function newMockPlaylist(title: string) {
 }
 
 export function HomePage() {
+    const { logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const loginInfo: UserData = location.state;
     let username = loginInfo.username;
 
     /** Redirects to the login page. */
-    function redirectToLogin() {
-        navigate('/login', { replace: true });
+    async function redirectToLogin() {
+        // await logout();
+        // await navigate('/login', { replace: true });
+        await navigate('/', { replace: true });
     }
 
     /** Opens the specified playlist with the given title. */
-    function openPlaylist(playlist: MockPlaylist) {
-        navigate(`./playlists/${playlist.id}`, {
+    async function openPlaylist(playlist: MockPlaylist) {
+        await navigate(`./playlists/${playlist.id}`, {
             state: playlist.title,
         });
     }
@@ -39,9 +42,7 @@ export function HomePage() {
 
     return (
         <div className="container">
-            {/* <div className="row"> */}
             <h2>Welcome {username}!</h2>
-            {/* </div> */}
 
             {/* TODO: Display pinned playlists */}
             <div className="content">
@@ -49,20 +50,11 @@ export function HomePage() {
                     {mockPlaylists.map((playlist) => (
                         <Card
                             key={playlist.id}
-                            onClick={() => openPlaylist(playlist)}
+                            onClick={async () => await openPlaylist(playlist)}
                         >
                             {playlist.title}
                         </Card>
                     ))}
-
-                    {/* <Card */}
-                    {/*     onClick={() => */}
-                    {/*         openPlaylist(newMockPlaylist('Playlist 1')) */}
-                    {/*     } */}
-                    {/* > */}
-                    {/*     Playlist 1 */}
-                    {/* </Card> */}
-                    {/* <Card>Playlist 2</Card> */}
                 </div>
             </div>
 

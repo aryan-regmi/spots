@@ -1,3 +1,6 @@
+import { load, Store } from '@tauri-apps/plugin-store';
+import { useEffect, useState } from 'react';
+
 /** Asserts the given condtion. */
 export function assert(
     condtion: unknown,
@@ -14,3 +17,16 @@ export type UserData = {
     username: string;
     password: string;
 };
+
+/** Loads the specifed store. */
+export function loadStore(storeName: string) {
+    const [store, setStore] = useState<Store | null>(null);
+    useEffect(() => {
+        const _loadStore = async () => setStore(await load(storeName));
+        if (store == null) {
+            _loadStore();
+            console.log('Store loaded!');
+        }
+    }, []);
+    return store;
+}
