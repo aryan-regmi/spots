@@ -13,6 +13,7 @@ export function LoginPage(props: { db: Database | null }) {
     function loginHandler(data: UserData) {
         navigate(`/home/${data.username}`, {
             state: data,
+            replace: true,
         });
     }
 

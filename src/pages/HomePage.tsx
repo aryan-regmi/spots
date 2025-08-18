@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import './pages.css';
 import { UserData } from '../utils/common';
 import { Card } from '../components/Card';
+import { useEffect } from 'react';
 
 type MockPlaylist = {
     id: string;
@@ -16,12 +17,12 @@ function newMockPlaylist(title: string) {
 export function HomePage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const loginInfo: UserData = location.state!;
+    const loginInfo: UserData = location.state;
     let username = loginInfo.username;
 
     /** Redirects to the login page. */
     function redirectToLogin() {
-        navigate('/login');
+        navigate('/login', { replace: true });
     }
 
     /** Opens the specified playlist with the given title. */

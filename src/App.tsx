@@ -34,13 +34,16 @@ function AppRoutes(props: { db: Database | null }) {
     return (
         <Routes>
             <Route path="/" element={<LoginPage db={db} />}></Route>
+            <Route path="/login" element={<Navigate to="/" replace />} />
+
             <Route path="/home/:username" element={<HomePage />} />
             <Route
                 path="/home/:username/playlists/:playlistId"
                 element={<PlaylistPage />}
             />
+
             <Route path="/signup" element={<SignupPage db={db} />} />
-            <Route path="/login" element={<Navigate to="/" replace />} />
+
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );

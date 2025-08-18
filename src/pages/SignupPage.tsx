@@ -44,8 +44,9 @@ function SignupForm(props: { db: Database | null }) {
                             'Incorrect number of users inserted into the table'
                         );
                         console.log(`Inserted user: ${username}`);
-                        navigate('/home', {
+                        navigate(`/home/${username}`, {
                             state: { username: username, password: password },
+                            replace: true,
                         });
                     });
                 } else {

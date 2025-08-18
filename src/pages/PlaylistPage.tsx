@@ -9,7 +9,7 @@ export function PlaylistPage() {
     const location = useLocation();
     const title = location.state || `${playlistId}`;
 
-    // Mock data - replace with actual fetching if needed
+    // Mock data - replace with actual fetching of playlist
     const mockItems = ['Song A', 'Song B', 'Song C'];
 
     return (
