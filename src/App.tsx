@@ -1,12 +1,13 @@
 import {
     Navigate,
+    redirect,
     Route,
     HashRouter as Router,
     Routes,
 } from 'react-router-dom';
 import './App.css';
 import { LoginPage } from './pages/LoginPage';
-import { HomePage } from './pages/HomePage';
+import { HomePage, homePageLoader } from './pages/HomePage';
 import { SignupPage } from './pages/SignupPage';
 import { loadDatabase } from './utils/sql';
 import { PlaylistPage } from './pages/PlaylistPage';
@@ -14,9 +15,8 @@ import Database from '@tauri-apps/plugin-sql';
 import { useRouteTracker } from './utils/hooks/useRouteTracker';
 import { AuthProvider, useAuth } from './components/Authenticator';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { load, Store } from '@tauri-apps/plugin-store';
-import { useEffect, useState } from 'react';
 import { loadStore } from './utils/common';
+import { Store } from '@tauri-apps/plugin-store';
 
 /** The main component of the application. */
 function App() {
@@ -30,7 +30,7 @@ function App() {
 
     // Setup routes
     return (
-        <AuthProvider>
+        <AuthProvider store={store}>
             <Router>
                 <AppRoutes db={db} store={store} />
             </Router>
@@ -39,62 +39,42 @@ function App() {
 }
 
 function AppRoutes(props: { db: Database | null; store: Store | null }) {
-    let { db, store } = props;
+    // Hooks
     useRouteTracker();
 
-    // TODO: Replace with react-router's loader() instead!
+    // Get props
+    let { db, store } = props;
 
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [authLoaded, setAuthLoaded] = useState(false);
-    const [hpr, setHpr] = useState(<Route></Route>);
-    useEffect(() => {
-        const loadAuth = async () => {
-            if (store != null) {
-                let auth = await store.get<boolean>('authenticated');
-                auth ? setAuthLoaded(auth) : setAuthLoaded(false);
-                setIsAuthenticated(auth === true);
-            }
-        };
-        loadAuth();
-    }, [store]);
+    // let username = st
 
-    let { loading } = useAuth();
-
-    if (!isAuthenticated && loading) {
-        return <div>Loading...</div>;
-    } else {
-        return (
-            <Routes>
-                {isAuthenticated ? (
-                    <Route path="/" element={<HomePage />}></Route>
-                ) : (
-                    <Route
-                        path="/"
-                        element={<LoginPage db={db}></LoginPage>}
-                    ></Route>
-                )}
-                <Route path="/login" element={<LoginPage db={db} />}></Route>
-                <Route path="/signup" element={<SignupPage db={db} />} />
-                <Route
-                    path="/home/:username"
-                    element={
-                        <ProtectedRoute>
-                            <HomePage />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/home/:username/playlists/:playlistId"
-                    element={
-                        <ProtectedRoute>
-                            <PlaylistPage />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        );
-    }
+    return (
+        <Routes>
+            <Route
+                path="/"
+                element={<HomePage />}
+                loader={homePageLoader}
+            ></Route>
+            <Route path="/login" element={<LoginPage db={db} />}></Route>
+            <Route path="/signup" element={<SignupPage db={db} />} />
+            <Route
+                path="/home/:username"
+                element={
+                    <ProtectedRoute>
+                        <HomePage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/home/:username/playlists/:playlistId"
+                element={
+                    <ProtectedRoute>
+                        <PlaylistPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+    );
 }
 
 export default App;

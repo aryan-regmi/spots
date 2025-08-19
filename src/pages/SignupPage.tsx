@@ -43,7 +43,9 @@ function SignupForm(props: { db: Database | null }) {
                             inserted.rowsAffected == 1,
                             'Incorrect number of users inserted into the table'
                         );
-                        console.log(`Inserted user: ${username}`);
+                        console.info(
+                            `(Database: ${db.path}) Inserted user: ${username}`
+                        );
                         navigate(`/home/${username}`, {
                             state: { username: username, password: password },
                             replace: true,
@@ -54,7 +56,7 @@ function SignupForm(props: { db: Database | null }) {
                 }
             });
         } else {
-            console.error('Invalid database');
+            throw new Error('Invalid database: database was null');
         }
     }
 

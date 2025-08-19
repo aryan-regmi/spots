@@ -1,8 +1,9 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { redirect, useLocation, useNavigate } from 'react-router-dom';
 import './pages.css';
 import { UserData } from '../utils/common';
-import { Card } from '../components/Card';
-import { useAuth } from '../components/Authenticator';
+import { Card } from '../components/Card/Card';
+import { getAuthData, useAuth } from '../components/Authenticator';
+import { load, Store } from '@tauri-apps/plugin-store';
 
 type MockPlaylist = {
     id: string;
@@ -14,18 +15,25 @@ function newMockPlaylist(title: string) {
     return { title: title, id: id };
 }
 
-export function HomePage() {
+export async function homePageLoader({ props }: any) {
+    const { store } = props;
+    let auth = await getAuthData(store);
+    if (!auth?.isValid) {
+        return redirect('/login');
+    }
+    return <HomePage username={auth.username!} />;
+}
+
+export function HomePage(props: { username: string }) {
     const { logout } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
-    const loginInfo: UserData = location.state;
-    let username = loginInfo.username;
 
-    /** Redirects to the login page. */
+    let { username } = props;
+
+    /** Logs the user out and redirects to the login page. */
     async function redirectToLogin() {
-        // await logout();
-        // await navigate('/login', { replace: true });
-        await navigate('/', { replace: true });
+        await logout();
+        await navigate('/login', { replace: true });
     }
 
     /** Opens the specified playlist with the given title. */

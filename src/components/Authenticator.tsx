@@ -1,57 +1,71 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { load, Store } from '@tauri-apps/plugin-store';
 
 type AuthContextType = {
+    username: string | null;
     isAuthenticated: boolean;
     loading: boolean;
     login: () => Promise<void>;
     logout: () => Promise<void>;
 };
 
+type AuthData = {
+    isValid: boolean;
+    username?: string;
+};
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-    children,
-}) => {
+export function AuthProvider(props: { store: Store | null; children: any }) {
+    let { store, children } = props;
+
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [store, setStore] = useState<Store | null>(null);
+    const [username, setUsername] = useState<string | null>(null);
 
     // On app load, read auth status from secure storage
     useEffect(() => {
-        load('store.json').then((store) => {
-            setStore(store);
-
-            store
-                .get<boolean>('authenticated')
-                .then((value) => setIsAuthenticated(value === true))
-                .finally(() => setLoading(false));
-        });
+        async function setupAuthStore() {
+            if (store == null) {
+                store = await load('store.json');
+            }
+            let auth = await store.get<AuthData>('authenticated');
+            setIsAuthenticated(auth?.isValid === true);
+            setUsername(auth?.username ?? null);
+            setLoading(false);
+        }
+        setupAuthStore();
     }, []);
 
     const login = async () => {
-        store?.set('authenticated', true);
+        store?.set('authenticated', { isValid: true, username });
         setIsAuthenticated(true);
         console.debug('Auth token set');
     };
 
     const logout = async () => {
-        store?.set('authenticated', false);
+        store?.set('authenticated', { isValid: false });
         setIsAuthenticated(false);
         console.debug('Auth token unset');
     };
 
     return (
         <AuthContext.Provider
-            value={{ isAuthenticated, loading, login, logout }}
+            value={{ username, isAuthenticated, loading, login, logout }}
         >
             {children}
         </AuthContext.Provider>
     );
-};
+}
 
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) throw new Error('useAuth must be used within AuthProvider');
     return context;
+}
+
+export async function getAuthData(store: Store | null) {
+    if (store != null) {
+        return await store.get<AuthData>('authenticated');
+    }
 }

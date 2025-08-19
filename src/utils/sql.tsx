@@ -10,7 +10,7 @@ export function loadDatabase(dbName: string) {
         };
         if (db == null) {
             loadDb();
-            console.log('Database loaded!');
+            console.info(`Database loaded: ${dbName}`);
         }
     }, []);
     return db;

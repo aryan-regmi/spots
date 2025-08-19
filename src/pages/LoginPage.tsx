@@ -74,7 +74,7 @@ export function LoginForm(props: {
                 }
             });
         } else {
-            console.error('Invalid database');
+            throw new Error('Invalid database: database was null');
         }
     }
 
