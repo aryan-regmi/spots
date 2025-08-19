@@ -1,7 +1,10 @@
 .footer {
-  font-size: 1em;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
   text-align: center;
-  margin-top: 33%;
+  padding-bottom: 2.5em;
 }
 
 .splash {

@@ -40,11 +40,11 @@ export function HomePage(props: { store: Store | null }) {
     ];
 
     return (
-        <div className="container">
+        <div className="container ">
             <h2>Welcome {username}!</h2>
 
             {/* TODO: Display pinned playlists */}
-            <div className="content">
+            <main className="content">
                 <div className="row">
                     {mockPlaylists.map((playlist) => (
                         <Card
@@ -55,7 +55,7 @@ export function HomePage(props: { store: Store | null }) {
                         </Card>
                     ))}
                 </div>
-            </div>
+            </main>
 
             <footer className="footer">
                 <a onClick={redirectToLogin} className="text-link">
