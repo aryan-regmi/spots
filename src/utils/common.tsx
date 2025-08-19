@@ -25,7 +25,7 @@ export function loadStore(storeName: string) {
         const _loadStore = async () => setStore(await load(storeName));
         if (store == null) {
             _loadStore();
-            console.log('Store loaded!');
+            console.info('Auth store loaded.');
         }
     }, []);
     return store;

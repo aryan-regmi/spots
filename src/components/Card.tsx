@@ -1,5 +1,5 @@
-import { CSSProperties, MouseEventHandler } from 'react';
 import './Card.css';
+import { CSSProperties, MouseEventHandler } from 'react';
 
 export function Card(props: {
     children: any;

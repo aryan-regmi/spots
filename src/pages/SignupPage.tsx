@@ -1,8 +1,8 @@
+import './pages.css';
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usernameExists } from '../utils/sql';
 import Database from '@tauri-apps/plugin-sql';
-import './pages.css';
 import { assert } from '../utils/common';
 
 /** The signup page component. */
@@ -43,18 +43,15 @@ function SignupForm(props: { db: Database | null }) {
                             inserted.rowsAffected == 1,
                             'Incorrect number of users inserted into the table'
                         );
-                        console.log(`Inserted user: ${username}`);
-                        navigate(`/home/${username}`, {
-                            state: { username: username, password: password },
-                            replace: true,
-                        });
+                        console.info(`Inserted user: ${username}.`);
+                        navigate(`/home`, { replace: true });
                     });
                 } else {
                     alert(`Invalid username: ${username} already exists!`);
                 }
             });
         } else {
-            console.error('Invalid database');
+            console.error('Invalid database.');
         }
     }
 
