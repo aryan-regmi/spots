@@ -1,12 +1,8 @@
-import { redirect, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './pages.css';
 import { Card } from '../components/Card/Card';
-import {
-    getAuthUsername,
-    getAuthValid,
-    useAuth,
-} from '../components/Authenticator';
-import { load, Store } from '@tauri-apps/plugin-store';
+import { getAuthUsername, useAuth } from '../components/Authenticator';
+import { Store } from '@tauri-apps/plugin-store';
 
 type MockPlaylist = {
     id: string;
@@ -16,15 +12,6 @@ type MockPlaylist = {
 function newMockPlaylist(title: string) {
     let id = `${title.toLowerCase().replace(' ', '-')}`;
     return { title: title, id: id };
-}
-
-export async function homePageLoader({ props }: any) {
-    const { store } = props;
-    let valid = await getAuthValid(store);
-    if (!valid) {
-        return redirect('/login');
-    }
-    return <HomePage store={store} />;
 }
 
 export function HomePage(props: { store: Store | null }) {
@@ -42,7 +29,7 @@ export function HomePage(props: { store: Store | null }) {
 
     /** Opens the specified playlist with the given title. */
     async function openPlaylist(playlist: MockPlaylist) {
-        await navigate(`./playlists/${playlist.id}`, {
+        await navigate(`/playlist/${playlist.id}`, {
             state: playlist.title,
         });
     }

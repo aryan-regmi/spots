@@ -1,22 +1,19 @@
 import {
+    createBrowserRouter,
     Navigate,
     redirect,
-    Route,
-    HashRouter as Router,
-    Routes,
+    RouterProvider,
 } from 'react-router-dom';
 import './App.css';
 import { LoginPage } from './pages/LoginPage';
-import { HomePage, homePageLoader } from './pages/HomePage';
+import { HomePage } from './pages/HomePage';
 import { SignupPage } from './pages/SignupPage';
 import { loadDatabase } from './utils/sql';
 import { PlaylistPage } from './pages/PlaylistPage';
-import Database from '@tauri-apps/plugin-sql';
-import { useRouteTracker } from './utils/hooks/useRouteTracker';
-import { AuthProvider, useAuth } from './components/Authenticator';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { AuthProvider, getAuthData } from './components/Authenticator';
 import { loadStore } from './utils/common';
-import { Store } from '@tauri-apps/plugin-store';
+import { load } from '@tauri-apps/plugin-store';
+import { LoadingPage } from './pages/LoadingPage';
 
 /** The main component of the application. */
 function App() {
@@ -26,52 +23,55 @@ function App() {
 
     // Store for auth
     const storeName = 'store.json';
-    const store = loadStore(storeName);
+    let store = loadStore(storeName);
 
     // Setup routes
+    const router = createBrowserRouter([
+        {
+            path: '/',
+            element: <HomePage store={store} />,
+            loader: async () => {
+                if (!store) {
+                    store = await load(storeName);
+                }
+                const auth = await getAuthData(store);
+                if (!auth?.isValid) {
+                    return redirect('/login');
+                }
+            },
+            hydrateFallbackElement: <LoadingPage />,
+        },
+        {
+            path: '/home',
+            element: <Navigate to="/" />,
+            hydrateFallbackElement: <LoadingPage />,
+        },
+        {
+            path: '/login',
+            element: <LoginPage db={db} store={store} />,
+            hydrateFallbackElement: <LoadingPage />,
+        },
+        {
+            path: '/signup',
+            element: <SignupPage db={db} />,
+            hydrateFallbackElement: <LoadingPage />,
+        },
+        {
+            path: 'playlist/:playlistId',
+            element: <PlaylistPage />,
+            hydrateFallbackElement: <LoadingPage />,
+        },
+        {
+            path: '*',
+            element: <Navigate to="/" />,
+            hydrateFallbackElement: <LoadingPage />,
+        },
+    ]);
+
     return (
         <AuthProvider store={store}>
-            <Router>
-                <AppRoutes db={db} store={store} />
-            </Router>
+            <RouterProvider router={router} />
         </AuthProvider>
-    );
-}
-
-function AppRoutes(props: { db: Database | null; store: Store | null }) {
-    // Hooks
-    useRouteTracker();
-
-    // Get props
-    let { db, store } = props;
-
-    return (
-        <Routes>
-            <Route
-                path="/"
-                element={<HomePage store={store} />}
-                loader={homePageLoader}
-            ></Route>
-            <Route path="/login" element={<LoginPage db={db} />}></Route>
-            <Route path="/signup" element={<SignupPage db={db} />} />
-            <Route
-                path="/home/:username"
-                element={
-                    <ProtectedRoute>
-                        <HomePage store={store} />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/home/:username/playlists/:playlistId"
-                element={
-                    <ProtectedRoute>
-                        <PlaylistPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
     );
 }
 

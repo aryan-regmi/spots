@@ -1,11 +1,10 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { load, Store } from '@tauri-apps/plugin-store';
+import { Store } from '@tauri-apps/plugin-store';
 
 type AuthContextType = {
-    username: string | null;
     isAuthenticated: boolean;
     loading: boolean;
-    login: () => Promise<void>;
+    login: (username: string) => Promise<void>;
     logout: () => Promise<void>;
 };
 
@@ -21,37 +20,32 @@ export function AuthProvider(props: { store: Store | null; children: any }) {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [username, setUsername] = useState<string | null>(null);
 
     // On app load, read auth status from secure storage
     useEffect(() => {
         async function setupAuthStore() {
-            if (store == null) {
-                store = await load('store.json');
-            }
-            let auth = await store.get<AuthData>('authenticated');
+            let auth = await store?.get<AuthData>('authenticated');
             setIsAuthenticated(auth?.isValid === true);
-            setUsername(auth?.username ?? null);
             setLoading(false);
         }
         setupAuthStore();
     }, []);
 
-    const login = async () => {
+    const login = async (username: string) => {
         store?.set('authenticated', { isValid: true, username });
         setIsAuthenticated(true);
         console.debug('Auth token set');
     };
 
     const logout = async () => {
-        store?.set('authenticated', { isValid: false });
+        store?.set('authenticated', { isValid: false, username: null });
         setIsAuthenticated(false);
         console.debug('Auth token unset');
     };
 
     return (
         <AuthContext.Provider
-            value={{ username, isAuthenticated, loading, login, logout }}
+            value={{ isAuthenticated, loading, login, logout }}
         >
             {children}
         </AuthContext.Provider>
@@ -64,7 +58,11 @@ export function useAuth() {
     return context;
 }
 
-export async function getAuthValid(store: Store | null) {
+export async function getAuthData(store: Store | null) {
+    return await store?.get<AuthData>('authenticated');
+}
+
+export async function getAuthIsValid(store: Store | null) {
     let auth = await store?.get<AuthData>('authenticated');
     return auth?.isValid;
 }

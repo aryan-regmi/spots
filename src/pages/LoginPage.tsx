@@ -5,14 +5,15 @@ import { UserData } from '../utils/common';
 import { FormEvent, useState } from 'react';
 import { passwordIsCorrect, usernameExists } from '../utils/sql';
 import { useAuth } from '../components/Authenticator';
+import { Store } from '@tauri-apps/plugin-store';
 
 /** The login page component. */
-export function LoginPage(props: { db: Database | null }) {
+export function LoginPage(props: { db: Database | null; store: Store | null }) {
     const navigate = useNavigate();
 
     /** Handles logging in by navigating to the home page. */
     function loginHandler(data: UserData) {
-        navigate(`/home/${data.username}`, {
+        navigate(`/home/`, {
             state: data,
             replace: true,
         });
@@ -64,7 +65,7 @@ export function LoginForm(props: {
         if (db != null) {
             validateLogin(db, username, password).then(async (valid) => {
                 if (valid) {
-                    await login();
+                    await login(username);
                     loginDataHandler({
                         username: username,
                         password: password,
