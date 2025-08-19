@@ -1,8 +1,11 @@
-import { redirect, useLocation, useNavigate } from 'react-router-dom';
+import { redirect, useNavigate } from 'react-router-dom';
 import './pages.css';
-import { UserData } from '../utils/common';
 import { Card } from '../components/Card/Card';
-import { getAuthData, useAuth } from '../components/Authenticator';
+import {
+    getAuthUsername,
+    getAuthValid,
+    useAuth,
+} from '../components/Authenticator';
 import { load, Store } from '@tauri-apps/plugin-store';
 
 type MockPlaylist = {
@@ -17,18 +20,19 @@ function newMockPlaylist(title: string) {
 
 export async function homePageLoader({ props }: any) {
     const { store } = props;
-    let auth = await getAuthData(store);
-    if (!auth?.isValid) {
+    let valid = await getAuthValid(store);
+    if (!valid) {
         return redirect('/login');
     }
-    return <HomePage username={auth.username!} />;
+    return <HomePage store={store} />;
 }
 
-export function HomePage(props: { username: string }) {
+export function HomePage(props: { store: Store | null }) {
     const { logout } = useAuth();
     const navigate = useNavigate();
 
-    let { username } = props;
+    const { store } = props;
+    const username = getAuthUsername(store);
 
     /** Logs the user out and redirects to the login page. */
     async function redirectToLogin() {

@@ -45,13 +45,11 @@ function AppRoutes(props: { db: Database | null; store: Store | null }) {
     // Get props
     let { db, store } = props;
 
-    // let username = st
-
     return (
         <Routes>
             <Route
                 path="/"
-                element={<HomePage />}
+                element={<HomePage store={store} />}
                 loader={homePageLoader}
             ></Route>
             <Route path="/login" element={<LoginPage db={db} />}></Route>
@@ -60,7 +58,7 @@ function AppRoutes(props: { db: Database | null; store: Store | null }) {
                 path="/home/:username"
                 element={
                     <ProtectedRoute>
-                        <HomePage />
+                        <HomePage store={store} />
                     </ProtectedRoute>
                 }
             />

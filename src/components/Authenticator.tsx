@@ -64,8 +64,14 @@ export function useAuth() {
     return context;
 }
 
-export async function getAuthData(store: Store | null) {
-    if (store != null) {
-        return await store.get<AuthData>('authenticated');
+export async function getAuthValid(store: Store | null) {
+    let auth = await store?.get<AuthData>('authenticated');
+    return auth?.isValid;
+}
+
+export async function getAuthUsername(store: Store | null) {
+    let auth = await store?.get<AuthData>('authenticated');
+    if (auth?.isValid) {
+        return auth.username;
     }
 }
