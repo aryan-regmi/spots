@@ -6,7 +6,7 @@ import './pages.css';
 import { assert } from '../utils/common';
 
 /** The signup page component. */
-export function SignupPage(props: { db: Database | null }) {
+export function SignupPage(props: { db?: Database }) {
     return (
         <div className="col">
             <SignupForm db={props.db} />
@@ -14,10 +14,8 @@ export function SignupPage(props: { db: Database | null }) {
     );
 }
 
-// FIXME: Setup database in App.tsx and pass to all pages!
-
 /** The form responsible for handling user signups. */
-function SignupForm(props: { db: Database | null }) {
+function SignupForm(props: { db?: Database }) {
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -31,7 +29,7 @@ function SignupForm(props: { db: Database | null }) {
     /** Validates the login (checks if username already exists). */
     function signupHandler(event: FormEvent) {
         event.preventDefault();
-        if (db != null) {
+        if (db !== undefined) {
             validateLogin(db, username).then((valid) => {
                 if (valid) {
                     // Save to database
@@ -56,7 +54,7 @@ function SignupForm(props: { db: Database | null }) {
                 }
             });
         } else {
-            throw new Error('Invalid database: database was null');
+            throw new Error('Invalid database');
         }
     }
 

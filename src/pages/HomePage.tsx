@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import './pages.css';
 import { Card } from '../components/Card/Card';
-import { getAuthUsername, useAuth } from '../components/Authenticator';
+import { useAuthUsername, useAuth } from '../components/Authenticator';
 import { Store } from '@tauri-apps/plugin-store';
+import { LoadingPage } from './LoadingPage';
 
 type MockPlaylist = {
     id: string;
@@ -11,17 +12,20 @@ type MockPlaylist = {
 
 function newMockPlaylist(title: string, username?: string) {
     let fixedTitle = title.toLowerCase().replace(' ', '-');
-    /* let id = username ? `${username}-${fixedTitle}` : fixedTitle; */
-    let id = fixedTitle;
+    let id = username ? `${username}-${fixedTitle}` : fixedTitle;
     return { title: title, id: id };
 }
 
-export function HomePage(props: { store: Store | null }) {
+export function HomePage(props: { store?: Store }) {
+    const { store } = props;
+
     const { logout } = useAuth();
     const navigate = useNavigate();
+    const username = useAuthUsername(store);
 
-    const { store } = props;
-    const username = getAuthUsername(store);
+    if (!store || !username) {
+        return <LoadingPage />;
+    }
 
     /** Logs the user out and redirects to the login page. */
     async function redirectToLogin() {
@@ -43,7 +47,7 @@ export function HomePage(props: { store: Store | null }) {
 
     return (
         <div className="container ">
-            <h2>Welcome {username}!</h2>
+            <h2>{`Welcome ${username}!`}</h2>
 
             {/* TODO: Display pinned playlists */}
             <main className="content">

@@ -15,7 +15,7 @@ type AuthData = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider(props: { store: Store | null; children: any }) {
+export function AuthProvider(props: { store?: Store; children: any }) {
     let { store, children } = props;
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -29,7 +29,7 @@ export function AuthProvider(props: { store: Store | null; children: any }) {
             setLoading(false);
         }
         setupAuthStore();
-    }, []);
+    }, [store]);
 
     const login = async (username: string) => {
         store?.set('authenticated', { isValid: true, username });
@@ -60,13 +60,13 @@ export function useAuth() {
 }
 
 /** Gets the authentication data (username and validity). */
-export async function getAuthData(store: Store | null) {
+export async function getAuthData(store?: Store) {
     return await store?.get<AuthData>('authenticated');
 }
 
 /** Gets the currently authenticated username from the store. */
-export function getAuthUsername(store: Store | null) {
-    const [username, setUsername] = useState<string | null>(null);
+export function useAuthUsername(store?: Store) {
+    const [username, setUsername] = useState<string>();
     useEffect(() => {
         async function getUsername() {
             let auth = await store?.get<AuthData>('authenticated');
@@ -75,6 +75,6 @@ export function getAuthUsername(store: Store | null) {
             }
         }
         getUsername();
-    }, []);
+    }, [store]);
     return username;
 }

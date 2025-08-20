@@ -4,10 +4,9 @@ import Database from '@tauri-apps/plugin-sql';
 import { FormEvent, useState } from 'react';
 import { passwordIsCorrect, usernameExists } from '../utils/sql';
 import { useAuth } from '../components/Authenticator';
-import { Store } from '@tauri-apps/plugin-store';
 
 /** The login page component. */
-export function LoginPage(props: { db: Database | null; store: Store | null }) {
+export function LoginPage(props: { db?: Database }) {
     const navigate = useNavigate();
     return (
         <main className="container">
@@ -34,7 +33,7 @@ export type LoginData = {
 };
 
 /** The component responsible for handling user logins. */
-export function LoginForm(props: { db: Database | null }) {
+export function LoginForm(props: { db?: Database }) {
     const navigate = useNavigate();
     const { login } = useAuth();
     const [username, setUsername] = useState('');
@@ -56,7 +55,7 @@ export function LoginForm(props: { db: Database | null }) {
     /** Validates the login (username and password) and redirects to the home page. */
     function handleSubmit(event: FormEvent) {
         event.preventDefault();
-        if (db != null) {
+        if (db !== undefined) {
             validateLogin(db, username, password).then(async (valid) => {
                 if (valid) {
                     await login(username);
@@ -66,7 +65,7 @@ export function LoginForm(props: { db: Database | null }) {
                 }
             });
         } else {
-            throw new Error('Invalid database: database was null');
+            throw new Error('Invalid database');
         }
     }
 

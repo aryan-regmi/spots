@@ -8,10 +8,10 @@ import './App.css';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { SignupPage } from './pages/SignupPage';
-import { loadDatabase } from './utils/sql';
+import { useDatabase } from './utils/sql';
 import { PlaylistPage } from './pages/PlaylistPage';
 import { AuthProvider, getAuthData } from './components/Authenticator';
-import { loadStore } from './utils/store';
+import { useStore } from './utils/store';
 import { load } from '@tauri-apps/plugin-store';
 import { LoadingPage } from './pages/LoadingPage';
 
@@ -21,13 +21,11 @@ import { LoadingPage } from './pages/LoadingPage';
 
 /** The main component of the application. */
 function App() {
-    // Load database
     const dbName = 'test.db';
-    const db = loadDatabase(dbName);
-
-    // Store for auth
     const storeName = 'store.json';
-    let store = loadStore(storeName);
+
+    const db = useDatabase(dbName);
+    let store = useStore(storeName);
 
     // Setup routes
     const router = createBrowserRouter([
@@ -48,27 +46,22 @@ function App() {
         {
             path: '/home',
             element: <Navigate to="/" />,
-            hydrateFallbackElement: <LoadingPage />,
         },
         {
             path: '/login',
-            element: <LoginPage db={db} store={store} />,
-            hydrateFallbackElement: <LoadingPage />,
+            element: <LoginPage db={db} />,
         },
         {
             path: '/signup',
             element: <SignupPage db={db} />,
-            hydrateFallbackElement: <LoadingPage />,
         },
         {
             path: 'playlist/:playlistId',
             element: <PlaylistPage />,
-            hydrateFallbackElement: <LoadingPage />,
         },
         {
             path: '*',
             element: <Navigate to="/" />,
-            hydrateFallbackElement: <LoadingPage />,
         },
     ]);
 
