@@ -3,15 +3,16 @@ import './pages.css';
 import { Card } from '../components/Card/Card';
 import { getAuthUsername, useAuth } from '../components/Authenticator';
 import { Store } from '@tauri-apps/plugin-store';
-import { useEffect, useState } from 'react';
 
 type MockPlaylist = {
     id: string;
     title: string;
 };
 
-function newMockPlaylist(title: string) {
-    let id = `${title.toLowerCase().replace(' ', '-')}`;
+function newMockPlaylist(title: string, username?: string) {
+    let fixedTitle = title.toLowerCase().replace(' ', '-');
+    /* let id = username ? `${username}-${fixedTitle}` : fixedTitle; */
+    let id = fixedTitle;
     return { title: title, id: id };
 }
 
@@ -20,7 +21,6 @@ export function HomePage(props: { store: Store | null }) {
     const navigate = useNavigate();
 
     const { store } = props;
-
     const username = getAuthUsername(store);
 
     /** Logs the user out and redirects to the login page. */

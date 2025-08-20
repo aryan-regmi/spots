@@ -11,7 +11,7 @@ import { SignupPage } from './pages/SignupPage';
 import { loadDatabase } from './utils/sql';
 import { PlaylistPage } from './pages/PlaylistPage';
 import { AuthProvider, getAuthData } from './components/Authenticator';
-import { loadStore } from './utils/common';
+import { loadStore } from './utils/store';
 import { load } from '@tauri-apps/plugin-store';
 import { LoadingPage } from './pages/LoadingPage';
 

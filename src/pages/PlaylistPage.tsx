@@ -5,7 +5,6 @@ export function PlaylistPage() {
     const { playlistId } = useParams<{
         playlistId: string;
     }>();
-    console.log(playlistId);
     const location = useLocation();
     const title = location.state || `${playlistId}`;
 
