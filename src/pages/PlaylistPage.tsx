@@ -6,6 +6,7 @@ export function PlaylistPage() {
         username: string;
         playlistId: string;
     }>();
+    console.log(`${username}`);
     const location = useLocation();
     const title = location.state || `${playlistId}`;
 

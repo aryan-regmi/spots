@@ -1,4 +1,4 @@
-import { CSSProperties, MouseEventHandler } from 'react';
+import { CSSProperties } from 'react';
 import './Card.css';
 
 export function Card(props: {
