@@ -2,11 +2,10 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 export function PlaylistPage() {
     const navigate = useNavigate();
-    const { username, playlistId } = useParams<{
-        username: string;
+    const { playlistId } = useParams<{
         playlistId: string;
     }>();
-    console.log(`${username}`);
+    console.log(playlistId);
     const location = useLocation();
     const title = location.state || `${playlistId}`;
 

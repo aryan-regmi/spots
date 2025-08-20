@@ -52,24 +52,29 @@ export function AuthProvider(props: { store: Store | null; children: any }) {
     );
 }
 
+/** Hook to use the authentication context. */
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) throw new Error('useAuth must be used within AuthProvider');
     return context;
 }
 
+/** Gets the authentication data (username and validity). */
 export async function getAuthData(store: Store | null) {
     return await store?.get<AuthData>('authenticated');
 }
 
-export async function getAuthIsValid(store: Store | null) {
-    let auth = await store?.get<AuthData>('authenticated');
-    return auth?.isValid;
-}
-
-export async function getAuthUsername(store: Store | null) {
-    let auth = await store?.get<AuthData>('authenticated');
-    if (auth?.isValid) {
-        return auth.username;
-    }
+/** Gets the currently authenticated username from the store. */
+export function getAuthUsername(store: Store | null) {
+    const [username, setUsername] = useState<string | null>(null);
+    useEffect(() => {
+        async function getUsername() {
+            let auth = await store?.get<AuthData>('authenticated');
+            if (auth?.isValid) {
+                setUsername(auth.username ?? '');
+            }
+        }
+        getUsername();
+    }, []);
+    return username;
 }

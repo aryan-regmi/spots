@@ -15,6 +15,10 @@ import { loadStore } from './utils/common';
 import { load } from '@tauri-apps/plugin-store';
 import { LoadingPage } from './pages/LoadingPage';
 
+// TODO: Change all `Type | null` to be  ?type instead
+//
+// TODO: Add doc comments to all public stuff at lease
+
 /** The main component of the application. */
 function App() {
     // Load database
