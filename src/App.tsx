@@ -25,7 +25,7 @@ import { load } from '@tauri-apps/plugin-store';
 //  * Stronghold
 //      - auth.username	"username"
 //      - auth.password "hashed_password"
-//      - auth.valid "true"
+//      - auth.current_user "username"
 //  * Sqlite
 //      - Playlists, Songs, etc
 //      - UI prefs/toggles
