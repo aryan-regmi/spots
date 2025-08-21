@@ -18,6 +18,8 @@ import { load } from '@tauri-apps/plugin-store';
 // TODO: Change all `Type | null` to be  ?type instead
 //
 // TODO: Add doc comments to all public stuff at lease
+//
+// TODO: Use the `Stronghold` Tauri plugin to store passwords
 
 /** The main component of the application. */
 function App() {
