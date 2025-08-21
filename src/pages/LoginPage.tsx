@@ -1,20 +1,18 @@
 import './pages.css';
-import Database from '@tauri-apps/plugin-sql';
 import useAuth from '../hooks/useAuth';
-import { FormEvent, useState } from 'react';
-import { passwordIsCorrect, usernameExists } from '../utils/sql';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// TODO: Check password and usernames against vault!;
+import { getRecord, StrongholdVault } from '../utils/stronghold';
+import { hash } from 'argon2-wasm';
 
 /** The login page component. */
-export function LoginPage(props: { db?: Database }) {
+export function LoginPage(props: { vault?: StrongholdVault }) {
     const navigate = useNavigate();
     return (
         <main className="container">
             <h1>Spots: A Spotify Alternative</h1>
             <div className="col">
-                <LoginForm db={props.db} />
+                <LoginForm vault={props.vault} />
                 <a
                     onClick={(_) => {
                         navigate('/signup');
@@ -35,44 +33,56 @@ export type LoginData = {
 };
 
 /** The component responsible for handling user logins. */
-export function LoginForm(props: { db?: Database }) {
+export function LoginForm(props: { vault?: StrongholdVault }) {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { authorize } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const db = props.db;
+    const { vault } = props;
 
     /** Checks the username and password against the database. */
     async function validateLogin(
-        db: Database,
+        vault: StrongholdVault,
         username: string,
         password: string
     ) {
-        return (
-            (await usernameExists(db, username)) &&
-            (await passwordIsCorrect(db, username, password))
-        );
+        if (!vault.store) throw new Error('Stronghold not initialized');
+        const encoder = new TextEncoder();
+
+        // Get stored data
+        const storedSalt = await getRecord(vault.store, `${username}.salt`);
+        const storedPass = await getRecord(vault.store, `${username}.password`);
+        if (!storedSalt || !storedPass) {
+            return false;
+        }
+        const salt = new Uint8Array(encoder.encode(storedSalt));
+
+        // Hash given password and compare to stored password
+        const hashedInput = await hash({ pass: password, salt: salt });
+        return hashedInput.encoded === storedPass;
     }
 
     /** Validates the login (username and password) and redirects to the home page. */
-    function handleSubmit(event: FormEvent) {
-        event.preventDefault();
-        if (db !== undefined) {
-            validateLogin(db, username, password).then(async (valid) => {
-                if (valid) {
-                    await login(username);
-                    navigate(`/home/`, { replace: true });
-                } else {
-                    alert('Invalid login: check username and password!');
-                }
-            });
+    async function handleSubmit() {
+        if (vault !== undefined) {
+            let valid = await validateLogin(vault, username, password);
+            if (valid) {
+                await authorize(username);
+                navigate('/home', { replace: true });
+            } else {
+                alert('Invalid login: check username and password!');
+            }
         } else {
             throw new Error('Invalid database');
         }
     }
 
     return (
-        <form className="col" id="login-form" onSubmit={handleSubmit}>
+        <form
+            className="col"
+            id="login-form"
+            onSubmit={(e) => e.preventDefault()}
+        >
             <div className="row">
                 Username:
                 <input
@@ -96,6 +106,7 @@ export function LoginForm(props: { db?: Database }) {
                 type="submit"
                 placeholder="Login"
                 className="submit-button"
+                onClick={handleSubmit}
             />
         </form>
     );

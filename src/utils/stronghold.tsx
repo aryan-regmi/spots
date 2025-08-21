@@ -19,6 +19,7 @@ export async function initStronghold(
     }
 
     const store = client.getStore();
+    console.info('Vault created.');
     return { stronghold, store };
 }
 

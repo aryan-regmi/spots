@@ -1,4 +1,3 @@
-import { Store, Stronghold } from '@tauri-apps/plugin-stronghold';
 import { useEffect, useState } from 'react';
 import { initStronghold, StrongholdVault } from '../utils/stronghold';
 import { invoke } from '@tauri-apps/api/core';
@@ -11,6 +10,6 @@ export default function useStronghold() {
         }
         loadVault();
         console.info('Stronghold vault loaded');
-    });
+    }, []);
     return vault;
 }

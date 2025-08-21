@@ -1,10 +1,9 @@
 import './pages.css';
 import useAuth from '../hooks/useAuth';
-import useAuthUsername from '../hooks/useAuthUsername';
 import { Card } from '../components/Card/Card';
 import { LoadingPage } from './LoadingPage';
-import { Store } from '@tauri-apps/plugin-store';
 import { useNavigate } from 'react-router-dom';
+import { StrongholdVault } from '../utils/stronghold';
 
 type MockPlaylist = {
     id: string;
@@ -17,20 +16,19 @@ function newMockPlaylist(title: string, username?: string) {
     return { title: title, id: id };
 }
 
-export function HomePage(props: { store?: Store }) {
-    const { store } = props;
+export function HomePage(props: { vault?: StrongholdVault }) {
+    const { vault } = props;
 
-    const { logout } = useAuth();
+    const { unauthorize, currentUser: username } = useAuth();
     const navigate = useNavigate();
-    const username = useAuthUsername(store);
 
-    if (!store || !username) {
+    if (!vault || !username) {
         return <LoadingPage />;
     }
 
     /** Logs the user out and redirects to the login page. */
     async function redirectToLogin() {
-        await logout();
+        await unauthorize();
         await navigate('/login', { replace: true });
     }
 

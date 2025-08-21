@@ -6,53 +6,37 @@ import {
     RouterProvider,
 } from 'react-router-dom';
 import useDatabase from './hooks/useDatabase';
-import useStore from './hooks/useStore';
 import { AuthProvider, getAuthData } from './components/Authenticator';
 import { HomePage } from './pages/HomePage';
 import { LoadingPage } from './pages/LoadingPage';
 import { LoginPage } from './pages/LoginPage';
 import { PlaylistPage } from './pages/PlaylistPage';
 import { SignupPage } from './pages/SignupPage';
-import { load } from '@tauri-apps/plugin-store';
 import useStronghold from './hooks/useStronghold';
+import { initStronghold } from './utils/stronghold';
+import { invoke } from '@tauri-apps/api/core';
 
-// TODO: Change all `Type | null` to be  ?type instead
-//
 // TODO: Add doc comments to all public stuff at lease
 //
-// TODO: Use the `Stronghold` Tauri plugin to store passwords
-//
-// TODO: All sensitive data in `Stronghold` && Replace all `store` usage w/ `sqlite`
-//  * Stronghold
-//      - auth.username	"username"
-//      - auth.password "hashed_password"
-//      - auth.current_user "username"
-//  * Sqlite
-//      - Playlists, Songs, etc
-//      - UI prefs/toggles
+// TODO: Sanitize username and password for SQL (extra characters etc)
 
 /** The main component of the application. */
 function App() {
-    const dbName = 'test.db';
-    const storeName = 'store.json';
-
-    const db = useDatabase(dbName);
-    const vault = useStronghold();
-    let store = useStore(storeName);
-
-    /* const vaultPassword = invoke('get_vault_passowrd'); */
-    /* const vault = initStronghold(await invoke('get_vault_password')); */
+    let vault = useStronghold();
+    const db = useDatabase('test.db');
 
     // Setup routes
     const router = createBrowserRouter([
         {
             path: '/',
-            element: <HomePage store={store} />,
+            element: <HomePage vault={vault} />,
             loader: async () => {
-                if (!store) {
-                    store = await load(storeName);
+                if (!vault) {
+                    vault = await initStronghold(
+                        await invoke('get_vault_password')
+                    );
                 }
-                const auth = await getAuthData(store);
+                const auth = await getAuthData(vault);
                 if (!auth?.isValid) {
                     return redirect('/login');
                 }
@@ -65,11 +49,11 @@ function App() {
         },
         {
             path: '/login',
-            element: <LoginPage db={db} />,
+            element: <LoginPage vault={vault} />,
         },
         {
             path: '/signup',
-            element: <SignupPage db={db} />,
+            element: <SignupPage vault={vault} db={db} />,
         },
         {
             path: 'playlist/:playlistId',
@@ -82,7 +66,7 @@ function App() {
     ]);
 
     return (
-        <AuthProvider store={store}>
+        <AuthProvider vault={vault}>
             <RouterProvider router={router} />
         </AuthProvider>
     );
