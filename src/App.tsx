@@ -20,6 +20,15 @@ import { load } from '@tauri-apps/plugin-store';
 // TODO: Add doc comments to all public stuff at lease
 //
 // TODO: Use the `Stronghold` Tauri plugin to store passwords
+//
+// TODO: All sensitive data in `Stronghold` && Replace all `store` usage w/ `sqlite`
+//  * Stronghold
+//      - auth.username	"username"
+//      - auth.password "hashed_password"
+//      - auth.valid "true"
+//  * Sqlite
+//      - Playlists, Songs, etc
+//      - UI prefs/toggles
 
 /** The main component of the application. */
 function App() {
