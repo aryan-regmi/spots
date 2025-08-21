@@ -1,5 +1,4 @@
 import Database from '@tauri-apps/plugin-sql';
-import { assert } from './common';
 
 /** Checks if the username exists in the database. */
 export async function usernameExists(db: Database, username: string) {
@@ -8,18 +7,4 @@ export async function usernameExists(db: Database, username: string) {
         [username]
     );
     return foundIds.length > 0;
-}
-
-/** Checks if the password is correct for the specifed username. */
-export async function passwordIsCorrect(
-    db: Database,
-    username: string,
-    password: string
-) {
-    const dbPassword = await db.select<{ password: string }[]>(
-        `SELECT password FROM users WHERE username = $1 LIMIT 1`,
-        [username]
-    );
-    assert(dbPassword.length === 1);
-    return dbPassword[0].password === password;
 }

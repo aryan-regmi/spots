@@ -14,6 +14,7 @@ import { LoginPage } from './pages/LoginPage';
 import { PlaylistPage } from './pages/PlaylistPage';
 import { SignupPage } from './pages/SignupPage';
 import { load } from '@tauri-apps/plugin-store';
+import useStronghold from './hooks/useStronghold';
 
 // TODO: Change all `Type | null` to be  ?type instead
 //
@@ -36,7 +37,11 @@ function App() {
     const storeName = 'store.json';
 
     const db = useDatabase(dbName);
+    const vault = useStronghold();
     let store = useStore(storeName);
+
+    /* const vaultPassword = invoke('get_vault_passowrd'); */
+    /* const vault = initStronghold(await invoke('get_vault_password')); */
 
     // Setup routes
     const router = createBrowserRouter([

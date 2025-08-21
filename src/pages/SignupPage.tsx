@@ -4,18 +4,21 @@ import { FormEvent, useState } from 'react';
 import { assert } from '../utils/common';
 import { useNavigate } from 'react-router-dom';
 import { usernameExists } from '../utils/sql';
+import { StrongholdVault } from '../utils/stronghold';
+
+// TODO: Open stronghold and store username and passwords there!
 
 /** The signup page component. */
-export function SignupPage(props: { db?: Database }) {
+export function SignupPage(props: { vault?: StrongholdVault; db?: Database }) {
     return (
         <div className="col">
-            <SignupForm db={props.db} />
+            <SignupForm vault={props.vault} db={props.db} />
         </div>
     );
 }
 
 /** The form responsible for handling user signups. */
-function SignupForm(props: { db?: Database }) {
+function SignupForm(props: { vault?: StrongholdVault; db?: Database }) {
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');

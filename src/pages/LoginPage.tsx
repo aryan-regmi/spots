@@ -5,6 +5,8 @@ import { FormEvent, useState } from 'react';
 import { passwordIsCorrect, usernameExists } from '../utils/sql';
 import { useNavigate } from 'react-router-dom';
 
+// TODO: Check password and usernames against vault!;
+
 /** The login page component. */
 export function LoginPage(props: { db?: Database }) {
     const navigate = useNavigate();
