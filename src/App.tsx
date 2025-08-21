@@ -1,19 +1,19 @@
+import './App.css';
 import {
     createBrowserRouter,
     Navigate,
     redirect,
     RouterProvider,
 } from 'react-router-dom';
-import './App.css';
-import { LoginPage } from './pages/LoginPage';
-import { HomePage } from './pages/HomePage';
-import { SignupPage } from './pages/SignupPage';
-import { useDatabase } from './utils/sql';
-import { PlaylistPage } from './pages/PlaylistPage';
+import useDatabase from './hooks/useDatabase';
+import useStore from './hooks/useStore';
 import { AuthProvider, getAuthData } from './components/Authenticator';
-import { useStore } from './utils/store';
-import { load } from '@tauri-apps/plugin-store';
+import { HomePage } from './pages/HomePage';
 import { LoadingPage } from './pages/LoadingPage';
+import { LoginPage } from './pages/LoginPage';
+import { PlaylistPage } from './pages/PlaylistPage';
+import { SignupPage } from './pages/SignupPage';
+import { load } from '@tauri-apps/plugin-store';
 
 // TODO: Change all `Type | null` to be  ?type instead
 //

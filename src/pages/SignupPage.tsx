@@ -1,9 +1,9 @@
+import './pages.css';
+import Database from '@tauri-apps/plugin-sql';
 import { FormEvent, useState } from 'react';
+import { assert } from '../utils/common';
 import { useNavigate } from 'react-router-dom';
 import { usernameExists } from '../utils/sql';
-import Database from '@tauri-apps/plugin-sql';
-import './pages.css';
-import { assert } from '../utils/common';
 
 /** The signup page component. */
 export function SignupPage(props: { db?: Database }) {

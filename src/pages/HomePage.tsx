@@ -1,9 +1,10 @@
-import { useNavigate } from 'react-router-dom';
 import './pages.css';
+import useAuth from '../hooks/useAuth';
+import useAuthUsername from '../hooks/useAuthUsername';
 import { Card } from '../components/Card/Card';
-import { useAuthUsername, useAuth } from '../components/Authenticator';
-import { Store } from '@tauri-apps/plugin-store';
 import { LoadingPage } from './LoadingPage';
+import { Store } from '@tauri-apps/plugin-store';
+import { useNavigate } from 'react-router-dom';
 
 type MockPlaylist = {
     id: string;

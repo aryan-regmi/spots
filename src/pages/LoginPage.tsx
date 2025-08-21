@@ -1,9 +1,9 @@
-import { useNavigate } from 'react-router-dom';
 import './pages.css';
 import Database from '@tauri-apps/plugin-sql';
+import useAuth from '../hooks/useAuth';
 import { FormEvent, useState } from 'react';
 import { passwordIsCorrect, usernameExists } from '../utils/sql';
-import { useAuth } from '../components/Authenticator';
+import { useNavigate } from 'react-router-dom';
 
 /** The login page component. */
 export function LoginPage(props: { db?: Database }) {

@@ -1,5 +1,5 @@
-import { CSSProperties } from 'react';
 import './Card.css';
+import { CSSProperties } from 'react';
 
 export function Card(props: {
     children: any;

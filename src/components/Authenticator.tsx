@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
 import { Store } from '@tauri-apps/plugin-store';
+import { createContext, useEffect, useState } from 'react';
 
 type AuthContextType = {
     isAuthenticated: boolean;
@@ -8,12 +8,12 @@ type AuthContextType = {
     logout: () => Promise<void>;
 };
 
-type AuthData = {
+export type AuthData = {
     isValid: boolean;
     username?: string;
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider(props: { store?: Store; children: any }) {
     let { store, children } = props;
@@ -52,29 +52,7 @@ export function AuthProvider(props: { store?: Store; children: any }) {
     );
 }
 
-/** Hook to use the authentication context. */
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (!context) throw new Error('useAuth must be used within AuthProvider');
-    return context;
-}
-
 /** Gets the authentication data (username and validity). */
 export async function getAuthData(store?: Store) {
     return await store?.get<AuthData>('authenticated');
-}
-
-/** Gets the currently authenticated username from the store. */
-export function useAuthUsername(store?: Store) {
-    const [username, setUsername] = useState<string>();
-    useEffect(() => {
-        async function getUsername() {
-            let auth = await store?.get<AuthData>('authenticated');
-            if (auth?.isValid) {
-                setUsername(auth.username ?? '');
-            }
-        }
-        getUsername();
-    }, [store]);
-    return username;
 }

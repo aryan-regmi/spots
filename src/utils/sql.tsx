@@ -1,18 +1,4 @@
 import Database from '@tauri-apps/plugin-sql';
-import { useEffect, useState } from 'react';
-
-/** Loads the specifed sqlite database. */
-export function useDatabase(dbName: string) {
-    const [db, setDb] = useState<Database>();
-    useEffect(() => {
-        const loadDb = async () => {
-            setDb(await Database.load(`sqlite:${dbName}`));
-        };
-        loadDb();
-        console.info(`Database loaded: ${dbName}`);
-    }, [dbName]);
-    return db;
-}
 
 /** Checks if the username exists in the database. */
 export async function usernameExists(db: Database, username: string) {
