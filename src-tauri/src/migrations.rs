@@ -27,7 +27,7 @@ pub fn migrations() -> Vec<Migration> {
             kind: MigrationKind::Up,
         },
         Migration {
-            version: 4,
+            version: 5,
             description: "Read password",
             sql: "
                 CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL);
@@ -36,7 +36,7 @@ pub fn migrations() -> Vec<Migration> {
             kind: MigrationKind::Up,
         },
         Migration {
-            version: 4,
+            version: 6,
             description: "Enabled foreign keys and added auth_user table",
             sql: "
                 PRAGMA foreign_keys = ON;
