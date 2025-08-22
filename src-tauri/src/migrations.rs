@@ -53,13 +53,13 @@ pub fn migrations() -> Vec<Migration> {
             kind: MigrationKind::Up,
         },
         Migration {
-            version: 6,
+            version: 7,
             description: "clear auth_user",
             sql: "DROP TABLE auth_user;",
             kind: MigrationKind::Up,
         },
         Migration {
-            version: 7,
+            version: 8,
             description: "Enabled foreign keys and added auth_user table",
             sql: "
                 PRAGMA foreign_keys = ON;
@@ -70,11 +70,73 @@ pub fn migrations() -> Vec<Migration> {
                 );
                 CREATE TABLE IF NOT EXISTS auth (
                     username TEXT PRIMARY KEY,
-                    is_valid INTEGER NOT NULL
+                    is_valid INTEGER NOT NULL,
                     FOREIGN KEY(username) REFERENCES users(username) ON DELETE SET NULL
                 );
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 9,
+            description: "Changed auth primary key",
+            sql: "
+                PRAGMA foreign_keys = ON;
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS auth (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT,
+                    FOREIGN KEY(username) REFERENCES users(username) ON DELETE SET NULL
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 10,
+            description: "reset auth",
+            sql: "DROP TABLE auth;",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 11,
+            description: "Fixed keys",
+            sql: "
+                PRAGMA foreign_keys = ON;
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS auth (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT,
+                    FOREIGN KEY(username) REFERENCES users(username) ON DELETE SET NULL
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 12,
+            description: "Added inital auth",
+            sql: "
+                PRAGMA foreign_keys = ON;
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS auth (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT,
+                    FOREIGN KEY(username) REFERENCES users(username) ON DELETE SET NULL
+                );
+                INSERT INTO auth (username) VALUES (NULL)
+            ",
+            kind: MigrationKind::Up,
+        },
+
     ]
 }

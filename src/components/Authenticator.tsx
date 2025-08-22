@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from 'react';
-import { getRecord, insertRecord, StrongholdVault } from '../utils/stronghold';
 import Database from '@tauri-apps/plugin-sql';
+import { getAuthRecord, updateAuthRecord } from '../utils/sql';
 
 type AuthContextType = {
     isAuthenticated: boolean;
@@ -11,17 +11,13 @@ type AuthContextType = {
 };
 
 export type AuthData = {
-    isValid: boolean;
     username?: string;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider(props: {
-    vault?: StrongholdVault;
-    children: any;
-}) {
-    let { vault, children } = props;
+export function AuthProvider(props: { db?: Database; children: any }) {
+    let { db, children } = props;
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -30,38 +26,32 @@ export function AuthProvider(props: {
     // On app load, check if a user is authorized
     useEffect(() => {
         async function initAuthUser() {
-            if (vault?.store) {
-                const user = await getRecord(vault.store, 'auth-user');
-
-                if (user && user.trim() !== '') {
-                    setIsAuthenticated(true);
-                    setCurrentUser(user);
-                } else {
-                    setIsAuthenticated(false);
-                    setCurrentUser(undefined);
-                }
-
+            if (db) {
+                const auth = await getAuthRecord(db);
+                auth ? setIsAuthenticated(true) : setIsAuthenticated(false);
+                setCurrentUser(auth?.username);
                 setLoading(false);
             }
         }
-
         initAuthUser();
-    }, []);
+    }, [db]);
 
     const authorize = async (username: string) => {
-        if (!vault?.store) return;
-        await insertRecord(vault.store, 'auth-user', username);
-        setIsAuthenticated(true);
-        setCurrentUser(username);
-        console.debug('Auth token set');
+        if (db) {
+            await updateAuthRecord(db, { username });
+            setIsAuthenticated(true);
+            setCurrentUser(username);
+            console.debug('Auth token set');
+        }
     };
 
     const unauthorize = async () => {
-        if (!vault?.store) return;
-        await insertRecord(vault.store, 'auth-user', '');
-        setIsAuthenticated(false);
-        setCurrentUser(undefined);
-        console.debug('Auth token unset');
+        if (db) {
+            await updateAuthRecord(db, { username: undefined });
+            setIsAuthenticated(false);
+            setCurrentUser(undefined);
+            console.debug('Auth token unset');
+        }
     };
 
     return (
@@ -77,15 +67,4 @@ export function AuthProvider(props: {
             {children}
         </AuthContext.Provider>
     );
-}
-
-/** Get the current authentication state manually */
-export async function getAuthData(db: Database): Promise<AuthData> {
-    /* if (!store) return { isValid: false }; */
-    /* const username = await getRecord(store, 'auth-user'); */
-    /* let isValid = username !== null && username.trim() !== ''; */
-    /* return { */
-    /*     isValid, */
-    /*     username: isValid ? username! : undefined, */
-    /* }; */
 }

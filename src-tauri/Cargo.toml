@@ -31,6 +31,8 @@ iroh = { version = "0.91.2", features = ["discovery-local-network"] }
 iroh-gossip = "0.91.0"
 tauri-plugin-stronghold = "2"
 hex = "0.4.3"
+argon2 = "0.5.3"
+sqlx = "0.8.6"
 
 [profile.dev]
 incremental = true

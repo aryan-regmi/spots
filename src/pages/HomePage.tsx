@@ -17,12 +17,10 @@ function newMockPlaylist(title: string, username?: string) {
 }
 
 export function HomePage(props: { db?: Database }) {
-    const { db: vault } = props;
-
     const { unauthorize, currentUser: username } = useAuth();
     const navigate = useNavigate();
 
-    if (!vault || !username) {
+    if (!username) {
         return <LoadingPage />;
     }
 
