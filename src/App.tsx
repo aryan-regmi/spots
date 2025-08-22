@@ -36,8 +36,8 @@ function App() {
                 if (!db) {
                     db = await Database.load(`sqlite:${dbName}`);
                 }
-                const { authenticatedUser } = await getAuthRecord(db);
-                if (!authenticatedUser) {
+                const auth = await getAuthRecord(db);
+                if (!auth) {
                     return redirect('/login');
                 }
             },

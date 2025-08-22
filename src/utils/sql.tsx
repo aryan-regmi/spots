@@ -13,10 +13,10 @@ export async function usernameExists(db: Database, username: string) {
 
 /** Gets the authentication record. */
 export async function getAuthRecord(db: Database) {
-    const { username } = await db.select<{
-        username?: string;
-    }>('SELECT username FROM auth LIMIT 1');
-    return { authenticatedUser: username };
+    const result = await db.select<AuthData[]>(
+        'SELECT username FROM auth LIMIT 1'
+    );
+    return result.length > 0 ? result[0] : undefined;
 }
 
 /** Updates the auth data. */
@@ -24,12 +24,12 @@ export async function updateAuthRecord(db: Database, data: AuthData) {
     const result = await db.execute(
         `
         UPDATE auth
-        SET username = $1,
+        SET username = $1
         WHERE id = 1;
     `,
         [data.username ?? null]
     );
-    assert(result.rowsAffected == 1 && result.lastInsertId == 1);
+    assert(result.rowsAffected);
 }
 
 /** Insert the username and password into the database. */
@@ -44,10 +44,17 @@ export async function insertUserLogin(
     ]);
 }
 
+export type UserData = {
+    username: string;
+    password: string;
+};
+
 /** Gets the record for the specified user. */
 export async function getUserRecord(db: Database, username: string) {
-    return await db.select<{ username: string; password: string }>(
+    let result = await db.select<UserData[]>(
         'SELECT username, password FROM users WHERE username = $1 LIMIT 1',
         [username]
     );
+    let user = result.length > 0 ? result[0] : undefined;
+    return user;
 }

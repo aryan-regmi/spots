@@ -17,7 +17,7 @@ export type AuthData = {
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider(props: { db?: Database; children: any }) {
-    const { db, children } = props;
+    let { db, children } = props;
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -27,15 +27,14 @@ export function AuthProvider(props: { db?: Database; children: any }) {
     useEffect(() => {
         async function initAuthUser() {
             if (db) {
-                const { authenticatedUser } = await getAuthRecord(db);
-                setIsAuthenticated(authenticatedUser !== undefined);
-                setCurrentUser(authenticatedUser);
+                const auth = await getAuthRecord(db);
+                auth ? setIsAuthenticated(true) : setIsAuthenticated(false);
+                setCurrentUser(auth?.username);
                 setLoading(false);
             }
         }
-
         initAuthUser();
-    }, []);
+    }, [db]);
 
     const authorize = async (username: string) => {
         if (db) {

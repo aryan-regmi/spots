@@ -94,5 +94,49 @@ pub fn migrations() -> Vec<Migration> {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 10,
+            description: "reset auth",
+            sql: "DROP TABLE auth;",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 11,
+            description: "Fixed keys",
+            sql: "
+                PRAGMA foreign_keys = ON;
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS auth (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT,
+                    FOREIGN KEY(username) REFERENCES users(username) ON DELETE SET NULL
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 12,
+            description: "Added inital auth",
+            sql: "
+                PRAGMA foreign_keys = ON;
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL UNIQUE,
+                    password TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS auth (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT,
+                    FOREIGN KEY(username) REFERENCES users(username) ON DELETE SET NULL
+                );
+                INSERT INTO auth (username) VALUES (NULL)
+            ",
+            kind: MigrationKind::Up,
+        },
+
     ]
 }

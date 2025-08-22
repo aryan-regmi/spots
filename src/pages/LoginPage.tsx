@@ -47,12 +47,16 @@ export function LoginForm(props: { db?: Database }) {
         username: string,
         password: string
     ) {
-        const { password: storedPassword } = await getUserRecord(db, username);
-        const verified = await invoke<boolean>('verify_password', {
-            pass: password,
-            encoded: storedPassword,
-        });
-        return verified;
+        const userRecord = await getUserRecord(db, username);
+        if (userRecord) {
+            if (userRecord.password) {
+                const verified = await invoke('verify_password', {
+                    password: password,
+                    hash: userRecord.password,
+                });
+                return verified;
+            }
+        }
     }
 
     /** Validates the login (username and password) and redirects to the home page. */

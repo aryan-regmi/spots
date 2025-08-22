@@ -3,7 +3,7 @@ import Database from '@tauri-apps/plugin-sql';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { insertUserLogin, usernameExists } from '../utils/sql';
-import { hash } from 'argon2-wasm';
+import { invoke } from '@tauri-apps/api/core';
 
 // TODO: Open stronghold and store username and passwords there!
 
@@ -35,13 +35,12 @@ function SignupForm(props: { db?: Database }) {
 
             if (valid) {
                 // Create salt and hash password
-                const hashedPassword = await hash({
-                    salt: crypto.getRandomValues(new Uint8Array(16)),
-                    pass: password,
+                const hashedPassword = await invoke<string>('hash_password', {
+                    password: password,
                 });
 
                 // Save user to database
-                await insertUserLogin(db, username, hashedPassword.encoded);
+                await insertUserLogin(db, username, hashedPassword);
                 console.info(`Created new user: ${username}`);
 
                 // Go to homepage
