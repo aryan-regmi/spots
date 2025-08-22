@@ -3,7 +3,6 @@ import useAuth from '../hooks/useAuth';
 import { Card } from '../components/Card/Card';
 import { LoadingPage } from './LoadingPage';
 import { useNavigate } from 'react-router-dom';
-import Database from '@tauri-apps/plugin-sql';
 
 type MockPlaylist = {
     id: string;
@@ -16,12 +15,12 @@ function newMockPlaylist(title: string, username?: string) {
     return { title: title, id: id };
 }
 
-export function HomePage(props: { db?: Database }) {
+export function HomePage() {
     const { unauthorize, currentUser: username } = useAuth();
     const navigate = useNavigate();
 
     if (!username) {
-        return <LoadingPage />;
+        return <LoadingPage></LoadingPage>;
     }
 
     /** Logs the user out and redirects to the login page. */

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { insertUserLogin, usernameExists } from '../utils/sql';
 import { invoke } from '@tauri-apps/api/core';
+import useAuth from '../hooks/useAuth';
 
 // TODO: Open stronghold and store username and passwords there!
 
@@ -18,6 +19,7 @@ export function SignupPage(props: { db?: Database }) {
 
 /** The form responsible for handling user signups. */
 function SignupForm(props: { db?: Database }) {
+    const { authorize } = useAuth();
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -44,6 +46,7 @@ function SignupForm(props: { db?: Database }) {
                 console.info(`Created new user: ${username}`);
 
                 // Go to homepage
+                await authorize(username);
                 navigate(`/home`, { replace: true });
             } else {
                 alert(`Invalid username: "${username}" already exists!`);

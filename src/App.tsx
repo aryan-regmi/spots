@@ -31,13 +31,13 @@ function App() {
     const router = createBrowserRouter([
         {
             path: '/',
-            element: <HomePage db={db} />,
+            element: <HomePage />,
             loader: async () => {
                 if (!db) {
                     db = await Database.load(`sqlite:${dbName}`);
                 }
                 const auth = await getAuthRecord(db);
-                if (!auth) {
+                if (!auth || !auth.username) {
                     return redirect('/login');
                 }
             },
@@ -58,6 +58,19 @@ function App() {
         {
             path: 'playlist/:playlistId',
             element: <PlaylistPage />,
+            loader: async () => {
+                if (db) {
+                    const auth = await getAuthRecord(db);
+                    if (!auth || !auth.username) {
+                        return redirect('/login');
+                    }
+                }
+            },
+            hydrateFallbackElement: <LoadingPage />,
+        },
+        {
+            path: '/loading',
+            element: <LoadingPage />,
         },
         {
             path: '*',
