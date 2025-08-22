@@ -6,16 +6,14 @@ import {
     RouterProvider,
 } from 'react-router-dom';
 import useDatabase from './hooks/useDatabase';
-import { AuthProvider, getAuthData } from './components/Authenticator';
+import { AuthProvider } from './components/Authenticator';
 import { HomePage } from './pages/HomePage';
 import { LoadingPage } from './pages/LoadingPage';
 import { LoginPage } from './pages/LoginPage';
 import { PlaylistPage } from './pages/PlaylistPage';
 import { SignupPage } from './pages/SignupPage';
-import useStronghold from './hooks/useStronghold';
-import { initStronghold } from './utils/stronghold';
-import { invoke } from '@tauri-apps/api/core';
 import Database from '@tauri-apps/plugin-sql';
+import { getAuthRecord } from './utils/sql';
 
 // TODO: Add doc comments to all public stuff at lease
 //
@@ -26,7 +24,7 @@ import Database from '@tauri-apps/plugin-sql';
 
 /** The main component of the application. */
 function App() {
-    const dbName = 'test.db';
+    const dbName = 'spots.db';
     let db = useDatabase(dbName);
 
     // Setup routes
@@ -38,8 +36,8 @@ function App() {
                 if (!db) {
                     db = await Database.load(`sqlite:${dbName}`);
                 }
-                const auth = await getAuthData(vault);
-                if (!auth?.isValid) {
+                const { authenticatedUser } = await getAuthRecord(db);
+                if (!authenticatedUser) {
                     return redirect('/login');
                 }
             },
@@ -51,11 +49,11 @@ function App() {
         },
         {
             path: '/login',
-            element: <LoginPage vault={vault} />,
+            element: <LoginPage db={db} />,
         },
         {
             path: '/signup',
-            element: <SignupPage vault={vault} db={db} />,
+            element: <SignupPage db={db} />,
         },
         {
             path: 'playlist/:playlistId',
@@ -68,7 +66,7 @@ function App() {
     ]);
 
     return (
-        <AuthProvider vault={vault}>
+        <AuthProvider db={db}>
             <RouterProvider router={router} />
         </AuthProvider>
     );

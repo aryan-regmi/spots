@@ -14,5 +14,14 @@ declare module 'argon2-wasm' {
         encoded: string;
     }
 
+    export interface VerifyOptions {
+        pass: string | Uint8Array;
+        encoded: string;
+    }
+
+    export interface VerifyResult {
+        verified: boolean;
+    }
+
     export function hash(options: Argon2HashOptions): Promise<Argon2HashResult>;
 }

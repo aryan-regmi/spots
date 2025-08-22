@@ -2,24 +2,25 @@ import './pages.css';
 import useAuth from '../hooks/useAuth';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getRecord, StrongholdVault } from '../utils/stronghold';
-import { hash } from 'argon2-wasm';
+import Database from '@tauri-apps/plugin-sql';
+import { getUserRecord } from '../utils/sql';
+import { invoke } from '@tauri-apps/api/core';
 
 /** The login page component. */
-export function LoginPage(props: { vault?: StrongholdVault }) {
+export function LoginPage(props: { db?: Database }) {
     const navigate = useNavigate();
     return (
         <main className="container">
             <h1>Spots: A Spotify Alternative</h1>
             <div className="col">
-                <LoginForm vault={props.vault} />
+                <LoginForm db={props.db} />
                 <a
                     onClick={(_) => {
                         navigate('/signup');
                     }}
                     className="text-link"
                 >
-                    Sign Up
+                    Create User
                 </a>
             </div>
         </main>
@@ -33,39 +34,31 @@ export type LoginData = {
 };
 
 /** The component responsible for handling user logins. */
-export function LoginForm(props: { vault?: StrongholdVault }) {
+export function LoginForm(props: { db?: Database }) {
     const navigate = useNavigate();
     const { authorize } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const { vault } = props;
+    const { db } = props;
 
     /** Checks the username and password against the database. */
     async function validateLogin(
-        vault: StrongholdVault,
+        db: Database,
         username: string,
         password: string
     ) {
-        if (!vault.store) throw new Error('Stronghold not initialized');
-        const encoder = new TextEncoder();
-
-        // Get stored data
-        const storedSalt = await getRecord(vault.store, `${username}.salt`);
-        const storedPass = await getRecord(vault.store, `${username}.password`);
-        if (!storedSalt || !storedPass) {
-            return false;
-        }
-        const salt = new Uint8Array(encoder.encode(storedSalt));
-
-        // Hash given password and compare to stored password
-        const hashedInput = await hash({ pass: password, salt: salt });
-        return hashedInput.encoded === storedPass;
+        const { password: storedPassword } = await getUserRecord(db, username);
+        const verified = await invoke<boolean>('verify_password', {
+            pass: password,
+            encoded: storedPassword,
+        });
+        return verified;
     }
 
     /** Validates the login (username and password) and redirects to the home page. */
     async function handleSubmit() {
-        if (vault !== undefined) {
-            let valid = await validateLogin(vault, username, password);
+        if (db !== undefined) {
+            let valid = await validateLogin(db, username, password);
             if (valid) {
                 await authorize(username);
                 navigate('/home', { replace: true });
