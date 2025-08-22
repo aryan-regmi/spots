@@ -6,8 +6,6 @@ import { insertUserLogin, usernameExists } from '../utils/sql';
 import { invoke } from '@tauri-apps/api/core';
 import useAuth from '../hooks/useAuth';
 
-// TODO: Open stronghold and store username and passwords there!
-
 /** The signup page component. */
 export function SignupPage(props: { db?: Database }) {
     return (
