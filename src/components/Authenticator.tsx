@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from 'react';
 import { getRecord, insertRecord, StrongholdVault } from '../utils/stronghold';
+import Database from '@tauri-apps/plugin-sql';
 
 type AuthContextType = {
     isAuthenticated: boolean;
@@ -79,13 +80,12 @@ export function AuthProvider(props: {
 }
 
 /** Get the current authentication state manually */
-export async function getAuthData(vault: StrongholdVault): Promise<AuthData> {
-    const store = vault.store;
-    if (!store) return { isValid: false };
-    const username = await getRecord(store, 'auth-user');
-    let isValid = username !== null && username.trim() !== '';
-    return {
-        isValid,
-        username: isValid ? username! : undefined,
-    };
+export async function getAuthData(db: Database): Promise<AuthData> {
+    /* if (!store) return { isValid: false }; */
+    /* const username = await getRecord(store, 'auth-user'); */
+    /* let isValid = username !== null && username.trim() !== ''; */
+    /* return { */
+    /*     isValid, */
+    /*     username: isValid ? username! : undefined, */
+    /* }; */
 }

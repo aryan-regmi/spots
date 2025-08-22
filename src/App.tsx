@@ -15,6 +15,7 @@ import { SignupPage } from './pages/SignupPage';
 import useStronghold from './hooks/useStronghold';
 import { initStronghold } from './utils/stronghold';
 import { invoke } from '@tauri-apps/api/core';
+import Database from '@tauri-apps/plugin-sql';
 
 // TODO: Add doc comments to all public stuff at lease
 //
@@ -25,19 +26,17 @@ import { invoke } from '@tauri-apps/api/core';
 
 /** The main component of the application. */
 function App() {
-    let vault = useStronghold();
-    const db = useDatabase('test.db');
+    const dbName = 'test.db';
+    let db = useDatabase(dbName);
 
     // Setup routes
     const router = createBrowserRouter([
         {
             path: '/',
-            element: <HomePage vault={vault} />,
+            element: <HomePage db={db} />,
             loader: async () => {
-                if (!vault) {
-                    vault = await initStronghold(
-                        await invoke('get_vault_password')
-                    );
+                if (!db) {
+                    db = await Database.load(`sqlite:${dbName}`);
                 }
                 const auth = await getAuthData(vault);
                 if (!auth?.isValid) {

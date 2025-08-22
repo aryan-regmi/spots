@@ -3,7 +3,7 @@ import useAuth from '../hooks/useAuth';
 import { Card } from '../components/Card/Card';
 import { LoadingPage } from './LoadingPage';
 import { useNavigate } from 'react-router-dom';
-import { StrongholdVault } from '../utils/stronghold';
+import Database from '@tauri-apps/plugin-sql';
 
 type MockPlaylist = {
     id: string;
@@ -16,8 +16,8 @@ function newMockPlaylist(title: string, username?: string) {
     return { title: title, id: id };
 }
 
-export function HomePage(props: { vault?: StrongholdVault }) {
-    const { vault } = props;
+export function HomePage(props: { db?: Database }) {
+    const { db: vault } = props;
 
     const { unauthorize, currentUser: username } = useAuth();
     const navigate = useNavigate();
