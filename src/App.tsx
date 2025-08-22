@@ -19,6 +19,9 @@ import { invoke } from '@tauri-apps/api/core';
 // TODO: Add doc comments to all public stuff at lease
 //
 // TODO: Sanitize username and password for SQL (extra characters etc)
+//
+//
+// TODO: Add a export/backup option so that everything can be backed up
 
 /** The main component of the application. */
 function App() {

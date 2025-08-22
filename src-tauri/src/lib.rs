@@ -1,7 +1,7 @@
 use tauri::Manager;
-use tauri_plugin_sql::{Migration, MigrationKind};
 
 // mod network;
+mod migrations;
 
 // FIXME: Do this dynamically during prod
 #[tauri::command]
@@ -11,28 +11,8 @@ fn get_vault_password() -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let migrations = 
-    vec![
-        Migration {
-            version: 1,
-            description: "create users table",
-            sql: "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL);",
-            kind: MigrationKind::Up,
-        },
-        Migration {
-            version: 2,
-            description: "removed passwords",
-            sql: "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE);",
-            kind: MigrationKind::Up,
-        },
-        Migration {
-            version: 3,
-            description: "new table",
-            sql: "DROP TABLE users; CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE);",
-            kind: MigrationKind::Up,
-        }
-    ];
-    
+    let migrations = migrations::migrations();
+
     tauri::Builder::default()
         .setup(|app| {
             let salt_path = app.path().app_local_data_dir()?.join("salt.txt");
@@ -54,4 +34,3 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
