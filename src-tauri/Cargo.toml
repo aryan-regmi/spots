@@ -33,6 +33,7 @@ tauri-plugin-stronghold = "2"
 hex = "0.4.3"
 argon2 = "0.5.3"
 sqlx = "0.8.6"
+aes-gcm = "0.10.3"
 
 [profile.dev]
 incremental = true

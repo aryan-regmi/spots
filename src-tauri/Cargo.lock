@@ -6097,6 +6097,7 @@ dependencies = [
 name = "spots"
 version = "0.1.0"
 dependencies = [
+ "aes-gcm",
  "anyhow",
  "argon2",
  "hex",

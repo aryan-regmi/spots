@@ -1,4 +1,4 @@
-// mod network;
+mod network;
 mod auth;
 mod migrations;
 
