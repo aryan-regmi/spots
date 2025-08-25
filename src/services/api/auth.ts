@@ -9,13 +9,13 @@ export async function hashPassword(password: string): Promise<string> {
     }
 }
 
-/** Checks that the provided password is the same as the hash. */
-export async function passwordIsSame(
-    password: string,
-    hash: string
+/** Checks that the provided password is the same as the hash stored in the database. */
+export async function verifyPassword(
+    username: string,
+    password: string
 ): Promise<boolean> {
     try {
-        return await invoke('verify_password', { password, hash });
+        return await invoke('verify_password', { username, password });
     } catch (e: any) {
         throw new Error(e);
     }

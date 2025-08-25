@@ -16,10 +16,10 @@ function newMockPlaylist(title: string, username?: string) {
 }
 
 export function HomePage() {
-    const { unauthorize, currentUser: username } = useAuth();
+    const { unauthorize, currentUser } = useAuth();
     const navigate = useNavigate();
 
-    if (!username) {
+    if (!currentUser) {
         return <LoadingPage></LoadingPage>;
     }
 
@@ -43,7 +43,7 @@ export function HomePage() {
 
     return (
         <div className="container ">
-            <h2>{`Welcome ${username}!`}</h2>
+            <h2>{`Welcome ${currentUser}!`}</h2>
 
             {/* TODO: Display pinned playlists */}
             <main className="content">

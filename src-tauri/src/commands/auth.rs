@@ -1,5 +1,8 @@
 use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use rand::rngs::OsRng;
+use tauri::State;
+
+use crate::database::Database;
 
 type Result<T> = anyhow::Result<T, String>;
 
@@ -14,7 +17,15 @@ pub fn hash_password(password: String) -> Result<String> {
 }
 
 #[tauri::command]
-pub fn verify_password(password: String, hash: String) -> Result<bool> {
+pub async fn verify_password(
+    database: State<'_, Database>,
+    username: String,
+    password: String,
+) -> Result<bool> {
+    let hash = database
+        .get_password_hash(username)
+        .await
+        .map_err(|e| e.to_string())?;
     let parsed = PasswordHash::new(&hash).map_err(|e| e.to_string())?;
     Ok(Argon2::default()
         .verify_password(password.as_bytes(), &parsed)

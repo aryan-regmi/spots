@@ -2,18 +2,17 @@ import './pages.css';
 import useAuth from '../hooks/useAuth';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Database from '@tauri-apps/plugin-sql';
-import { getUserRecord } from '../utils/sql';
-import { invoke } from '@tauri-apps/api/core';
+import { useGetUsers } from '../hooks/useDatabase';
+import { verifyPassword } from '../services/api/auth';
 
 /** The login page component. */
-export function LoginPage(props: { db?: Database }) {
+export function LoginPage() {
     const navigate = useNavigate();
     return (
         <main className="container">
             <h1>Spots: A Spotify Alternative</h1>
             <div className="col">
-                <LoginForm db={props.db} />
+                <LoginForm />
                 <a
                     onClick={(_) => {
                         navigate('/signup');
@@ -34,43 +33,39 @@ export type LoginData = {
 };
 
 /** The component responsible for handling user logins. */
-export function LoginForm(props: { db?: Database }) {
+export function LoginForm() {
     const navigate = useNavigate();
     const { authorize } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const { db } = props;
+    const { data: users } = useGetUsers();
 
     /** Checks the username and password against the database. */
-    async function validateLogin(
-        db: Database,
-        username: string,
-        password: string
-    ) {
-        const userRecord = await getUserRecord(db, username);
-        if (userRecord) {
-            if (userRecord.password) {
-                const verified = await invoke('verify_password', {
-                    password: password,
-                    hash: userRecord.password,
-                });
+    async function validateLogin(username: string, password: string) {
+        try {
+            let user = users?.find((user) => user.username === username);
+            if (user) {
+                const verified = await verifyPassword(username, password);
                 return verified;
             }
+            return false;
+        } catch (error) {
+            console.error('Unable to validate login:', error);
         }
     }
 
     /** Validates the login (username and password) and redirects to the home page. */
     async function handleSubmit() {
-        if (db !== undefined) {
-            let valid = await validateLogin(db, username, password);
+        try {
+            let valid = await validateLogin(username, password);
             if (valid) {
                 await authorize(username);
                 navigate('/home', { replace: true });
             } else {
                 alert('Invalid login: check username and password!');
             }
-        } else {
-            throw new Error('Invalid database');
+        } catch (error) {
+            console.error('Unable to login:', error);
         }
     }
 

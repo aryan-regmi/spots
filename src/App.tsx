@@ -5,15 +5,13 @@ import {
     redirect,
     RouterProvider,
 } from 'react-router-dom';
-import useDatabase from './hooks/useDatabase';
 import { AuthProvider } from './components/Authenticator';
 import { HomePage } from './pages/HomePage';
 import { LoadingPage } from './pages/LoadingPage';
 import { LoginPage } from './pages/LoginPage';
 import { PlaylistPage } from './pages/PlaylistPage';
 import { SignupPage } from './pages/SignupPage';
-import Database from '@tauri-apps/plugin-sql';
-import { getAuthRecord } from './utils/sql';
+import { getAuthUser } from './services/api/database';
 
 // TODO: Add doc comments to all public stuff at lease
 //
@@ -24,20 +22,14 @@ import { getAuthRecord } from './utils/sql';
 
 /** The main component of the application. */
 function App() {
-    const dbName = 'spots.db';
-    let db = useDatabase(dbName);
-
     // Setup routes
     const router = createBrowserRouter([
         {
             path: '/',
             element: <HomePage />,
             loader: async () => {
-                if (!db) {
-                    db = await Database.load(`sqlite:${dbName}`);
-                }
-                const auth = await getAuthRecord(db);
-                if (!auth || !auth.username) {
+                const auth = await getAuthUser();
+                if (!auth.username) {
                     return redirect('/login');
                 }
             },
@@ -49,21 +41,19 @@ function App() {
         },
         {
             path: '/login',
-            element: <LoginPage db={db} />,
+            element: <LoginPage />,
         },
         {
             path: '/signup',
-            element: <SignupPage db={db} />,
+            element: <SignupPage />,
         },
         {
             path: 'playlist/:playlistId',
             element: <PlaylistPage />,
             loader: async () => {
-                if (db) {
-                    const auth = await getAuthRecord(db);
-                    if (!auth || !auth.username) {
-                        return redirect('/login');
-                    }
+                const auth = await getAuthUser();
+                if (!auth.username) {
+                    return redirect('/login');
                 }
             },
             hydrateFallbackElement: <LoadingPage />,
@@ -79,7 +69,7 @@ function App() {
     ]);
 
     return (
-        <AuthProvider db={db}>
+        <AuthProvider>
             <RouterProvider router={router} />
         </AuthProvider>
     );

@@ -1,10 +1,13 @@
-import { createContext, useEffect, useState } from 'react';
-import Database from '@tauri-apps/plugin-sql';
-import { getAuthRecord, updateAuthRecord } from '../utils/sql';
+import { createContext } from 'react';
+import {
+    useAuthUser,
+    useSetAuthUser,
+    useUnsetAuthUser,
+} from '../hooks/useDatabase';
 
 type AuthContextType = {
     isAuthenticated: boolean;
-    loading: boolean;
+    isLoading: boolean;
     authorize: (username: string) => Promise<void>;
     unauthorize: () => Promise<void>;
     currentUser?: string;
@@ -16,41 +19,31 @@ export type AuthData = {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider(props: { db?: Database; children: any }) {
-    let { db, children } = props;
+export function AuthProvider(props: { children: any }) {
+    let { children } = props;
 
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState<string>();
+    const { data: authUser, isLoading } = useAuthUser();
+    const { mutateAsync: setAuthUser } = useSetAuthUser();
+    const { mutateAsync: unsetAuthUser } = useUnsetAuthUser();
 
-    // On app load, check if a user is authorized
-    useEffect(() => {
-        async function initAuthUser() {
-            if (db) {
-                const auth = await getAuthRecord(db);
-                auth ? setIsAuthenticated(true) : setIsAuthenticated(false);
-                setCurrentUser(auth?.username);
-                setLoading(false);
-            }
-        }
-        initAuthUser();
-    }, [db]);
+    const isAuthenticated = !isLoading && Boolean(authUser?.username);
+    const currentUser = authUser?.username;
 
     const authorize = async (username: string) => {
-        if (db) {
-            await updateAuthRecord(db, { username });
-            setIsAuthenticated(true);
-            setCurrentUser(username);
-            console.debug('Auth token set');
+        try {
+            await setAuthUser({ username });
+            console.debug('Auth user set to', username);
+        } catch (error) {
+            console.error('Error setting auth user:', error);
         }
     };
 
     const unauthorize = async () => {
-        if (db) {
-            await updateAuthRecord(db, { username: undefined });
-            setIsAuthenticated(false);
-            setCurrentUser(undefined);
-            console.debug('Auth token unset');
+        try {
+            await unsetAuthUser();
+            console.debug('Auth user unset');
+        } catch (error) {
+            console.error('Error unsetting auth user:', error);
         }
     };
 
@@ -58,7 +51,7 @@ export function AuthProvider(props: { db?: Database; children: any }) {
         <AuthContext.Provider
             value={{
                 isAuthenticated,
-                loading,
+                isLoading,
                 authorize,
                 unauthorize,
                 currentUser,

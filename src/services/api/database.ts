@@ -19,10 +19,11 @@ export async function getUsers() {
 }
 
 /** Inserts the user to the database. */
-export async function insertUser(
-    username: string,
-    password: string
-): Promise<User> {
+export async function insertUser(data: {
+    username: string;
+    password: string;
+}): Promise<User> {
+    const { username, password } = data;
     try {
         let insertedId = await invoke<number>('insert_user', {
             username,
@@ -44,7 +45,8 @@ export async function getAuthUser(): Promise<AuthUser> {
 }
 
 /** Sets the authenticated user. */
-export async function setAuthUser(username: string) {
+export async function setAuthUser(data: { username: string }) {
+    const { username } = data;
     try {
         await invoke('set_auth_user', { username });
     } catch (e: any) {

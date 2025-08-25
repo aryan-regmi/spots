@@ -1,56 +1,52 @@
 import './pages.css';
-import Database from '@tauri-apps/plugin-sql';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { insertUserLogin, usernameExists } from '../utils/sql';
-import { invoke } from '@tauri-apps/api/core';
 import useAuth from '../hooks/useAuth';
+import { useAddUser, useGetUsers } from '../hooks/useDatabase';
+import { hashPassword } from '../services/api/auth';
 
 /** The signup page component. */
-export function SignupPage(props: { db?: Database }) {
+export function SignupPage() {
     return (
         <div className="col">
-            <SignupForm db={props.db} />
+            <SignupForm />
         </div>
     );
 }
 
 /** The form responsible for handling user signups. */
-function SignupForm(props: { db?: Database }) {
-    const { authorize } = useAuth();
+function SignupForm() {
     const navigate = useNavigate();
+    const { authorize } = useAuth();
+
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const { db } = props;
+    const { data: users } = useGetUsers();
+    const { mutateAsync: addUser } = useAddUser();
 
     /** Checks if the username is available in the database. */
-    async function validateUsername(db: Database, username: string) {
-        return !(await usernameExists(db, username));
+    async function validateUsername(username: string) {
+        let user = users?.find((user) => user.username === username);
+        return user !== undefined;
     }
 
     /** Validates and creates the login. */
     async function handleSignup() {
-        if (db !== undefined) {
-            let valid = await validateUsername(db, username);
+        let valid = await validateUsername(username);
 
-            if (valid) {
-                // Create salt and hash password
-                const hashedPassword = await invoke<string>('hash_password', {
-                    password: password,
-                });
+        if (valid) {
+            // Create salt and hash password
+            const hashedPassword = await hashPassword(password);
 
-                // Save user to database
-                await insertUserLogin(db, username, hashedPassword);
-                console.info(`Created new user: ${username}`);
+            // Save user to database
+            await addUser({ username, password: hashedPassword });
+            console.info(`Created new user: ${username}`);
 
-                // Go to homepage
-                await authorize(username);
-                navigate(`/home`, { replace: true });
-            } else {
-                alert(`Invalid username: "${username}" already exists!`);
-            }
+            // Go to homepage
+            await authorize(username);
+            navigate(`/home`, { replace: true });
         } else {
-            throw new Error('Invalid database');
+            alert(`Invalid username: "${username}" already exists!`);
         }
     }
 
