@@ -12,6 +12,7 @@ import { LoginPage } from './pages/LoginPage';
 import { PlaylistPage } from './pages/PlaylistPage';
 import { SignupPage } from './pages/SignupPage';
 import { getAuthUser } from './services/api/database';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // TODO: Add doc comments to all public stuff at lease
 //
@@ -22,6 +23,9 @@ import { getAuthUser } from './services/api/database';
 
 /** The main component of the application. */
 function App() {
+    // Setup query client
+    const queryClient = new QueryClient();
+
     // Setup routes
     const router = createBrowserRouter([
         {
@@ -69,9 +73,11 @@ function App() {
     ]);
 
     return (
-        <AuthProvider>
-            <RouterProvider router={router} />
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+                <RouterProvider router={router} />
+            </AuthProvider>
+        </QueryClientProvider>
     );
 }
 
