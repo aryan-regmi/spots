@@ -13,8 +13,6 @@ import { PlaylistPage } from './pages/PlaylistPage';
 import { SignupPage } from './pages/SignupPage';
 import { getAuthUser } from './services/api/database';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
-import { useEffect } from 'react';
 
 // TODO: TEST ON ANDROID!!!
 //
@@ -24,17 +22,6 @@ import { useEffect } from 'react';
 
 /** The main component of the application. */
 function App() {
-    // FIXME: Remove in prod
-    //
-    // Sets window to mobile view
-    let window = getCurrentWindow();
-    useEffect(() => {
-        async function mobileView() {
-            await window.setSize(new LogicalSize(375, 812));
-        }
-        mobileView();
-    }, [window]);
-
     // Setup query client
     const queryClient = new QueryClient();
 
@@ -54,6 +41,10 @@ function App() {
         {
             path: '/home',
             element: <Navigate to="/" />,
+        },
+        {
+            path: '/home/profile',
+            element: <div>TODO: Profile</div>,
         },
         {
             path: '/login',

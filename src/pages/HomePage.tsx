@@ -3,6 +3,7 @@ import useAuth from '../hooks/useAuth';
 import { Card } from '../components/Card/Card';
 import { LoadingPage } from './LoadingPage';
 import { useNavigate } from 'react-router-dom';
+import { NavDrawer } from '../components/NavDrawer/NavDrawer';
 
 type MockPlaylist = {
     id: string;
@@ -43,11 +44,11 @@ export function HomePage() {
 
     return (
         <div className="container ">
-            <h2>{`Welcome ${currentUser}!`}</h2>
-
             {/* TODO: Display pinned playlists */}
+            <h2>Playlists</h2>
             <main className="content">
                 <div className="row">
+                    <NavDrawer title={currentUser}></NavDrawer>
                     {mockPlaylists.map((playlist) => (
                         <Card
                             key={playlist.id}

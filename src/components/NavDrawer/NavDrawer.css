@@ -1,0 +1,23 @@
+.drawer-header {
+    color: white;
+    text-align: left;
+    padding-left: 1em;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.drawer-header-content {
+    font-size: 2em;
+    padding-top: 0.5em;
+    padding-bottom: 0;
+    justify-content: left;
+}
+
+#view-profile-button {
+    font-size: 0.8em;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 3em;
+    margin-bottom: 0;
+}
