@@ -21,3 +21,15 @@
     padding-left: 3em;
     margin-bottom: 0;
 }
+
+.menu-items {
+    color: white;
+}
+
+.menu-item-btn {
+    padding-bottom: 0.8em;
+}
+
+.menu-item-btn div:hover {
+    background-color: #1f1f1f;
+}

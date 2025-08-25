@@ -6,26 +6,31 @@ import {
     Drawer,
     Icon,
     IconButton,
+    List,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
     Toolbar,
     Typography,
 } from '@mui/material';
-import { Menu, AccountCircle } from '@mui/icons-material';
+import {
+    Menu,
+    AccountCircle,
+    BackHand,
+    BarcodeReader,
+} from '@mui/icons-material';
 
 import { useState, CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export function NavDrawer(props: {
-    title: string;
-    children?: any;
-    style?: CSSProperties;
-}) {
+export function NavDrawer(props: { title: string; style?: CSSProperties }) {
     const navigate = useNavigate();
 
-    const { title, children, style } = props;
+    const { title, style } = props;
     const [open, setOpen] = useState(false);
 
     const defaultStyle: CSSProperties = {
-        backgroundColor: '#2f2f2f',
+        backgroundColor: '#1f2f2f',
     };
 
     const appBar = (
@@ -51,34 +56,45 @@ export function NavDrawer(props: {
     );
 
     const drawerSlotStyle = {
-        backgroundColor: defaultStyle.backgroundColor,
-        width: '80%',
-        borderTopRightRadius: '1em',
-        borderBottomRightRadius: '1em',
-        opacity: 0.98,
+        paper: {
+            sx: {
+                backgroundColor: defaultStyle.backgroundColor,
+                width: '80%',
+                borderTopRightRadius: '1em',
+                borderBottomRightRadius: '1em',
+                /* opacity: 0.98, */
+            },
+        },
     };
+
+    const menuItems: MenuItem[] = [
+        {
+            label: 'Menu 1',
+            icon: <BackHand />,
+            onClick: () => console.log('Menu 1'),
+        },
+        {
+            label: 'Menu 2',
+            icon: <BarcodeReader />,
+            onClick: () => console.log('Menu 2'),
+        },
+    ];
 
     function toggleDrawer() {
         setOpen(!open);
     }
 
     async function redirectToProfile() {
-        console.log('Clicked!');
         await navigate('/home/profile');
     }
 
-    // FIXME: Move styles to css file!
     return (
         <div>
             {appBar}
             <Drawer
                 open={open}
                 onClose={toggleDrawer}
-                slotProps={{
-                    paper: {
-                        sx: drawerSlotStyle,
-                    },
-                }}
+                slotProps={drawerSlotStyle}
             >
                 <div
                     className="drawer-main"
@@ -95,10 +111,30 @@ export function NavDrawer(props: {
                             <a style={{ color: 'gray' }}>View Profile</a>
                         </div>
                     </div>
+
                     <Divider color="white" style={{ marginTop: 0 }} />
-                    {children}
+
+                    <List className="menu-items">
+                        {menuItems.map((item) => (
+                            <div key={item.label} className="menu-item-btn">
+                                <ListItemButton
+                                    className="row"
+                                    onClick={item.onClick}
+                                >
+                                    {item.icon}
+                                    {item.label}
+                                </ListItemButton>
+                            </div>
+                        ))}
+                    </List>
                 </div>
             </Drawer>
         </div>
     );
 }
+
+type MenuItem = {
+    label: string;
+    icon: any;
+    onClick?: () => void;
+};

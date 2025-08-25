@@ -46,7 +46,7 @@ export function HomePage() {
         <div className="container ">
             {/* TODO: Display pinned playlists */}
             <h2>Playlists</h2>
-            <main className="content">
+            <main className="col">
                 <div className="row">
                     <NavDrawer title={currentUser}></NavDrawer>
                     {mockPlaylists.map((playlist) => (
