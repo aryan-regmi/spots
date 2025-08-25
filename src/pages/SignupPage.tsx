@@ -27,7 +27,7 @@ function SignupForm() {
     /** Checks if the username is available in the database. */
     async function validateUsername(username: string) {
         let user = users?.find((user) => user.username === username);
-        return user !== undefined;
+        return user === undefined; // Only true if no user by that name
     }
 
     /** Validates and creates the login. */

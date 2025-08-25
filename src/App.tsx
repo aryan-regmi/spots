@@ -32,7 +32,7 @@ function App() {
             path: '/',
             element: <HomePage />,
             loader: async () => {
-                const auth = await getAuthUser();
+                let auth = await getAuthUser();
                 if (!auth.username) {
                     return redirect('/login');
                 }

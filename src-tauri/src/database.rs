@@ -67,7 +67,10 @@ impl Database {
             .fetch_one(&self.pool)
             .await?;
         let username: Option<String> = auth_record.get("username");
-        Ok(username.map_or(AuthUser(None), |username| AuthUser(Some(username))))
+        let auth_user = username.map_or(AuthUser { username: None }, |username| AuthUser {
+            username: Some(username),
+        });
+        Ok(auth_user)
     }
 
     /// Sets the authenticated user.
@@ -108,4 +111,6 @@ pub struct User {
 
 /// Represents an authenticated user.
 #[derive(Serialize)]
-pub struct AuthUser(pub Option<String>);
+pub struct AuthUser {
+    username: Option<String>,
+}

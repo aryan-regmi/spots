@@ -7,7 +7,7 @@ export type User = {
 };
 
 /** Represents an user in the database. */
-export type AuthUser = { username?: string };
+export type AuthUser = { username: string | null };
 
 /** Gets all users from the database. */
 export async function getUsers() {
