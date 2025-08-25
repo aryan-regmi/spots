@@ -4,11 +4,12 @@ use aes_gcm::{
     aead::{Aead, KeyInit},
     AeadCore, Aes256Gcm, Key, Nonce,
 };
-use anyhow::Result;
 use iroh::{protocol::Router, Endpoint, SecretKey};
 use iroh_gossip::{net::Gossip, proto::TopicId};
 use rand::rngs::OsRng;
 use serde::Serialize;
+
+type Result<T> = anyhow::Result<T, String>;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -17,10 +18,11 @@ pub struct EncryptedValue {
     nonce: Vec<u8>,
     encryption_key: Vec<u8>,
 }
-
-/// Generates a secret key if one doesn't exist.
+// TODO: Generate secret key on signup
+//
+/// Generates an encrypted secret key and encrypts it.
 #[tauri::command]
-pub async fn generate_secret_key() -> Result<EncryptedValue, String> {
+pub async fn generate_secret_key() -> Result<EncryptedValue> {
     // Create new key
     let rng = OsRng;
     let iroh_secret_key = SecretKey::generate(rng);
@@ -52,7 +54,9 @@ pub async fn generate_secret_key() -> Result<EncryptedValue, String> {
 /// The should only be called after an [EncryptedKey] has been generated using
 /// [generate_secret_key].
 #[tauri::command]
-pub async fn init_endpoint(encrypted_secret_key: EncryptedValue) -> Result<String, String> {
+pub async fn init_endpoint(encrypted_secret_key: EncryptedValue) -> Result<()> {
+    // TODO: Get encrypted_secret_key from the database instead!
+    //
     // Decrypt secret key
     let secret_key = decrypt_secret_key(encrypted_secret_key)?;
 
@@ -65,6 +69,7 @@ pub async fn init_endpoint(encrypted_secret_key: EncryptedValue) -> Result<Strin
         .await
         .map_err(|e| e.to_string())?;
     let endpoint_id = endpoint.node_id();
+    // TODO: Store endpoint_id in database
 
     // Create the router
     let gossip = Gossip::builder().spawn(endpoint.clone());
@@ -87,11 +92,11 @@ pub async fn init_endpoint(encrypted_secret_key: EncryptedValue) -> Result<Strin
 
     // TODO: Run entire thing in a `tauri::async_runtime::spawn` to keep it from closing
 
-    Ok(endpoint_id.to_string())
+    Ok(())
 }
 
 /// Decrypts the given encrypted [SecretKey].
-fn decrypt_secret_key(encrypted_secret_key: EncryptedValue) -> Result<SecretKey, String> {
+fn decrypt_secret_key(encrypted_secret_key: EncryptedValue) -> Result<SecretKey> {
     let secret_key_bytes = decrypt_value(encrypted_secret_key)?;
     Ok(SecretKey::from_bytes(
         &secret_key_bytes
@@ -101,7 +106,7 @@ fn decrypt_secret_key(encrypted_secret_key: EncryptedValue) -> Result<SecretKey,
 }
 
 /// Decrypts the given [EncryptedValue] to a vector of bytes.
-fn decrypt_value(encrypted_value: EncryptedValue) -> Result<Vec<u8>, String> {
+fn decrypt_value(encrypted_value: EncryptedValue) -> Result<Vec<u8>> {
     // Convert vecs to arrays
     let key_bytes: [u8; 32] = encrypted_value
         .encryption_key

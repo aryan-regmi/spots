@@ -36,7 +36,10 @@ impl Database {
 
         Ok(Self { pool })
     }
+}
 
+/// Methods for the `users` table.
+impl Database {
     /// Gets all the users from the database.
     pub async fn get_users(&self) -> Result<Vec<User>> {
         let users = sqlx::query("SELECT id, username FROM users")
@@ -61,6 +64,20 @@ impl Database {
         Ok(result.last_insert_rowid())
     }
 
+    /// Gets the password hash for the specified user.
+    pub async fn get_password_hash(&self, username: String) -> Result<String> {
+        Ok(
+            sqlx::query("SELECT password FROM users WHERE username = ? LIMIT 1")
+                .bind(username)
+                .fetch_one(&self.pool)
+                .await?
+                .get("password"),
+        )
+    }
+}
+
+/// Methods for the `auth` table.
+impl Database {
     /// Gets the currently authenticated user.
     pub async fn get_auth_user(&self) -> Result<AuthUser> {
         let auth_record = sqlx::query("SELECT username FROM auth LIMIT 1")
@@ -88,17 +105,6 @@ impl Database {
             .execute(&self.pool)
             .await?;
         Ok(())
-    }
-
-    /// Gets the password hash for the specified user.
-    pub async fn get_password_hash(&self, username: String) -> Result<String> {
-        Ok(
-            sqlx::query("SELECT password FROM users WHERE username = ? LIMIT 1")
-                .bind(username)
-                .fetch_one(&self.pool)
-                .await?
-                .get("password"),
-        )
     }
 }
 
