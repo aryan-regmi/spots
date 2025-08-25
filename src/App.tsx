@@ -20,6 +20,8 @@ import { ProfilePage } from './pages/ProfilePage';
 // TODO: Add doc comments to all public stuff at lease
 //
 // TODO: Add a export/backup option so that everything can be backed up
+//
+// FIXME: Move all styling to .css files
 
 /** The main component of the application. */
 function App() {

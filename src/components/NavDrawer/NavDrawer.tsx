@@ -111,11 +111,11 @@ export function NavDrawer(props: { title: string; style?: CSSProperties }) {
 
                     <Divider color="white" style={{ marginTop: 0 }} />
 
-                    <List className="menu-items">
+                    <List className="menu-list">
                         {menuItems.map((item) => (
-                            <div key={item.label} className="menu-item-btn">
+                            <div key={item.label} className="menu-item">
                                 <ListItemButton
-                                    className="row"
+                                    className="row menu-item-btn"
                                     onClick={item.onClick}
                                 >
                                     {item.icon}

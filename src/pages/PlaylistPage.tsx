@@ -1,4 +1,5 @@
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { BackButton } from '../components/BackButton';
 
 export function PlaylistPage() {
     const navigate = useNavigate();
@@ -12,16 +13,16 @@ export function PlaylistPage() {
     const mockItems = ['Song A', 'Song B', 'Song C'];
 
     return (
-        <div style={{ padding: 20 }}>
-            <button onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
-                ← Back
-            </button>
-            <h1>{title}</h1>
-            <ul>
-                {mockItems.map((item) => (
-                    <li key={item}>{item}</li>
-                ))}
-            </ul>
+        <div>
+            <BackButton />
+            <div>
+                <h1>{title}</h1>
+                <ul>
+                    {mockItems.map((item) => (
+                        <li key={item}>{item}</li>
+                    ))}
+                </ul>
+            </div>
         </div>
     );
 }

@@ -22,14 +22,16 @@
     margin-bottom: 0;
 }
 
-.menu-items {
+.menu-list {
     color: white;
 }
 
-.menu-item-btn {
+.menu-item {
     padding-bottom: 0.8em;
+    margin-left: 0.25em;
+    margin-right: 0.25em;
 }
 
-.menu-item-btn div:hover {
+.menu-item div:hover {
     background-color: #1f1f1f;
 }
