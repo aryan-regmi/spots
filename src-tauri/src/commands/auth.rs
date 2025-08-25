@@ -1,9 +1,10 @@
-use anyhow::Result;
 use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use rand::rngs::OsRng;
 
+type Result<T> = anyhow::Result<T, String>;
+
 #[tauri::command]
-pub fn hash_password(password: String) -> Result<String, String> {
+pub fn hash_password(password: String) -> Result<String> {
     let salt = SaltString::generate(&mut OsRng);
     let hash = Argon2::default()
         .hash_password(password.as_bytes(), &salt)
@@ -13,7 +14,7 @@ pub fn hash_password(password: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-pub fn verify_password(password: String, hash: String) -> Result<bool, String> {
+pub fn verify_password(password: String, hash: String) -> Result<bool> {
     let parsed = PasswordHash::new(&hash).map_err(|e| e.to_string())?;
     Ok(Argon2::default()
         .verify_password(password.as_bytes(), &parsed)

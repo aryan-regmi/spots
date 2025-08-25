@@ -7,11 +7,6 @@
   ],
   "permissions": [
     "core:default",
-    "opener:default",
-    "sql:default",
-    "sql:allow-execute",
-    "store:default",
-    "stronghold:default",
-    "stronghold:default"
+    "opener:default"
   ]
 }

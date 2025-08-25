@@ -1,0 +1,100 @@
+use anyhow::Result;
+use serde::Serialize;
+use sqlx::{
+    sqlite::{SqliteConnectOptions, SqliteJournalMode},
+    Pool, Row, Sqlite, SqlitePool,
+};
+use tauri::{AppHandle, Manager};
+use tokio::fs;
+
+pub struct Database {
+    pub pool: Pool<Sqlite>,
+}
+
+impl Database {
+    /// Initializes the database.
+    pub async fn new(app_handle: &AppHandle) -> Result<Self> {
+        // Open/setup database file
+        let data_dir = app_handle.path().app_data_dir()?;
+        if !data_dir.exists() {
+            fs::create_dir_all(&data_dir).await?;
+        }
+        let db_path = data_dir.join("spots_user_data.db");
+        std::env::set_var("DATABASE_URL", format!("sqlite://{}", db_path.display()));
+
+        // Setup connection preferences w/ Write-Ahead Logging
+        let conn_opts = SqliteConnectOptions::new()
+            .filename(&db_path)
+            .create_if_missing(true)
+            .journal_mode(SqliteJournalMode::Wal);
+
+        // Create pool with specified options
+        let pool = SqlitePool::connect_with(conn_opts).await?;
+
+        // Run migrations
+        sqlx::migrate!("./migrations").run(&pool).await?;
+
+        Ok(Self { pool })
+    }
+
+    /// Gets all the users from the database.
+    pub async fn get_users(&self) -> Result<Vec<User>> {
+        let users = sqlx::query("SELECT id, username FROM users")
+            .fetch_all(&self.pool)
+            .await?
+            .iter()
+            .map(|row| User {
+                id: row.get("id"),
+                username: row.get("username"),
+            })
+            .collect::<Vec<_>>();
+        Ok(users)
+    }
+
+    /// Inserts the given user into the database, and returns the id of the inserted record.
+    pub async fn insert_user(&self, username: String, password: String) -> Result<i64> {
+        let result = sqlx::query("INSERT INTO users (username, password) VALUES (?, ?)")
+            .bind(username)
+            .bind(password)
+            .execute(&self.pool)
+            .await?;
+        Ok(result.last_insert_rowid())
+    }
+
+    /// Gets the currently authenticated user.
+    pub async fn get_auth_user(&self) -> Result<AuthUser> {
+        let auth_record = sqlx::query("SELECT username FROM auth LIMIT 1")
+            .fetch_one(&self.pool)
+            .await?;
+        let username: Option<String> = auth_record.get("username");
+        Ok(username.map_or(AuthUser(None), |username| AuthUser(Some(username))))
+    }
+
+    /// Sets the authenticated user.
+    pub async fn set_auth_user(&self, username: String) -> Result<()> {
+        sqlx::query("UPDATE auth SET username = ? WHERE id = 1")
+            .bind(username)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    /// Removes the authenticated user.
+    pub async fn remove_auth_user(&self) -> Result<()> {
+        sqlx::query("UPDATE auth SET username = NULL WHERE id = 1")
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+}
+
+/// Represents a user in the database.
+#[derive(Serialize)]
+pub struct User {
+    id: u32,
+    username: String,
+}
+
+/// Represents an authenticated user.
+#[derive(Serialize)]
+pub struct AuthUser(pub Option<String>);
