@@ -4,23 +4,32 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGetUsers } from '../hooks/useDatabase';
 import { verifyPassword } from '../services/api/auth';
+import { Icon } from '@mui/material';
+import { GraphicEqRounded } from '@mui/icons-material';
 
 /** The login page component. */
 export function LoginPage() {
     const navigate = useNavigate();
     return (
         <main className="container">
-            <h1>Spots: A Spotify Alternative</h1>
-            <div className="col">
-                <LoginForm />
-                <a
-                    onClick={(_) => {
-                        navigate('/signup');
-                    }}
-                    className="text-link"
-                >
-                    Create User
-                </a>
+            <div className="row" id="login-header">
+                <Icon fontSize="large">
+                    <GraphicEqRounded fontSize="large" />
+                </Icon>
+                <h2>Spots: A P2P Music App</h2>
+            </div>
+            <div className="container">
+                <div className="col">
+                    <LoginForm />
+                    <a
+                        onClick={(_) => {
+                            navigate('/signup');
+                        }}
+                        className="text-link"
+                    >
+                        Create User
+                    </a>
+                </div>
             </div>
         </main>
     );
@@ -96,7 +105,7 @@ export function LoginForm() {
 
             <input
                 type="submit"
-                placeholder="Login"
+                value="Login"
                 className="submit-button"
                 onClick={handleSubmit}
             />

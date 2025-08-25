@@ -43,7 +43,7 @@ export function HomePage() {
     ];
 
     return (
-        <div className="container ">
+        <div className="container" id="home-page">
             {/* TODO: Display pinned playlists */}
             <h2>Playlists</h2>
             <main className="col">
@@ -59,7 +59,6 @@ export function HomePage() {
                     ))}
                 </div>
             </main>
-
             <footer className="footer">
                 <a onClick={redirectToLogin} className="text-link">
                     Log Out

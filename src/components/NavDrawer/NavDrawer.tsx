@@ -100,6 +100,7 @@ export function NavDrawer(props: { title: string; style?: CSSProperties }) {
                     <div className="drawer-header" onClick={redirectToProfile}>
                         <div className="row drawer-header-content">
                             <Icon fontSize="large">
+                                {/* TODO: Replace with Avatar */}
                                 <AccountCircle fontSize="large"></AccountCircle>
                             </Icon>
                             {title}

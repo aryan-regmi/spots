@@ -21,6 +21,15 @@ import { ProfilePage } from './pages/ProfilePage';
 //
 // TODO: Add a export/backup option so that everything can be backed up
 //
+// TODO: Move `Log Out` button from bottom of page to nav drawer
+//
+// TODO: Replace custom components with Material-UI when possible
+//  - Card
+//  - Link
+//  - div with Box, Grid, Stack
+//      - replace `row` and `col` css stuff
+//  - alerts with Modal
+//
 // FIXME: Move all styling to .css files
 
 /** The main component of the application. */

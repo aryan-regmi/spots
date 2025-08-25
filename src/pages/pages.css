@@ -28,6 +28,15 @@
   margin-bottom: 0.5em;
 }
 
+#login-header {
+  padding-top: 5em;
+  padding-bottom: 8em;
+}
+
+#home-page {
+  padding-top: 4em;
+}
+
 .submit-button:disabled,
 .submit-button:disabled:hover {
   cursor: not-allowed;
