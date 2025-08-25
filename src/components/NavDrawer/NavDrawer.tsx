@@ -8,8 +8,6 @@ import {
     IconButton,
     List,
     ListItemButton,
-    ListItemIcon,
-    ListItemText,
     Toolbar,
     Typography,
 } from '@mui/material';
@@ -19,7 +17,6 @@ import {
     BackHand,
     BarcodeReader,
 } from '@mui/icons-material';
-
 import { useState, CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 

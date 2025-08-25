@@ -48,7 +48,7 @@ export function HomePage() {
             <h2>Playlists</h2>
             <main className="col">
                 <div className="row">
-                    <NavDrawer title={currentUser}></NavDrawer>
+                    <NavDrawer title={currentUser} />
                     {mockPlaylists.map((playlist) => (
                         <Card
                             key={playlist.id}

@@ -13,6 +13,7 @@ import { PlaylistPage } from './pages/PlaylistPage';
 import { SignupPage } from './pages/SignupPage';
 import { getAuthUser } from './services/api/database';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ProfilePage } from './pages/ProfilePage';
 
 // TODO: TEST ON ANDROID!!!
 //
@@ -44,7 +45,7 @@ function App() {
         },
         {
             path: '/home/profile',
-            element: <div>TODO: Profile</div>,
+            element: <ProfilePage />,
         },
         {
             path: '/login',
