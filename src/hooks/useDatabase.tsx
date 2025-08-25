@@ -5,7 +5,6 @@ import {
     insertUser,
     removeAuthUser,
     setAuthUser,
-    User,
 } from '../services/api/database';
 
 /** Gets the users from the database. */

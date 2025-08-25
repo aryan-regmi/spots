@@ -31,6 +31,8 @@ hex = "0.4.3"
 argon2 = "0.5.3"
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
 aes-gcm = "0.10.3"
+futures = "0.3.31"
+bincode = { version = "2.0.1", features = ["serde"] }
 
 # [profile.dev]
 # incremental = true

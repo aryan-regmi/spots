@@ -1,4 +1,5 @@
 use anyhow::Result;
+use futures::TryStreamExt;
 use serde::Serialize;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode},
@@ -6,6 +7,8 @@ use sqlx::{
 };
 use tauri::{AppHandle, Manager};
 use tokio::fs;
+
+use crate::net::{EncryptedValue, EncryptedValueBincode};
 
 pub struct Database {
     pub pool: Pool<Sqlite>,
@@ -40,6 +43,8 @@ impl Database {
 
 /// Methods for the `users` table.
 impl Database {
+    // FIXME: Remove this and replace with things that get specific user instead!
+    //
     /// Gets all the users from the database.
     pub async fn get_users(&self) -> Result<Vec<User>> {
         let users = sqlx::query("SELECT id, username FROM users")
@@ -52,6 +57,15 @@ impl Database {
             })
             .collect::<Vec<_>>();
         Ok(users)
+    }
+
+    /// Gets the user ID for the given username.
+    pub async fn get_user_id(&self, username: String) -> Result<u32> {
+        let result = sqlx::query("SELECT id FROM users WHERE username = ? LIMIT 1")
+            .bind(username)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(result.get("id"))
     }
 
     /// Inserts the given user into the database, and returns the id of the inserted record.
@@ -102,6 +116,37 @@ impl Database {
     /// Removes the authenticated user.
     pub async fn remove_auth_user(&self) -> Result<()> {
         sqlx::query("UPDATE auth SET username = NULL WHERE id = 1")
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+}
+
+/// Methods for the `network` table.
+impl Database {
+    /// Gets the secret key for the specified user.
+    pub async fn get_secret_key(&self, username: String) -> Result<EncryptedValue> {
+        let user_id = self.get_user_id(username).await?;
+        let row = sqlx::query("SELECT secret_key FROM network WHERE user_id = ?")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await?;
+        let bytes: Vec<u8> = row.get("secret_key");
+        let (encrypted_key, _): (EncryptedValueBincode, usize) =
+            bincode::decode_from_slice(&bytes, bincode::config::standard())?;
+        Ok(encrypted_key.value)
+    }
+
+    /// Gets the secret key for the specified user.
+    pub async fn set_secret_key(&self, username: String, secret_key: EncryptedValue) -> Result<()> {
+        let secret_key_bytes = bincode::encode_to_vec(
+            EncryptedValueBincode { value: secret_key },
+            bincode::config::standard(),
+        )?;
+        let user_id = self.get_user_id(username).await?;
+        sqlx::query("INSERT INTO network (user_id, secret_key) VALUES (?,?)")
+            .bind(user_id)
+            .bind(secret_key_bytes)
             .execute(&self.pool)
             .await?;
         Ok(())

@@ -1,6 +1,7 @@
 mod commands;
 mod database;
-mod network;
+// mod network;
+mod net;
 
 use crate::database::Database;
 use commands::{auth, database as db};
