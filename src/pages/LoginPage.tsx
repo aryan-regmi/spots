@@ -6,6 +6,7 @@ import { useGetUsers } from '../hooks/useDatabase';
 import { verifyPassword } from '../services/api/auth';
 import { Icon } from '@mui/material';
 import { GraphicEqRounded } from '@mui/icons-material';
+import { useLoadNetworkEndpoint } from '../hooks/useNetwork';
 
 /** The login page component. */
 export function LoginPage() {
@@ -45,9 +46,10 @@ export type LoginData = {
 export function LoginForm() {
     const navigate = useNavigate();
     const { authorize } = useAuth();
+    const { data: users } = useGetUsers();
+    const { mutateAsync: loadEndpoint } = useLoadNetworkEndpoint();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const { data: users } = useGetUsers();
 
     /** Checks the username and password against the database. */
     async function validateLogin(username: string, password: string) {
@@ -68,7 +70,12 @@ export function LoginForm() {
         try {
             let valid = await validateLogin(username, password);
             if (valid) {
+                // Update auth
                 await authorize(username);
+
+                // Load network endpoint
+                await loadEndpoint(username);
+
                 navigate('/home', { replace: true });
             } else {
                 alert('Invalid login: check username and password!');

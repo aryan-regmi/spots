@@ -1,5 +1,4 @@
 use anyhow::Result;
-use futures::TryStreamExt;
 use serde::Serialize;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode},
@@ -8,11 +7,15 @@ use sqlx::{
 use tauri::{AppHandle, Manager};
 use tokio::fs;
 
-use crate::net::{EncryptedValue, EncryptedValueBincode};
+use crate::network::{EncryptedValue, EncryptedValueBincode, Peers, PeersBincode};
 
 pub struct Database {
     pub pool: Pool<Sqlite>,
 }
+
+// TODO: Make all NULL-able values Option<>
+//
+// TODO: Make all `String` taking funcs take `&str` instead
 
 impl Database {
     /// Initializes the database.
@@ -127,11 +130,11 @@ impl Database {
     /// Gets the secret key for the specified user.
     pub async fn get_secret_key(&self, username: String) -> Result<EncryptedValue> {
         let user_id = self.get_user_id(username).await?;
-        let row = sqlx::query("SELECT secret_key FROM network WHERE user_id = ?")
+        let result = sqlx::query("SELECT secret_key FROM network WHERE user_id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
             .await?;
-        let bytes: Vec<u8> = row.get("secret_key");
+        let bytes: Vec<u8> = result.get("secret_key");
         let (encrypted_key, _): (EncryptedValueBincode, usize) =
             bincode::decode_from_slice(&bytes, bincode::config::standard())?;
         Ok(encrypted_key.value)
@@ -147,6 +150,78 @@ impl Database {
         sqlx::query("INSERT INTO network (user_id, secret_key) VALUES (?,?)")
             .bind(user_id)
             .bind(secret_key_bytes)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    /// Gets the endpoint node address for the specified user.
+    pub async fn get_endpoint_node(&self, username: String) -> Result<String> {
+        let user_id = self.get_user_id(username).await?;
+        let result = sqlx::query("SELECT endpoint FROM network WHERE user_id = ?")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(result.get("endpoint"))
+    }
+
+    /// Sets the endpoint node address for the specified user.
+    pub async fn set_endpoint_node(
+        &self,
+        username: String,
+        endpoint_address: String,
+    ) -> Result<()> {
+        let user_id = self.get_user_id(username).await?;
+        sqlx::query("UPDATE network SET endpoint = ? WHERE user_id = ?")
+            .bind(endpoint_address)
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    /// Gets the topic id for the specified user.
+    pub async fn get_topic_id(&self, username: String) -> Result<Option<String>> {
+        let user_id = self.get_user_id(username).await?;
+        let result = sqlx::query("SELECT topic_id FROM network WHERE user_id = ?")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(result.get("topic_id"))
+    }
+
+    /// Sets the topic id for the specified user.
+    pub async fn set_topic_id(&self, username: String, topic_id: String) -> Result<()> {
+        let user_id = self.get_user_id(username).await?;
+        sqlx::query("UPDATE network SET topic_id = ? WHERE user_id = ?")
+            .bind(topic_id)
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    /// Gets the peers for the specified username.
+    pub async fn get_peers(&self, username: String) -> Result<Peers> {
+        let user_id = self.get_user_id(username).await?;
+        let result = sqlx::query("SELECT peers FROM network where user_id = ?")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await?;
+        let bytes: Vec<u8> = result.get("peers");
+        let (peers, _): (PeersBincode, usize) =
+            bincode::decode_from_slice(&bytes, bincode::config::standard())?;
+        Ok(peers.peers)
+    }
+
+    /// Sets the peers for the specified username.
+    pub async fn set_peers(&self, username: String, peers: Peers) -> Result<()> {
+        let peers_bytes =
+            bincode::encode_to_vec(PeersBincode { peers }, bincode::config::standard())?;
+        let user_id = self.get_user_id(username).await?;
+        sqlx::query("UPDATE network SET peers = ? WHERE user_id = ?")
+            .bind(peers_bytes)
+            .bind(user_id)
             .execute(&self.pool)
             .await?;
         Ok(())

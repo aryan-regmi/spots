@@ -1,12 +1,16 @@
 import QRCode from 'react-qr-code';
-import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
+import { useGetEndpointAddr } from '../hooks/useNetwork';
+import { LoadingPage } from './LoadingPage';
+import useAuth from '../hooks/useAuth';
 
 export function ProfilePage() {
-    const navigate = useNavigate();
+    const { currentUser, isLoading } = useAuth();
+    const { data: endpointAddr } = useGetEndpointAddr(currentUser ?? '');
 
-    // FIXME: Get endpoint QR value from rust
-    const value = 'TODO: GET VALUE FROM RUST';
+    if (!currentUser || isLoading) {
+        return <LoadingPage />;
+    }
 
     return (
         <div>
@@ -20,7 +24,7 @@ export function ProfilePage() {
                         borderRadius: '1em',
                     }}
                 >
-                    <QRCode value={value}></QRCode>
+                    <QRCode value={endpointAddr ?? ''}></QRCode>
                 </div>
             </div>
         </div>

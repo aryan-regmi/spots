@@ -1,25 +1,32 @@
 mod commands;
 mod database;
-// mod network;
-mod net;
+mod network;
 
-use crate::database::Database;
-use commands::{auth, database as db};
+use std::sync::Arc;
+
+use crate::{database::Database, network::Network};
+use commands::{auth, database as db, network as net};
 use tauri::Manager;
+use tokio::sync::Mutex;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            // Initialize database
             tauri::async_runtime::block_on(async move {
                 let handle = app.handle();
+
+                // Initialize database
                 let database = Database::new(&handle)
                     .await
                     .expect("failed to initialize database");
 
-                // Store database pool in app state
+                // Initialize net
+                let net = Network::new();
+
+                // Manage states
                 app.manage(database);
+                app.manage(Arc::new(Mutex::new(net)));
 
                 Ok(())
             })
@@ -33,6 +40,9 @@ pub fn run() {
             db::get_auth_user,
             db::set_auth_user,
             db::remove_auth_user,
+            net::create_new_endpoint,
+            net::load_endpoint,
+            net::get_endpoint_addr,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

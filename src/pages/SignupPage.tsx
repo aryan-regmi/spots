@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { useAddUser, useGetUsers } from '../hooks/useDatabase';
 import { hashPassword } from '../services/api/auth';
+import { useCreateNetworkEndpoint } from '../hooks/useNetwork';
 
 /** The signup page component. */
 export function SignupPage() {
@@ -18,11 +19,12 @@ export function SignupPage() {
 function SignupForm() {
     const navigate = useNavigate();
     const { authorize } = useAuth();
+    const { mutateAsync: createEndpoint } = useCreateNetworkEndpoint();
+    const { data: users } = useGetUsers();
+    const { mutateAsync: addUser } = useAddUser();
 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const { data: users } = useGetUsers();
-    const { mutateAsync: addUser } = useAddUser();
 
     /** Checks if the username is available in the database. */
     async function validateUsername(username: string) {
@@ -41,6 +43,9 @@ function SignupForm() {
             // Save user to database
             await addUser({ username, password: hashedPassword });
             console.info(`Created new user: ${username}`);
+
+            // Create network endpoint
+            await createEndpoint(username);
 
             // Go to homepage
             await authorize(username);
