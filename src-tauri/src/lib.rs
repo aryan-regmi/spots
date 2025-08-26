@@ -43,6 +43,7 @@ pub fn run() {
             net::create_new_endpoint,
             net::load_endpoint,
             net::get_endpoint_addr,
+            net::close_endpoint,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

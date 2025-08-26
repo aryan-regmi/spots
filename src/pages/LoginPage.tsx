@@ -74,7 +74,9 @@ export function LoginForm() {
                 await authorize(username);
 
                 // Load network endpoint
+                console.log('Loading endpoint...');
                 await loadEndpoint(username);
+                console.log('Endpoint loaded');
 
                 navigate('/home', { replace: true });
             } else {

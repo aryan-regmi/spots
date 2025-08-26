@@ -20,24 +20,20 @@ pub async fn create_new_endpoint(
     net: NetworkState<'_>,
     username: String,
 ) -> Result<()> {
-    let mut net = net.lock().await;
-
     // Create new secret key and store in db
+    let mut net = net.lock().await;
     let encrypted_secret_key = net.generate_secret_key()?;
     db.set_secret_key(username.clone(), encrypted_secret_key)
         .await
         .map_err(|e| e.to_string())?;
 
-    // Init endpoint
+    // Create endpoint
     net.init_endpoint(&app_handle, username.clone()).await?;
-    drop(net);
+    // .unwrap_or_else(|e| eprintln!("{e}"));
 
-    // Join topic in separate thread
-    tauri::async_runtime::spawn(async move {
-        let net: NetworkState = app_handle.state();
-        let mut net = net.lock().await;
-        net.init_topic(&app_handle, username.clone()).await.unwrap();
-    });
+    net.init_topic(&app_handle, username.clone()).await?;
+    // .unwrap_or_else(|e| eprintln!("{e}"));
+    drop(net);
 
     Ok(())
 }
@@ -47,20 +43,17 @@ pub async fn create_new_endpoint(
 /// # Note
 /// This should be called only if the user already exists.
 #[tauri::command]
-pub async fn load_endpoint(
-    app_handle: AppHandle,
-    net: NetworkState<'_>,
-    username: String,
-) -> Result<()> {
-    let mut net = net.lock().await;
-    net.init_endpoint(&app_handle, username.clone()).await?;
-    drop(net);
-
-    // Join topic in separate thread
+pub async fn load_endpoint(app_handle: AppHandle, username: String) -> Result<()> {
     tauri::async_runtime::spawn(async move {
         let net: NetworkState = app_handle.state::<Arc<Mutex<Network>>>();
         let mut net = net.lock().await;
-        net.load_topic(&app_handle, username.clone()).await.unwrap();
+        net.init_endpoint(&app_handle, username.clone())
+            .await
+            .unwrap_or_else(|e| eprintln!("{e}"));
+        net.load_topic(&app_handle, username.clone())
+            .await
+            .unwrap_or_else(|e| eprintln!("{e}"));
+        drop(net);
     });
 
     Ok(())
@@ -72,4 +65,11 @@ pub async fn get_endpoint_addr(db: DatabaseState<'_>, username: String) -> Resul
     db.get_endpoint_node(username)
         .await
         .map_err(|e| e.to_string())
+}
+
+/// Closes the endpoint.
+#[tauri::command]
+pub async fn close_endpoint(net: NetworkState<'_>) -> Result<()> {
+    let mut net = net.lock().await;
+    net.close().await
 }

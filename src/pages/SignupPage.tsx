@@ -45,7 +45,9 @@ function SignupForm() {
             console.info(`Created new user: ${username}`);
 
             // Create network endpoint
+            console.log('Creating endpoint...');
             await createEndpoint(username);
+            console.log('Endpoint created');
 
             // Go to homepage
             await authorize(username);

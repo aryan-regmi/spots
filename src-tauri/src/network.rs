@@ -33,6 +33,21 @@ impl Network {
         }
     }
 
+    /// Closes the endpoint and associated resources.
+    pub async fn close(&mut self) -> Result<()> {
+        if let Some(router) = &self.router {
+            router.shutdown().await.map_err(|e| e.to_string())?;
+        }
+        if let Some(gossip) = &self.gossip {
+            gossip.shutdown().await.map_err(|e| e.to_string())?;
+        }
+        if let Some(endpoint) = &self.endpoint {
+            endpoint.close().await;
+        }
+        *self = Self::new();
+        Ok(())
+    }
+
     /// Generates an encrypted secret key and encrypts it.
     pub fn generate_secret_key(&self) -> Result<EncryptedValue> {
         // Create new key
@@ -117,7 +132,7 @@ impl Network {
             .gossip
             .as_ref()
             .ok_or(String::from("Invalid `Gossip`"))?
-            .subscribe_and_join(topic_id, peers.clone())
+            .subscribe(topic_id, peers.clone())
             .await
             .map_err(|e| e.to_string())?;
         let (sender, receiver) = topic.split();
@@ -136,6 +151,7 @@ impl Network {
             sender,
             receiver,
         });
+
         Ok(())
     }
 
@@ -198,9 +214,9 @@ pub struct PeersBincode {
 
 #[allow(unused)]
 pub struct TopicState {
-    id: TopicId,
-    sender: GossipSender,
-    receiver: GossipReceiver,
+    pub id: TopicId,
+    pub sender: GossipSender,
+    pub receiver: GossipReceiver,
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode)]

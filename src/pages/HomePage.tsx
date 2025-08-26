@@ -4,6 +4,7 @@ import { Card } from '../components/Card/Card';
 import { LoadingPage } from './LoadingPage';
 import { useNavigate } from 'react-router-dom';
 import { NavDrawer } from '../components/NavDrawer/NavDrawer';
+import { useCloseNetworkEndpoint } from '../hooks/useNetwork';
 
 type MockPlaylist = {
     id: string;
@@ -17,8 +18,9 @@ function newMockPlaylist(title: string, username?: string) {
 }
 
 export function HomePage() {
-    const { unauthorize, currentUser } = useAuth();
     const navigate = useNavigate();
+    const { unauthorize, currentUser } = useAuth();
+    const { mutateAsync: closeNetwork } = useCloseNetworkEndpoint();
 
     if (!currentUser) {
         return <LoadingPage></LoadingPage>;
@@ -27,6 +29,7 @@ export function HomePage() {
     /** Logs the user out and redirects to the login page. */
     async function redirectToLogin() {
         await unauthorize();
+        await closeNetwork();
         await navigate('/login', { replace: true });
     }
 

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+    closeEndpoint,
     createNetworkEndpoint,
     getEndpointAddr,
     loadNetworkEndpoint,
@@ -30,6 +31,15 @@ export function useLoadNetworkEndpoint() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: loadNetworkEndpoint,
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: ['networkData'] }),
+    });
+}
+
+export function useCloseNetworkEndpoint() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: closeEndpoint,
         onSuccess: () =>
             queryClient.invalidateQueries({ queryKey: ['networkData'] }),
     });
