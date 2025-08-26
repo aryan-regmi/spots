@@ -1,8 +1,7 @@
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 
 export function PlaylistPage() {
-    const navigate = useNavigate();
     const { playlistId } = useParams<{
         playlistId: string;
     }>();

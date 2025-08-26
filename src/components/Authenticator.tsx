@@ -54,7 +54,7 @@ export function AuthProvider(props: { children: any }) {
                 isLoading,
                 authorize,
                 unauthorize,
-                currentUser,
+                currentUser: currentUser ?? undefined,
             }}
         >
             {children}

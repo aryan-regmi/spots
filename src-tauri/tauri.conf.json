@@ -13,8 +13,6 @@
         "windows": [
             {
                 "title": "spots",
-                "width": 375,
-                "height": 812,
                 "resizable": false
             }
         ],

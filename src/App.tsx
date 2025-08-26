@@ -14,6 +14,8 @@ import { SignupPage } from './pages/SignupPage';
 import { getAuthUser } from './services/api/database';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProfilePage } from './pages/ProfilePage';
+import { useEffect } from 'react';
+import { currentMonitor, getCurrentWindow } from '@tauri-apps/api/window';
 
 // TODO: TEST ON ANDROID!!!
 //
@@ -34,6 +36,17 @@ import { ProfilePage } from './pages/ProfilePage';
 
 /** The main component of the application. */
 function App() {
+    // Setup window
+    useEffect(() => {
+        async function resizeToMobile() {
+            let monitor = await currentMonitor();
+            if (monitor) {
+                await getCurrentWindow().setSize(monitor?.size);
+            }
+        }
+        resizeToMobile();
+    }, []);
+
     // Setup query client
     const queryClient = new QueryClient();
 
