@@ -35,12 +35,6 @@ impl Network {
 
     /// Closes the endpoint and associated resources.
     pub async fn close(&mut self) -> Result<()> {
-        if let Some(router) = &self.router {
-            router.shutdown().await.map_err(|e| e.to_string())?;
-        }
-        if let Some(gossip) = &self.gossip {
-            gossip.shutdown().await.map_err(|e| e.to_string())?;
-        }
         if let Some(endpoint) = &self.endpoint {
             endpoint.close().await;
         }
