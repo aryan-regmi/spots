@@ -30,6 +30,8 @@ import { ProfilePage } from './pages/ProfilePage';
 //      - replace `row` and `col` css stuff
 //  - alerts with Modal
 //
+// FIXME: Change all styling to Material-UI and see if android is fixed!
+//
 // FIXME: Move all styling to .css files
 
 /** The main component of the application. */

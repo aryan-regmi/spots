@@ -19,18 +19,16 @@ export function LoginPage() {
                 </Icon>
                 <h2>Spots: A P2P Music App</h2>
             </div>
-            <div className="container">
-                <div className="col">
-                    <LoginForm />
-                    <a
-                        onClick={(_) => {
-                            navigate('/signup');
-                        }}
-                        className="text-link"
-                    >
-                        Create User
-                    </a>
-                </div>
+            <div className="col">
+                <LoginForm />
+                <a
+                    onClick={(_) => {
+                        navigate('/signup');
+                    }}
+                    className="text-link"
+                >
+                    Create User
+                </a>
             </div>
         </div>
     );
@@ -94,7 +92,7 @@ export function LoginForm() {
             onSubmit={(e) => e.preventDefault()}
         >
             <div className="row">
-                Username:
+                <label htmlFor="username-input">Username:</label>
                 <input
                     id="username-input"
                     onChange={(e) => setUsername(e.currentTarget.value)}
@@ -103,7 +101,7 @@ export function LoginForm() {
             </div>
 
             <div className="row">
-                Password:
+                <label htmlFor="password-input">Password: </label>
                 <input
                     id="password-input"
                     type="password"
