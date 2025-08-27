@@ -12,7 +12,7 @@ import { useLoadNetworkEndpoint } from '../hooks/useNetwork';
 export function LoginPage() {
     const navigate = useNavigate();
     return (
-        <main className="container">
+        <div className="container">
             <div className="row" id="login-header">
                 <Icon fontSize="large">
                     <GraphicEqRounded fontSize="large" />
@@ -32,7 +32,7 @@ export function LoginPage() {
                     </a>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 
