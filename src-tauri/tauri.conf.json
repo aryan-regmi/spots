@@ -13,7 +13,9 @@
         "windows": [
             {
                 "title": "spots",
-                "resizable": true
+                "width": 411,
+                "height": 915,
+                "resizable": false
             }
         ],
         "security": {

@@ -36,6 +36,7 @@ pub fn run() {
             auth::hash_password,
             auth::verify_password,
             db::get_users,
+            db::get_user,
             db::insert_user,
             db::get_auth_user,
             db::set_auth_user,

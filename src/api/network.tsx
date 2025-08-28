@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 
-/** Creates a network endpoint for the user. */
-export async function createNetworkEndpoint(username: string) {
+/** Creates a new network endpoint for the user. */
+export async function createNewEndpoint(username: string) {
     try {
         await invoke('create_new_endpoint', { username });
     } catch (e: any) {
@@ -9,8 +9,8 @@ export async function createNetworkEndpoint(username: string) {
     }
 }
 
-/** Loads the previously created network endpoint for the user. */
-export async function loadNetworkEndpoint(username: string) {
+/** Loads the stored endpoint for the user. */
+export async function loadEndpoint(username: string) {
     try {
         await invoke('load_endpoint', { username });
     } catch (e: any) {
@@ -18,10 +18,13 @@ export async function loadNetworkEndpoint(username: string) {
     }
 }
 
-/** Gets the endpoint address for the user. */
+/** Gets the endpoint address for the specfied user. */
 export async function getEndpointAddr(username: string) {
     try {
-        return await invoke<string>('get_endpoint_addr', { username });
+        let endpointAddr = await invoke<string>('get_endpoint_addr', {
+            username,
+        });
+        return endpointAddr;
     } catch (e: any) {
         throw new Error(e);
     }

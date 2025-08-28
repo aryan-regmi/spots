@@ -11,6 +11,11 @@ pub async fn get_users(database: DatabaseState<'_>) -> Result<Vec<User>> {
 }
 
 #[tauri::command]
+pub async fn get_user(database: DatabaseState<'_>, username: String) -> Result<Option<User>> {
+    database.get_user(username).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn insert_user(
     database: DatabaseState<'_>,
     username: String,

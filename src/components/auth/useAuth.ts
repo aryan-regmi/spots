@@ -1,7 +1,7 @@
-import { AuthContext } from '../components/Authenticator';
-import { useContext } from 'react';
+import { AuthContext } from './AuthContext';
+import { useContext, useEffect } from 'react';
 
-/** Hook to use the authentication context. */
+/** Returns the authentication context. */
 export default function useAuth() {
     const context = useContext(AuthContext);
     if (!context) throw new Error('useAuth must be used within AuthProvider');

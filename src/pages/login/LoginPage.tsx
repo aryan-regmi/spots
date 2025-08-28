@@ -1,0 +1,130 @@
+import '../../App.css';
+import './LoginPage.css';
+import { useFetcher, ActionFunctionArgs, useNavigate } from 'react-router-dom';
+import { Button, Icon, Stack, styled, TextField } from '@mui/material';
+import { GraphicEq } from '@mui/icons-material';
+import { getUser, verifyPassword } from '../../api/users';
+import useAuth from '../../components/auth/useAuth';
+import { loadEndpoint } from '../../api/network';
+import useValidateAction, {
+    ActionResponse,
+} from '../../components/common/hooks/useValidateAction';
+
+const StyledTextField = styled(TextField)({
+    input: {
+        color: 'white',
+    },
+    label: {
+        color: '#FFE3DC',
+    },
+    '& .MuiOutlinedInput-root': {
+        backgroundColor: '#2f2f2f',
+    },
+});
+
+const StyledButton = styled(Button)({
+    ':disabled': {
+        color: 'white',
+    },
+});
+
+export default function LoginPage() {
+    const navigate = useNavigate();
+    const fetcher = useFetcher();
+    const { authorize } = useAuth();
+    useValidateAction<string>(fetcher, onValid, onInvalid);
+
+    function onValid(username: string) {
+        // Authorize username
+        authorize(username);
+
+        // Load network endpoint
+        loadEndpoint(username).then(() =>
+            console.info('Network endpoint loaded')
+        );
+
+        // Go to homepage
+        navigate('/home', { replace: true });
+    }
+
+    function onInvalid(_: ActionResponse<string>) {
+        // TODO: Replace with custom alert dialog
+        alert('Invalid login: check username and password!');
+    }
+
+    return (
+        <Stack className="content login-container" direction="column">
+            {/* Header */}
+            <Stack className="login-header" direction="row">
+                <div className="stack-item">
+                    <Icon fontSize="large">
+                        <GraphicEq fontSize="large"></GraphicEq>
+                    </Icon>
+                </div>
+                <div className="stack-item">
+                    <h2>Spots</h2>
+                </div>
+            </Stack>
+
+            {/* Login form */}
+            <fetcher.Form method="post" action="/login">
+                <Stack className="form-content" direction="column">
+                    <StyledTextField
+                        className="test"
+                        label="Username"
+                        name="username"
+                        type="text"
+                        placeholder="Enter username..."
+                        fullWidth
+                        required
+                    />
+                    <StyledTextField
+                        label="Password"
+                        name="password"
+                        type="password"
+                        placeholder="Enter password..."
+                        fullWidth
+                        required
+                    />
+                    <StyledButton
+                        type="submit"
+                        variant="contained"
+                        disabled={fetcher.state !== 'idle'}
+                        color="primary"
+                    >
+                        {fetcher.state === 'submitting'
+                            ? 'Logging in...'
+                            : 'Login'}
+                    </StyledButton>
+                </Stack>
+            </fetcher.Form>
+        </Stack>
+    );
+}
+
+export async function loginAction({
+    request,
+}: ActionFunctionArgs): Promise<ActionResponse<string>> {
+    // Extract form data
+    const data = await request.formData();
+    const username = data.get('username');
+    const password = data.get('password');
+    if (typeof username !== 'string' || typeof password !== 'string') {
+        return {
+            ok: false,
+            error: 'Missing username or password',
+        };
+    }
+
+    // Verfiy login in the backend
+    const user = await getUser(username);
+    if (!user) {
+        return { ok: false, error: 'Username not found in database' };
+    }
+    const verified = await verifyPassword(username, password);
+    if (!verified) {
+        return { ok: false, error: 'Incorrect password' };
+    }
+
+    return { ok: true, data: username };
+}

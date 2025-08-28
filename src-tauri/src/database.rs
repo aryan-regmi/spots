@@ -62,6 +62,19 @@ impl Database {
         Ok(users)
     }
 
+    /// Gets the user with the specified username from the database.
+    pub async fn get_user(&self, username: String) -> Result<Option<User>> {
+        let user = sqlx::query("SELECT id, username FROM users WHERE username = ?")
+            .bind(username)
+            .fetch_optional(&self.pool)
+            .await?
+            .map(|result| User {
+                id: result.get("id"),
+                username: result.get("username"),
+            });
+        Ok(user)
+    }
+
     /// Gets the user ID for the given username.
     pub async fn get_user_id(&self, username: String) -> Result<u32> {
         let result = sqlx::query("SELECT id FROM users WHERE username = ? LIMIT 1")
