@@ -1,6 +1,11 @@
 import '../../App.css';
 import './LoginPage.css';
-import { useFetcher, ActionFunctionArgs, useNavigate } from 'react-router-dom';
+import {
+    useFetcher,
+    ActionFunctionArgs,
+    useNavigate,
+    Link,
+} from 'react-router-dom';
 import { Button, Icon, Stack, styled, TextField } from '@mui/material';
 import { GraphicEq } from '@mui/icons-material';
 import { getUser, verifyPassword } from '../../api/users';
@@ -9,6 +14,7 @@ import { loadEndpoint } from '../../api/network';
 import useValidateAction, {
     ActionResponse,
 } from '../../components/common/hooks/useValidateAction';
+import { useState } from 'react';
 
 const StyledTextField = styled(TextField)({
     input: {
@@ -32,9 +38,12 @@ export default function LoginPage() {
     const navigate = useNavigate();
     const fetcher = useFetcher();
     const { authorize } = useAuth();
-    useValidateAction<string>(fetcher, onValid, onInvalid);
+    useValidateAction<string>(fetcher, onValidLogin, onInvalidLogin);
+    const [isValid, setIsValid] = useState(true);
 
-    function onValid(username: string) {
+    function onValidLogin(username: string) {
+        setIsValid(true);
+
         // Authorize username
         authorize(username);
 
@@ -47,9 +56,10 @@ export default function LoginPage() {
         navigate('/home', { replace: true });
     }
 
-    function onInvalid(_: ActionResponse<string>) {
+    function onInvalidLogin(_: ActionResponse<string>) {
         // TODO: Replace with custom alert dialog
         alert('Invalid login: check username and password!');
+        setIsValid(false);
     }
 
     return (
@@ -77,6 +87,8 @@ export default function LoginPage() {
                         placeholder="Enter username..."
                         fullWidth
                         required
+                        error={!isValid}
+                        onChange={(_) => (isValid ? null : setIsValid(true))}
                     />
                     <StyledTextField
                         label="Password"
@@ -85,19 +97,29 @@ export default function LoginPage() {
                         placeholder="Enter password..."
                         fullWidth
                         required
+                        error={!isValid}
+                        onChange={(_) => (isValid ? null : setIsValid(true))}
                     />
-                    <StyledButton
-                        type="submit"
-                        variant="contained"
-                        disabled={fetcher.state !== 'idle'}
-                        color="primary"
-                    >
-                        {fetcher.state === 'submitting'
-                            ? 'Logging in...'
-                            : 'Login'}
-                    </StyledButton>
+
+                    <div id="login-btn">
+                        <StyledButton
+                            type="submit"
+                            variant="contained"
+                            disabled={fetcher.state !== 'idle'}
+                            color="primary"
+                        >
+                            {fetcher.state === 'submitting'
+                                ? 'Logging in...'
+                                : 'Login'}
+                        </StyledButton>
+                    </div>
                 </Stack>
             </fetcher.Form>
+
+            {/* Sign up link */}
+            <Link to={'/signup'} id="signup-link">
+                Sign Up
+            </Link>
         </Stack>
     );
 }

@@ -22,3 +22,12 @@
 .form-content {
   gap: 0.5em;
 }
+
+#signup-link {
+  text-align: center;
+  margin-top: -3em;
+}
+
+#login-btn {
+  text-align: center;
+}
