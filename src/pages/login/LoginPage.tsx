@@ -1,48 +1,32 @@
 import '../../App.css';
 import './LoginPage.css';
 import {
-    useFetcher,
     ActionFunctionArgs,
-    useNavigate,
     Link,
+    useFetcher,
+    useNavigate,
 } from 'react-router-dom';
-import { Button, Icon, Stack, styled, TextField } from '@mui/material';
-import { GraphicEq } from '@mui/icons-material';
-import { getUser, verifyPassword } from '../../api/users';
+import Banner from '../../components/banner/Banner';
 import useAuth from '../../components/auth/useAuth';
-import { loadEndpoint } from '../../api/network';
 import useValidateAction, {
     ActionResponse,
-} from '../../components/common/hooks/useValidateAction';
+} from '../../common/hooks/useValidateAction';
+import { Stack } from '@mui/material';
+import { StyledButton, StyledTextField } from '../../common/form/styled';
+import { getUser, verifyPassword } from '../../api/users';
+import { loadEndpoint } from '../../api/network';
 import { useState } from 'react';
 
-const StyledTextField = styled(TextField)({
-    input: {
-        color: 'white',
-    },
-    label: {
-        color: '#FFE3DC',
-    },
-    '& .MuiOutlinedInput-root': {
-        backgroundColor: '#2f2f2f',
-    },
-});
-
-const StyledButton = styled(Button)({
-    ':disabled': {
-        color: 'white',
-    },
-});
-
 export default function LoginPage() {
+    const { authorize } = useAuth();
     const navigate = useNavigate();
     const fetcher = useFetcher();
-    const { authorize } = useAuth();
     useValidateAction<string>(fetcher, onValidLogin, onInvalidLogin);
     const [isValid, setIsValid] = useState(true);
 
     function onValidLogin(username: string) {
         setIsValid(true);
+        console.info('Logged in user: ', username);
 
         // Authorize username
         authorize(username);
@@ -63,24 +47,13 @@ export default function LoginPage() {
     }
 
     return (
-        <Stack className="content login-container" direction="column">
-            {/* Header */}
-            <Stack className="login-header" direction="row">
-                <div className="stack-item">
-                    <Icon fontSize="large">
-                        <GraphicEq fontSize="large"></GraphicEq>
-                    </Icon>
-                </div>
-                <div className="stack-item">
-                    <h2>Spots</h2>
-                </div>
-            </Stack>
+        <Stack className="content auth-page" direction="column">
+            <Banner />
 
             {/* Login form */}
             <fetcher.Form method="post" action="/login">
                 <Stack className="form-content" direction="column">
                     <StyledTextField
-                        className="test"
                         label="Username"
                         name="username"
                         type="text"

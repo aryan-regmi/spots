@@ -11,3 +11,11 @@ body {
   flex: 1 0 300px;
   margin: 10px;
 }
+
+.auth-page {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-top: 2.5em;
+  gap: 5em;
+}
