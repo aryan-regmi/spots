@@ -1,20 +1,8 @@
 import '../../App.css';
 import './SignupPage.css';
 import Banner from '../../components/banner/Banner';
-import {
-    Alert,
-    Button,
-    Icon,
-    IconButton,
-    Stack,
-    Typography,
-} from '@mui/material';
-import {
-    ActionFunctionArgs,
-    Link,
-    useFetcher,
-    useNavigate,
-} from 'react-router-dom';
+import { Alert, IconButton, Stack } from '@mui/material';
+import { ActionFunctionArgs, useFetcher, useNavigate } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '../../common/form/styled';
 import { ArrowBack } from '@mui/icons-material';
 import { getUser, hashPassword, insertUser } from '../../api/users';

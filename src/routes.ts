@@ -1,5 +1,5 @@
 import App from './App';
-import HomePage from './pages/HomePage';
+import HomePage from './pages/home/HomePage';
 import LoginPage, { loginAction } from './pages/login/LoginPage';
 import SignupPage, { signupAction } from './pages/signup/SignupPage';
 import { createBrowserRouter, redirect } from 'react-router';
