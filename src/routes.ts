@@ -2,9 +2,9 @@ import App from './App';
 import HomePage from './pages/HomePage';
 import LoginPage, { loginAction } from './pages/login/LoginPage';
 import SignupPage, { signupAction } from './pages/signup/SignupPage';
-import { CircularProgress } from '@mui/material';
 import { createBrowserRouter, redirect } from 'react-router';
 import { getAuthUser } from './api/auth';
+import Loading from './components/loading/Loading';
 
 export const router = createBrowserRouter([
     {
@@ -20,24 +20,24 @@ export const router = createBrowserRouter([
                         return redirect('/home');
                     }
                 },
-                HydrateFallback: CircularProgress,
+                HydrateFallback: Loading,
             },
             {
                 path: '/login',
                 Component: LoginPage,
                 action: loginAction,
-                HydrateFallback: CircularProgress,
+                HydrateFallback: Loading,
             },
             {
                 path: '/home',
                 Component: HomePage,
-                HydrateFallback: CircularProgress,
+                HydrateFallback: Loading,
             },
             {
                 path: '/signup',
                 Component: SignupPage,
                 action: signupAction,
-                HydrateFallback: CircularProgress,
+                HydrateFallback: Loading,
             },
         ],
     },

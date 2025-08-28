@@ -11,7 +11,7 @@ import useAuth from '../../components/auth/useAuth';
 import useValidateAction, {
     ActionResponse,
 } from '../../common/hooks/useValidateAction';
-import { Stack } from '@mui/material';
+import { Alert, Stack } from '@mui/material';
 import { StyledButton, StyledTextField } from '../../common/form/styled';
 import { getUser, verifyPassword } from '../../api/users';
 import { loadEndpoint } from '../../api/network';
@@ -22,7 +22,8 @@ export default function LoginPage() {
     const navigate = useNavigate();
     const fetcher = useFetcher();
     useValidateAction<string>(fetcher, onValidLogin, onInvalidLogin);
-    const [isValid, setIsValid] = useState(true);
+    const [isValid, setIsValid] = useState({ username: true, password: true });
+    const [errMsg, setErrMsg] = useState<string>();
 
     function onValidLogin(username: string) {
         setIsValid(true);
@@ -40,10 +41,16 @@ export default function LoginPage() {
         navigate('/home', { replace: true });
     }
 
-    function onInvalidLogin(_: ActionResponse<string>) {
-        // TODO: Replace with custom alert dialog
-        alert('Invalid login: check username and password!');
-        setIsValid(false);
+    function onInvalidLogin(response: ActionResponse<string>) {
+        const error = response?.error;
+        if (error === 'Username not found in database') {
+            setIsValid({ username: false, password: true });
+        } else if (error === 'Incorrect password') {
+            setIsValid({ username: true, password: false });
+        } else {
+            setIsValid({ username: false, password: false });
+        }
+        setErrMsg(response?.error);
     }
 
     return (
@@ -60,8 +67,15 @@ export default function LoginPage() {
                         placeholder="Enter username..."
                         fullWidth
                         required
-                        error={!isValid}
-                        onChange={(_) => (isValid ? null : setIsValid(true))}
+                        error={!isValid.username}
+                        onChange={(_) =>
+                            isValid.username
+                                ? null
+                                : setIsValid({
+                                      username: true,
+                                      password: isValid.password,
+                                  })
+                        }
                     />
                     <StyledTextField
                         label="Password"
@@ -70,8 +84,15 @@ export default function LoginPage() {
                         placeholder="Enter password..."
                         fullWidth
                         required
-                        error={!isValid}
-                        onChange={(_) => (isValid ? null : setIsValid(true))}
+                        error={!isValid.password}
+                        onChange={(_) =>
+                            isValid.password
+                                ? null
+                                : setIsValid({
+                                      username: isValid.username,
+                                      password: true,
+                                  })
+                        }
                     />
 
                     <div id="login-btn">
@@ -93,6 +114,12 @@ export default function LoginPage() {
             <Link to={'/signup'} id="signup-link">
                 Sign Up
             </Link>
+
+            {errMsg ? (
+                <Alert severity="error" variant="filled">
+                    {errMsg}
+                </Alert>
+            ) : null}
         </Stack>
     );
 }
