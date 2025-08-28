@@ -21,12 +21,16 @@ export default function LoginPage() {
     const { authorize } = useAuth();
     const navigate = useNavigate();
     const fetcher = useFetcher();
-    useValidateAction<string>(fetcher, onValidLogin, onInvalidLogin);
+    useValidateAction<string, ResponseError>(
+        fetcher,
+        onValidLogin,
+        onInvalidLogin
+    );
     const [isValid, setIsValid] = useState({ username: true, password: true });
     const [errMsg, setErrMsg] = useState<string>();
 
     function onValidLogin(username: string) {
-        setIsValid(true);
+        setIsValid({ username: true, password: true });
         console.info('Logged in user: ', username);
 
         // Authorize username
@@ -41,15 +45,26 @@ export default function LoginPage() {
         navigate('/home', { replace: true });
     }
 
-    function onInvalidLogin(response: ActionResponse<string>) {
+    function onInvalidLogin(response: ActionResponse<string, ResponseError>) {
         const error = response?.error;
-        if (error === 'Username not found in database') {
-            setIsValid({ username: false, password: true });
-        } else if (error === 'Incorrect password') {
-            setIsValid({ username: true, password: false });
-        } else {
+        if (!error) {
             setIsValid({ username: false, password: false });
+            setErrMsg('Unknown error');
+            return;
         }
+
+        switch (error) {
+            case 'Username not found':
+                setIsValid({ username: false, password: isValid.password });
+                break;
+            case 'Incorrect password':
+                setIsValid({ username: isValid.username, password: false });
+                break;
+            default:
+                setIsValid({ username: false, password: false });
+                break;
+        }
+
         setErrMsg(response?.error);
     }
 
@@ -115,6 +130,7 @@ export default function LoginPage() {
                 Sign Up
             </Link>
 
+            {/* Error alerts */}
             {errMsg ? (
                 <Alert severity="error" variant="filled">
                     {errMsg}
@@ -124,9 +140,14 @@ export default function LoginPage() {
     );
 }
 
+type ResponseError =
+    | 'Missing username or password'
+    | 'Username not found'
+    | 'Incorrect password';
+
 export async function loginAction({
     request,
-}: ActionFunctionArgs): Promise<ActionResponse<string>> {
+}: ActionFunctionArgs): Promise<ActionResponse<string, ResponseError>> {
     // Extract form data
     const data = await request.formData();
     const username = data.get('username');
@@ -141,7 +162,7 @@ export async function loginAction({
     // Verfiy login in the backend
     const user = await getUser(username);
     if (!user) {
-        return { ok: false, error: 'Username not found in database' };
+        return { ok: false, error: 'Username not found' };
     }
     const verified = await verifyPassword(username, password);
     if (!verified) {

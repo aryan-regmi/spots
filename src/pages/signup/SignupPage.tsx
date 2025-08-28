@@ -1,7 +1,14 @@
 import '../../App.css';
 import './SignupPage.css';
 import Banner from '../../components/banner/Banner';
-import { Button, Icon, IconButton, Stack, Typography } from '@mui/material';
+import {
+    Alert,
+    Button,
+    Icon,
+    IconButton,
+    Stack,
+    Typography,
+} from '@mui/material';
 import {
     ActionFunctionArgs,
     Link,
@@ -24,6 +31,7 @@ export default function SignupPage() {
     const fetcher = useFetcher();
     useValidateAction<ResponseData>(fetcher, onValidLogin, onInvalidLogin);
     const [isValid, setIsValid] = useState(true);
+    const [errMsg, setErrMsg] = useState<string>();
 
     function onValidLogin(data: ResponseData) {
         setIsValid(true);
@@ -49,7 +57,7 @@ export default function SignupPage() {
 
     function onInvalidLogin(response: ActionResponse<ResponseData>) {
         setIsValid(false);
-        alert(response?.error);
+        setErrMsg(response?.error);
     }
 
     return (
@@ -81,8 +89,6 @@ export default function SignupPage() {
                         placeholder="Enter a password..."
                         fullWidth
                         required
-                        error={!isValid}
-                        onChange={(_) => (isValid ? null : setIsValid(true))}
                     ></StyledTextField>
 
                     <div id="signup-btn">
@@ -99,6 +105,13 @@ export default function SignupPage() {
                     </div>
                 </Stack>
             </fetcher.Form>
+
+            {/* Error alerts */}
+            {errMsg ? (
+                <Alert severity="error" variant="filled">
+                    {errMsg}
+                </Alert>
+            ) : null}
         </Stack>
     );
 }
