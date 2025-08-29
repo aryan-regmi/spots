@@ -1,6 +1,8 @@
+import Loading from '../loading/Loading';
+import useGetAuthUser from '../../common/hooks/auth/useGetAuthUser';
+import useRemoveAuthUser from '../../common/hooks/auth/useRemoveAuthUser';
+import useSetAuthUser from '../../common/hooks/auth/useSetAuthUser';
 import { AuthContext } from './AuthContext';
-import { getAuthUser, removeAuthUser, setAuthUser } from '../../api/auth';
-import { useEffect, useState } from 'react';
 
 export type AuthData = {
     username?: string;
@@ -8,20 +10,18 @@ export type AuthData = {
 
 export function AuthProvider(props: { children: any }) {
     const { children } = props;
+    const { data: authUser, isLoading } = useGetAuthUser();
+    const removeAuthUser = useRemoveAuthUser();
+    const setAuthUser = useSetAuthUser();
+    const isAuthenticated = !isLoading && Boolean(authUser);
 
-    const [currentUser, setCurrentUser] = useState<string>();
-    const [isLoading, setIsLoading] = useState(true);
-    useEffect(() => {
-        getAuthUser()
-            .then((user) => setCurrentUser(user.username ?? undefined))
-            .finally(() => setIsLoading(false));
-    }, []);
-    const isAuthenticated = !isLoading && Boolean(currentUser);
+    if (!authUser || !authUser.username) {
+        return <Loading />;
+    }
 
     async function authorize(username: string) {
         try {
-            await setAuthUser(username);
-            setCurrentUser(username);
+            await setAuthUser.mutateAsync(username);
             console.debug('Authenticated user:', username);
         } catch (e: any) {
             throw new Error(e);
@@ -30,9 +30,8 @@ export function AuthProvider(props: { children: any }) {
 
     async function unauthorize() {
         try {
-            await removeAuthUser();
-            setCurrentUser(undefined);
-            console.debug('Unauthenticated user:', currentUser);
+            await removeAuthUser.mutateAsync();
+            console.debug('Unauthenticated user:', authUser);
         } catch (e: any) {
             throw new Error(e);
         }
@@ -43,7 +42,7 @@ export function AuthProvider(props: { children: any }) {
             value={{
                 isAuthenticated,
                 isLoading,
-                currentUser,
+                currentUser: authUser.username,
                 authorize,
                 unauthorize,
             }}

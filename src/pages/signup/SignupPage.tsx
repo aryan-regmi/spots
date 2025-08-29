@@ -4,6 +4,7 @@ import Banner from '../../components/banner/Banner';
 import { Alert, IconButton, Stack } from '@mui/material';
 import {
     ActionFunctionArgs,
+    Form,
     redirect,
     useFetcher,
     useNavigate,
@@ -14,41 +15,56 @@ import { getUser, hashPassword, insertUser } from '../../api/users';
 import useValidateAction, {
     ActionResponse,
 } from '../../common/hooks/useValidateAction';
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { createNewEndpoint } from '../../api/network';
 import useAuth from '../../components/auth/useAuth';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Loading from '../../components/loading/Loading';
 
 export default function SignupPage() {
     const { authorize } = useAuth();
     const navigate = useNavigate();
-    const fetcher = useFetcher();
-    useValidateAction<ResponseData>(fetcher, onValidLogin, onInvalidLogin);
-    const [isValid, setIsValid] = useState(true);
+    const { data: user } = useQuery({ queryKey: ['getUser'] });
     const [errMsg, setErrMsg] = useState<string>();
+    const queryClient = useQueryClient();
+    const { isSuccess } = useMutation({
+        mutationFn: createNewEndpoint,
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: ['networkData'] }),
+    });
 
-    async function onValidLogin(data: ResponseData) {
-        setIsValid(true);
-        console.info('Registered user: ', data.username);
-
-        // Hash password
-        const hashedPassword = await hashPassword(data.password);
-
-        // Save user to database
-        await insertUser(data.username, hashedPassword);
-
-        // Authorize username
-        await authorize(data.username);
-
-        // Create network endpoint
-        await createNewEndpoint(data.username);
-
-        // Go to homepage
-        await navigate('/home', { replace: true });
+    if (!isSuccess) {
+        return <Loading />;
     }
 
-    function onInvalidLogin(response: ActionResponse<ResponseData>) {
-        setIsValid(false);
-        setErrMsg(response?.error);
+    /* async function onValidLogin(data: ResponseData) { */
+    /*     setIsValid(true); */
+    /*     console.info('Registered user: ', data.username); */
+    /**/
+    /*     // Hash password */
+    /*     const hashedPassword = await hashPassword(data.password); */
+    /**/
+    /*     // Save user to database */
+    /*     await insertUser(data.username, hashedPassword); */
+    /**/
+    /*     // Authorize username */
+    /*     await authorize(data.username); */
+    /**/
+    /*     // Create network endpoint */
+    /*     await createNewEndpoint(data.username); */
+    /**/
+    /*     // Go to homepage */
+    /*     await navigate('/home', { replace: true }); */
+    /* } */
+
+    /* function onInvalidLogin(response: ActionResponse<ResponseData>) { */
+    /*     setIsValid(false); */
+    /*     setErrMsg(response?.error); */
+    /* } */
+
+    async function validateLogin(e: FormEvent) {
+        e.preventDefault();
+        console.log('hi');
     }
 
     return (
@@ -64,7 +80,7 @@ export default function SignupPage() {
             <Banner />
 
             {/* Signup form */}
-            <fetcher.Form method="post" action="/signup">
+            <Form onSubmit={validateLogin}>
                 <Stack className="form-content" direction="column">
                     <StyledTextField
                         label="Username"
@@ -73,8 +89,8 @@ export default function SignupPage() {
                         placeholder="Enter a username..."
                         fullWidth
                         required
-                        error={!isValid}
-                        onChange={(_) => (isValid ? null : setIsValid(true))}
+                        /* error={!isValid} */
+                        /* onChange={(_) => (isValid ? null : setIsValid(true))} */
                     ></StyledTextField>
 
                     <StyledTextField
@@ -90,16 +106,16 @@ export default function SignupPage() {
                         <StyledButton
                             type="submit"
                             variant="contained"
-                            disabled={fetcher.state !== 'idle'}
+                            /* disabled={fetcher.state !== 'idle'} */
                             color="primary"
                         >
-                            {fetcher.state === 'submitting'
-                                ? 'Logging in...'
-                                : 'Sign Up'}
+                            {/* {fetcher.state === 'submitting' */}
+                            {/*     ? 'Logging in...' */}
+                            {/*     : 'Sign Up'} */}
                         </StyledButton>
                     </div>
                 </Stack>
-            </fetcher.Form>
+            </Form>
 
             {/* Error alerts */}
             {errMsg ? (

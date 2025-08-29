@@ -153,7 +153,7 @@ impl Database {
         Ok(encrypted_key.value)
     }
 
-    /// Gets the secret key for the specified user.
+    /// Sets the secret key for the specified user.
     pub async fn set_secret_key(&self, username: String, secret_key: EncryptedValue) -> Result<()> {
         let secret_key_bytes = bincode::encode_to_vec(
             EncryptedValueBincode { value: secret_key },
