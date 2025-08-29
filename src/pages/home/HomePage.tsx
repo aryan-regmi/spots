@@ -4,9 +4,11 @@ import Loading from '@/components/loading/Loading';
 import NavDrawer from '@/components/nav/NavDrawer';
 import useAuth from '@/components/auth/useAuth';
 import useCloseEndpoint from '@/utils/hooks/network/useCloseEndpoint';
-import { Logout } from '@mui/icons-material';
+import { Logout, Home, Search, List as ListIcon } from '@mui/icons-material';
 import {
     Avatar,
+    BottomNavigation,
+    BottomNavigationAction,
     Divider,
     IconButton,
     List,
@@ -24,6 +26,7 @@ export default function HomePage() {
     const closeEndpoint = useCloseEndpoint();
 
     const [menuIsOpen, setMenuIsOpen] = useState(false);
+    const [nav, setNav] = useState<NavState>('Home');
 
     if (isLoading || !currentUser) {
         return <Loading />;
@@ -63,14 +66,39 @@ export default function HomePage() {
         );
     }
 
-    return (
-        <Stack direction="column" className="content home-container">
-            <IconButton id="avatar" onClick={toggleMenu}>
-                <Avatar {...stringAvatar(currentUser)} />
-            </IconButton>
+    function bottomNav() {
+        return (
+            <BottomNavigation
+                showLabels
+                value={nav}
+                onChange={(_, newNav) => setNav(newNav)}
+                style={{
+                    backgroundColor: '#54414E',
+                    borderRadius: '1em',
+                    opacity: 0.9,
+                }}
+            >
+                <BottomNavigationAction
+                    label="Home"
+                    icon={<Home />}
+                    style={{ color: 'white' }}
+                />
+                <BottomNavigationAction
+                    label="Search"
+                    icon={<Search />}
+                    style={{ color: 'white' }}
+                />
+                <BottomNavigationAction
+                    label="Playlists"
+                    icon={<ListIcon />}
+                    style={{ color: 'white' }}
+                />
+            </BottomNavigation>
+        );
+    }
 
-            {/* Menu drawer  */}
-            {/* FIXME: Extract Menu drawer to separate component */}
+    function navDrawer(currentUser: string) {
+        return (
             <NavDrawer
                 open={menuIsOpen}
                 onClose={toggleMenu}
@@ -88,10 +116,34 @@ export default function HomePage() {
                     </ListItemButton>
                 </List>
             </NavDrawer>
+        );
+    }
 
-            <Stack direction="row" className="pinned-playlists">
+    return (
+        <Stack
+            direction="column"
+            className="content home-container"
+            style={{ minHeight: '90vh' }}
+        >
+            <IconButton id="avatar" onClick={toggleMenu}>
+                <Avatar {...stringAvatar(currentUser)} />
+            </IconButton>
+
+            {/* Menu drawer  */}
+            {navDrawer(currentUser)}
+
+            <Stack
+                direction="column"
+                className="home-content"
+                sx={{ flexGrow: 1 }}
+            >
                 {/*  TODO: Display playlists here! */}
             </Stack>
+
+            {/* Bottom Navigation */}
+            {bottomNav()}
         </Stack>
     );
 }
+
+type NavState = 'Home';
