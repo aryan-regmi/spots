@@ -23,10 +23,6 @@ export default function useValidateAction<T, E = string>(
                 await onValid(response.data);
             } else if (response?.error) {
                 await onInvalid(response);
-            } else {
-                if (response?.data) {
-                    await onValid(response.data);
-                }
             }
         }
         run();

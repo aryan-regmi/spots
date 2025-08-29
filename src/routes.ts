@@ -12,6 +12,7 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
+                Component: Loading,
                 loader: async () => {
                     const authUser = await getAuthUser();
                     if (!authUser.username) {

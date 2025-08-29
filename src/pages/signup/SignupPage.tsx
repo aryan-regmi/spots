@@ -40,9 +40,7 @@ export default function SignupPage() {
         await authorize(data.username);
 
         // Create network endpoint
-        console.debug('Creating new endpoint...');
         await createNewEndpoint(data.username);
-        console.debug('Endpoint created!');
 
         // Go to homepage
         await navigate('/home', { replace: true });
@@ -55,7 +53,11 @@ export default function SignupPage() {
 
     return (
         <Stack className="content auth-page" direction="column">
-            <IconButton id="back-btn" size="large" onClick={() => navigate(-1)}>
+            <IconButton
+                id="back-btn"
+                size="large"
+                onClick={() => navigate('/login', { replace: true })}
+            >
                 <ArrowBack />
             </IconButton>
 
