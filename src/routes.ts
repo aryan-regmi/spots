@@ -2,6 +2,7 @@ import App from '@/App';
 import HomePage from '@/pages/home/HomePage';
 import Loading from '@/components/loading/Loading';
 import LoginPage from '@/pages/login/LoginPage';
+import ProfilePage from '@/pages/profile/ProfilePage';
 import SignupPage from '@/pages/signup/SignupPage';
 import { createBrowserRouter, redirect } from 'react-router';
 import { getAuthUser } from '@/api/auth';
@@ -53,6 +54,11 @@ export const router = createBrowserRouter([
                         return redirect('/home');
                     }
                 },
+            },
+            {
+                path: '/home/profile',
+                Component: ProfilePage,
+                HydrateFallback: Loading,
             },
         ],
     },

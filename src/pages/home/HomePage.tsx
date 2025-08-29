@@ -40,11 +40,10 @@ export default function HomePage() {
     }
 
     async function showProfile() {
-        /* FIXME: Implement
-         * 
-        /* await navigate('/home/profile'); */
+        await navigate('/home/profile');
     }
 
+    /* FIXME: Move styles to HomePage.css */
     function menuHeader(currentUser: string) {
         return (
             <Button
@@ -75,7 +74,6 @@ export default function HomePage() {
                             id="avatar-text"
                             style={{
                                 color: 'white',
-                                /* marginBottom: 0, */
                                 paddingLeft: '0.25em',
                                 fontSize: '2em',
                             }}
