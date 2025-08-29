@@ -1,70 +1,62 @@
 import '../../App.css';
 import './SignupPage.css';
 import Banner from '../../components/banner/Banner';
-import { Alert, IconButton, Stack } from '@mui/material';
-import {
-    ActionFunctionArgs,
-    Form,
-    redirect,
-    useFetcher,
-    useNavigate,
-} from 'react-router-dom';
+import { Alert, CircularProgress, IconButton, Stack } from '@mui/material';
+import { Form, useNavigate } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '../../common/form/styled';
 import { ArrowBack } from '@mui/icons-material';
-import { getUser, hashPassword, insertUser } from '../../api/users';
-import useValidateAction, {
-    ActionResponse,
-} from '../../common/hooks/useValidateAction';
-import { FormEvent, useEffect, useState } from 'react';
-import { createNewEndpoint } from '../../api/network';
+import { FormEvent, useState } from 'react';
 import useAuth from '../../components/auth/useAuth';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import Loading from '../../components/loading/Loading';
+import { getUser, hashPassword } from '../../api/users';
+import useInsertUser from '../../common/hooks/users/useInsertUser';
+import useCreateNewEndpoint from '../../common/network/useCreateNewEndpoint';
 
 export default function SignupPage() {
-    const { authorize } = useAuth();
+    const { authorize, isLoading } = useAuth();
     const navigate = useNavigate();
-    const { data: user } = useQuery({ queryKey: ['getUser'] });
+    const insertUser = useInsertUser();
+    const createNewEndpoint = useCreateNewEndpoint();
+
     const [errMsg, setErrMsg] = useState<string>();
-    const queryClient = useQueryClient();
-    const { isSuccess } = useMutation({
-        mutationFn: createNewEndpoint,
-        onSuccess: () =>
-            queryClient.invalidateQueries({ queryKey: ['networkData'] }),
-    });
+    const [isValid, setIsValid] = useState(true);
+    const isBusy =
+        isLoading || insertUser.isPending || createNewEndpoint.isPending;
 
-    if (!isSuccess) {
-        return <Loading />;
-    }
-
-    /* async function onValidLogin(data: ResponseData) { */
-    /*     setIsValid(true); */
-    /*     console.info('Registered user: ', data.username); */
-    /**/
-    /*     // Hash password */
-    /*     const hashedPassword = await hashPassword(data.password); */
-    /**/
-    /*     // Save user to database */
-    /*     await insertUser(data.username, hashedPassword); */
-    /**/
-    /*     // Authorize username */
-    /*     await authorize(data.username); */
-    /**/
-    /*     // Create network endpoint */
-    /*     await createNewEndpoint(data.username); */
-    /**/
-    /*     // Go to homepage */
-    /*     await navigate('/home', { replace: true }); */
-    /* } */
-
-    /* function onInvalidLogin(response: ActionResponse<ResponseData>) { */
-    /*     setIsValid(false); */
-    /*     setErrMsg(response?.error); */
-    /* } */
-
-    async function validateLogin(e: FormEvent) {
+    /* TODO: Add password validation also! */
+    async function validateLogin(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        console.log('hi');
+        const formData = new FormData(e.currentTarget);
+        const username = formData.get('username');
+        const password = formData.get('password');
+
+        if (typeof username === 'string' && typeof password === 'string') {
+            const user = await getUser(username);
+            if (!user) {
+                setIsValid(true);
+                console.info('Registered user: ', username);
+
+                // Hash password
+                const hashedPassword = await hashPassword(password);
+
+                // Save user to database
+                await insertUser.mutateAsync({
+                    username,
+                    password: hashedPassword,
+                });
+
+                // Authorize username
+                await authorize(username);
+
+                // Create network endpoint
+                await createNewEndpoint.mutateAsync(username);
+
+                // Go to homepage
+                await navigate('/home', { replace: true });
+            } else {
+                setIsValid(false);
+                setErrMsg('Username already exists!');
+            }
+        }
     }
 
     return (
@@ -89,8 +81,8 @@ export default function SignupPage() {
                         placeholder="Enter a username..."
                         fullWidth
                         required
-                        /* error={!isValid} */
-                        /* onChange={(_) => (isValid ? null : setIsValid(true))} */
+                        error={!isValid}
+                        onChange={(_) => (isValid ? null : setIsValid(true))}
                     ></StyledTextField>
 
                     <StyledTextField
@@ -106,13 +98,18 @@ export default function SignupPage() {
                         <StyledButton
                             type="submit"
                             variant="contained"
-                            /* disabled={fetcher.state !== 'idle'} */
+                            disabled={isBusy}
                             color="primary"
                         >
-                            {/* {fetcher.state === 'submitting' */}
-                            {/*     ? 'Logging in...' */}
-                            {/*     : 'Sign Up'} */}
+                            {isBusy ? 'Logging in...' : 'Sign Up'}
                         </StyledButton>
+                    </div>
+                    <div
+                        style={{
+                            textAlign: 'center',
+                        }}
+                    >
+                        {isBusy ? <CircularProgress /> : null}
                     </div>
                 </Stack>
             </Form>
@@ -125,36 +122,4 @@ export default function SignupPage() {
             ) : null}
         </Stack>
     );
-}
-
-type ResponseData = { username: string; password: string };
-
-export async function signupAction({
-    request,
-}: ActionFunctionArgs): Promise<ActionResponse<ResponseData>> {
-    // Extract form data
-    const data = await request.formData();
-    const username = data.get('username');
-    const password = data.get('password');
-    if (typeof username !== 'string' || typeof password !== 'string') {
-        return {
-            ok: false,
-            error: 'Missing username or password',
-        };
-    }
-
-    // TODO: Add more username and password validation
-    //  - Check for extra characters
-    //  - Check password length
-
-    // Verify username
-    const user = await getUser(username);
-    if (user) {
-        return {
-            ok: false,
-            error: 'Username already exists',
-        };
-    }
-
-    return { ok: true, data: { username, password } };
 }

@@ -1,8 +1,7 @@
 import '../../App.css';
 import './HomePage.css';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import useAuth from '../../components/auth/useAuth';
-import { closeEndpoint } from '../../api/network';
 import Loading from '../../components/loading/Loading';
 import {
     Avatar,
@@ -17,10 +16,12 @@ import { stringAvatar } from '../../common/stringAvatar';
 import { useState } from 'react';
 import NavDrawer from '../../components/nav/NavDrawer';
 import { Logout } from '@mui/icons-material';
+import useCloseEndpoint from '../../common/network/useCloseEndpoint';
 
 export default function HomePage() {
-    const { unauthorize, currentUser, isLoading } = useAuth();
+    let { unauthorize, currentUser, isLoading } = useAuth();
     const navigate = useNavigate();
+    const closeEndpoint = useCloseEndpoint();
 
     const [menuIsOpen, setMenuIsOpen] = useState(false);
 
@@ -30,7 +31,7 @@ export default function HomePage() {
 
     async function logout() {
         await unauthorize();
-        await closeEndpoint();
+        await closeEndpoint.mutateAsync();
         navigate('/login', { replace: true });
     }
 

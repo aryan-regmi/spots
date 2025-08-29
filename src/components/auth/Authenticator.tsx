@@ -15,14 +15,14 @@ export function AuthProvider(props: { children: any }) {
     const setAuthUser = useSetAuthUser();
     const isAuthenticated = !isLoading && Boolean(authUser);
 
-    if (!authUser || !authUser.username) {
+    if (isLoading) {
         return <Loading />;
     }
 
     async function authorize(username: string) {
         try {
             await setAuthUser.mutateAsync(username);
-            console.debug('Authenticated user:', username);
+            console.info('Authenticated user:', username);
         } catch (e: any) {
             throw new Error(e);
         }
@@ -31,7 +31,7 @@ export function AuthProvider(props: { children: any }) {
     async function unauthorize() {
         try {
             await removeAuthUser.mutateAsync();
-            console.debug('Unauthenticated user:', authUser);
+            console.info('Unauthenticated user:', authUser);
         } catch (e: any) {
             throw new Error(e);
         }
@@ -42,7 +42,7 @@ export function AuthProvider(props: { children: any }) {
             value={{
                 isAuthenticated,
                 isLoading,
-                currentUser: authUser.username,
+                currentUser: authUser?.username ?? undefined,
                 authorize,
                 unauthorize,
             }}

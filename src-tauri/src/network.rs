@@ -176,13 +176,21 @@ impl Network {
             .nodes;
 
         // Create topic with db info
-        let topic = self
-            .gossip
-            .as_ref()
-            .ok_or(String::from("Invalid `Gossip`"))?
-            .subscribe_and_join(topic_id, peers)
-            .await
-            .map_err(|e| e.to_string())?;
+        let topic = if peers.is_empty() {
+            self.gossip
+                .as_ref()
+                .ok_or(String::from("Invalid `Gossip`"))?
+                .subscribe(topic_id, peers)
+                .await
+                .map_err(|e| e.to_string())?
+        } else {
+            self.gossip
+                .as_ref()
+                .ok_or(String::from("Invalid `Gossip`"))?
+                .subscribe_and_join(topic_id, peers)
+                .await
+                .map_err(|e| e.to_string())?
+        };
         let (sender, receiver) = topic.split();
 
         // Update `self`

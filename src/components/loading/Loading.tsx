@@ -11,11 +11,12 @@ export default function Loading() {
                 alignItems: 'center', // horizontal center
                 justifyContent: 'center', // vertical center
                 textAlign: 'center',
-                width: '100vw',
+                width: '95vw',
                 height: '90vh',
             }}
         >
             <CircularProgress size="5em"></CircularProgress>
+            <h3>Loading...</h3>
         </div>
     );
 }

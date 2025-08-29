@@ -67,11 +67,9 @@ pub async fn get_endpoint_addr(db: DatabaseState<'_>, username: String) -> Resul
 /// Closes the endpoint.
 #[tauri::command]
 pub async fn close_endpoint(app_handle: AppHandle) -> Result<()> {
-    tauri::async_runtime::spawn(async move {
-        let net: NetworkState = app_handle.state::<Arc<Mutex<Network>>>();
-        let mut net = net.lock().await;
-        net.close().await.unwrap_or_else(|e| eprintln!("{e}"));
-        drop(net);
-    });
+    let net: NetworkState = app_handle.state::<Arc<Mutex<Network>>>();
+    let mut net = net.lock().await;
+    net.close().await.unwrap_or_else(|e| eprintln!("{e}"));
+    drop(net);
     Ok(())
 }

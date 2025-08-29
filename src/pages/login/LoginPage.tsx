@@ -1,74 +1,58 @@
 import '../../App.css';
 import './LoginPage.css';
-import {
-    ActionFunctionArgs,
-    Link,
-    useFetcher,
-    useNavigate,
-} from 'react-router-dom';
+import { Form, Link, useNavigate } from 'react-router-dom';
 import Banner from '../../components/banner/Banner';
 import useAuth from '../../components/auth/useAuth';
-import useValidateAction, {
-    ActionResponse,
-} from '../../common/hooks/useValidateAction';
 import { Alert, Stack } from '@mui/material';
 import { StyledButton, StyledTextField } from '../../common/form/styled';
 import { getUser, verifyPassword } from '../../api/users';
-import { loadEndpoint } from '../../api/network';
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
+import useLoadEndpoint from '../../common/network/useLoadEndpoint';
 
 export default function LoginPage() {
-    const { authorize } = useAuth();
+    const { authorize, isLoading } = useAuth();
     const navigate = useNavigate();
-    let fetcher = useFetcher();
-    useValidateAction<string, ResponseError>(
-        fetcher,
-        onValidLogin,
-        onInvalidLogin
-    );
+    const loadEndpoint = useLoadEndpoint();
+
     const [isValid, setIsValid] = useState({ username: true, password: true });
     const [errMsg, setErrMsg] = useState<string>();
+    const isBusy = isLoading || loadEndpoint.isPending;
 
-    async function onValidLogin(username: string) {
-        console.info('Logged in user: ', username);
-        setIsValid({ username: true, password: true });
+    async function validateLogin(e: FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const username = formData.get('username');
+        const password = formData.get('password');
 
-        // Authorize username
-        await authorize(username);
-
-        // Load network endpoint
-        console.debug('Loading network endpoint...');
-        await loadEndpoint(username);
-        console.info('Network endpoint loaded');
-
-        // Go to homepage
-        await navigate('/home', { replace: true });
-    }
-
-    async function onInvalidLogin(
-        response: ActionResponse<string, ResponseError>
-    ) {
-        console.debug('Errored');
-        const error = response?.error;
-        if (!error) {
-            setIsValid({ username: false, password: false });
-            setErrMsg('Unknown error');
-            return;
-        }
-
-        switch (error) {
-            case 'Username not found':
+        if (typeof username === 'string' && typeof password === 'string') {
+            // Validate username
+            const user = await getUser(username);
+            if (!user) {
                 setIsValid({ username: false, password: isValid.password });
-                break;
-            case 'Incorrect password':
-                setIsValid({ username: isValid.username, password: false });
-                break;
-            default:
-                setIsValid({ username: false, password: false });
-                break;
-        }
+                setErrMsg('Username not found!');
+                return;
+            }
 
-        setErrMsg(response?.error);
+            // Validate password
+            const verified = await verifyPassword(username, password);
+            if (!verified) {
+                setIsValid({ username: isValid.username, password: false });
+                setErrMsg('Incorrect password!');
+                return;
+            }
+
+            setIsValid({ username: true, password: true });
+            setErrMsg(undefined);
+
+            // Authorize username
+            await authorize(username);
+
+            // Load network endpoint
+            await loadEndpoint.mutateAsync(username);
+
+            // Go to homepage
+            await navigate('/home', { replace: true });
+        }
     }
 
     return (
@@ -76,7 +60,7 @@ export default function LoginPage() {
             <Banner />
 
             {/* Login form */}
-            <fetcher.Form method="post" action="/login">
+            <Form onSubmit={validateLogin}>
                 <Stack className="form-content" direction="column">
                     <StyledTextField
                         label="Username"
@@ -117,16 +101,14 @@ export default function LoginPage() {
                         <StyledButton
                             type="submit"
                             variant="contained"
-                            disabled={fetcher.state !== 'idle'}
+                            disabled={isBusy}
                             color="primary"
                         >
-                            {fetcher.state !== 'idle'
-                                ? 'Logging in...'
-                                : 'Login'}
+                            {isBusy ? 'Logging in...' : 'Login'}
                         </StyledButton>
                     </div>
                 </Stack>
-            </fetcher.Form>
+            </Form>
 
             {/* Sign up link */}
             <Link to={'/signup'} id="signup-link">
@@ -147,30 +129,3 @@ type ResponseError =
     | 'Missing username or password'
     | 'Username not found'
     | 'Incorrect password';
-
-export async function loginAction({
-    request,
-}: ActionFunctionArgs): Promise<ActionResponse<string, ResponseError>> {
-    // Extract form data
-    const data = await request.formData();
-    const username = data.get('username');
-    const password = data.get('password');
-    if (typeof username !== 'string' || typeof password !== 'string') {
-        return {
-            ok: false,
-            error: 'Missing username or password',
-        };
-    }
-
-    // Verfiy login in the backend
-    const user = await getUser(username);
-    if (!user) {
-        return { ok: false, error: 'Username not found' };
-    }
-    const verified = await verifyPassword(username, password);
-    if (!verified) {
-        return { ok: false, error: 'Incorrect password' };
-    }
-
-    return { ok: true, data: username };
-}
