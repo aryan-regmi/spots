@@ -1,5 +1,5 @@
+import { getUser } from '@/api/users';
 import { useQuery } from '@tanstack/react-query';
-import { getUser } from '../../../api/users';
 
 /** Gets the specfied user from the database. */
 export default function useGetUser(username: string) {

@@ -1,4 +1,4 @@
-import '../../App.css';
+import '@/App.css';
 import { CircularProgress } from '@mui/material';
 
 export default function Loading() {

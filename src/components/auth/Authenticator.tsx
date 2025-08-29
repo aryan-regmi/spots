@@ -1,8 +1,8 @@
-import Loading from '../loading/Loading';
-import useGetAuthUser from '../../common/hooks/auth/useGetAuthUser';
-import useRemoveAuthUser from '../../common/hooks/auth/useRemoveAuthUser';
-import useSetAuthUser from '../../common/hooks/auth/useSetAuthUser';
-import { AuthContext } from './AuthContext';
+import Loading from '@/components/loading/Loading';
+import useGetAuthUser from '@/utils/hooks/auth/useGetAuthUser';
+import useRemoveAuthUser from '@/utils/hooks/auth/useRemoveAuthUser';
+import useSetAuthUser from '@/utils/hooks/auth/useSetAuthUser';
+import { AuthContext } from '@/components/auth/AuthContext';
 
 export type AuthData = {
     username?: string;

@@ -1,5 +1,5 @@
+import { setAuthUser } from '@/api/auth';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { setAuthUser } from '../../../api/auth';
 
 /** Sets the authenticated user from the database. */
 export default function useSetAuthUser() {

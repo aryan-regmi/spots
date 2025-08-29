@@ -1,7 +1,7 @@
-import '../../App.css';
-import './LoginPage.css';
-import Banner from '../../components/banner/Banner';
-import useAuth from '../../components/auth/useAuth';
+import '@/App.css';
+import '@/pages/login/LoginPage.css';
+import Banner from '@/components/banner/Banner';
+import useAuth from '@/components/auth/useAuth';
 import useLoadEndpoint from '@/utils/hooks/network/useLoadEndpoint';
 import { Alert, Stack } from '@mui/material';
 import { Form, Link, useNavigate } from 'react-router-dom';

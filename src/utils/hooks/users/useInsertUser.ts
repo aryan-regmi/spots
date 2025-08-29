@@ -1,5 +1,5 @@
+import { insertUser } from '@/api/users';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { insertUser } from '../../../api/users';
 
 /** Inserts the given user into the database, and returns the id of the inserted
  * record. */

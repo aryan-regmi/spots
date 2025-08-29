@@ -1,15 +1,15 @@
-import '../../App.css';
-import './SignupPage.css';
-import Banner from '../../components/banner/Banner';
+import '@/App.css';
+import '@/pages/signup/SignupPage.css';
+import Banner from '@/components/banner/Banner';
+import useAuth from '@/components/auth/useAuth';
+import useCreateNewEndpoint from '@/utils/hooks/network/useCreateNewEndpoint';
+import useInsertUser from '@/utils/hooks/users/useInsertUser';
 import { Alert, CircularProgress, IconButton, Stack } from '@mui/material';
-import { Form, useNavigate } from 'react-router-dom';
-import { StyledButton, StyledTextField } from '../../common/form/styled';
 import { ArrowBack } from '@mui/icons-material';
+import { Form, useNavigate } from 'react-router-dom';
 import { FormEvent, useState } from 'react';
-import useAuth from '../../components/auth/useAuth';
-import { getUser, hashPassword } from '../../api/users';
-import useInsertUser from '../../common/hooks/users/useInsertUser';
-import useCreateNewEndpoint from '../../common/network/useCreateNewEndpoint';
+import { StyledButton, StyledTextField } from '@/utils/form/styled';
+import { getUser, hashPassword } from '@/api/users';
 
 export default function SignupPage() {
     const { authorize, isLoading } = useAuth();

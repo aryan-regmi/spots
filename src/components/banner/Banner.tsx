@@ -1,4 +1,4 @@
-import './Banner.css';
+import '@/components/banner/Banner.css';
 import { GraphicEq } from '@mui/icons-material';
 import { Icon, Stack } from '@mui/material';
 

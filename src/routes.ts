@@ -1,10 +1,10 @@
-import App from './App';
-import HomePage from './pages/home/HomePage';
-import LoginPage from './pages/login/LoginPage';
-import SignupPage from './pages/signup/SignupPage';
+import App from '@/App';
+import HomePage from '@/pages/home/HomePage';
+import Loading from '@/components/loading/Loading';
+import LoginPage from '@/pages/login/LoginPage';
+import SignupPage from '@/pages/signup/SignupPage';
 import { createBrowserRouter, redirect } from 'react-router';
-import { getAuthUser } from './api/auth';
-import Loading from './components/loading/Loading';
+import { getAuthUser } from '@/api/auth';
 
 export const router = createBrowserRouter([
     {

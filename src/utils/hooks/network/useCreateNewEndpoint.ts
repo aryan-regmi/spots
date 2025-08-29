@@ -1,5 +1,5 @@
+import { createNewEndpoint } from '@/api/network';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createNewEndpoint } from '../../api/network';
 
 /** Creates a new network endpoint for the user. */
 export default function useCreateNewEndpoint() {

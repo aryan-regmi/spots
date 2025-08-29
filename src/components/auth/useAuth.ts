@@ -1,5 +1,5 @@
-import { AuthContext } from './AuthContext';
-import { useContext, useEffect } from 'react';
+import { AuthContext } from '@/components/auth/AuthContext';
+import { useContext } from 'react';
 
 /** Returns the authentication context. */
 export default function useAuth() {

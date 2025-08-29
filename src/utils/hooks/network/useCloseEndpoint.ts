@@ -1,5 +1,5 @@
+import { closeEndpoint } from '@/api/network';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { closeEndpoint } from '../../api/network';
 
 /** Closes the endpoint. */
 export default function useCloseEndpoint() {

@@ -1,5 +1,5 @@
-import '../../App.css';
-import './HomePage.css';
+import '@/App.css';
+import '@/pages/home/HomePage.css';
 import Loading from '@/components/loading/Loading';
 import useAuth from '@/components/auth/useAuth';
 import { useNavigate } from 'react-router-dom';
