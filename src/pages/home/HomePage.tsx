@@ -1,21 +1,21 @@
 import '@/App.css';
 import '@/pages/home/HomePage.css';
 import Loading from '@/components/loading/Loading';
+import NavDrawer from '@/components/nav/NavDrawer';
 import useAuth from '@/components/auth/useAuth';
-import { useNavigate } from 'react-router-dom';
+import useCloseEndpoint from '@/utils/hooks/network/useCloseEndpoint';
+import { Logout } from '@mui/icons-material';
 import {
     Avatar,
-    Button,
     Divider,
     IconButton,
     List,
     ListItemButton,
     Stack,
 } from '@mui/material';
-import NavDrawer from '@/components/nav/NavDrawer';
-import useCloseEndpoint from '@/utils/hooks/network/useCloseEndpoint';
-import { Logout } from '@mui/icons-material';
+import { StyledButton } from '@/utils/home/styled';
 import { stringAvatar } from '@/utils/stringAvatar';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 export default function HomePage() {
@@ -43,63 +43,23 @@ export default function HomePage() {
         await navigate('/home/profile');
     }
 
-    /* FIXME: Move styles to HomePage.css */
     function menuHeader(currentUser: string) {
         return (
-            <Button
-                style={{
-                    backgroundColor: '#1f1f1f',
-                    paddingTop: '1em',
-                    paddingLeft: '1.5em',
-                    marginBottom: 0,
-                    paddingBottom: 0,
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    justifyContent: 'left',
-                }}
+            <StyledButton
                 sx={{
                     textTransform: 'none',
                     borderRadius: 0,
                 }}
                 onClick={showProfile}
             >
-                <Stack direction="column" className="menu-header">
-                    <Stack
-                        direction="row"
-                        style={{ justifyContent: 'left' }}
-                        spacing="0.1em"
-                    >
+                <Stack direction="column">
+                    <Stack id="menu-header-inner-row" direction="row">
                         <Avatar {...stringAvatar(currentUser)} />
-                        <div
-                            id="avatar-text"
-                            style={{
-                                color: 'white',
-                                paddingLeft: '0.25em',
-                                fontSize: '2em',
-                            }}
-                        >
-                            {currentUser}
-                        </div>
+                        <div id="avatar-text">{currentUser}</div>
                     </Stack>
-                    <a
-                        style={{
-                            fontSize: '0.8em',
-                            paddingTop: 0,
-                            paddingBottom: 0,
-                            paddingLeft: '1.5em',
-                            marginBottom: 0,
-                            marginTop: 0,
-                            color: 'gray',
-                            userSelect: 'none',
-                            WebkitUserSelect: 'none',
-                            MozUserSelect: 'none',
-                            msUserSelect: 'none',
-                        }}
-                    >
-                        View Profile
-                    </a>
+                    <a id="view-profile-text">View Profile</a>
                 </Stack>
-            </Button>
+            </StyledButton>
         );
     }
 

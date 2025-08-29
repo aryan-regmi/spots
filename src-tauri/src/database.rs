@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Error, Result};
 use serde::Serialize;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode},
@@ -76,8 +76,8 @@ impl Database {
     }
 
     /// Gets the user ID for the given username.
-    pub async fn get_user_id(&self, username: String) -> Result<u32> {
-        let result = sqlx::query("SELECT id FROM users WHERE username = ? LIMIT 1")
+    pub async fn get_user_id(&self, username: String) -> Result<Option<u32>> {
+        let result = sqlx::query("SELECT id FROM users WHERE username = ?")
             .bind(username)
             .fetch_one(&self.pool)
             .await?;
@@ -142,7 +142,10 @@ impl Database {
 impl Database {
     /// Gets the secret key for the specified user.
     pub async fn get_secret_key(&self, username: String) -> Result<EncryptedValue> {
-        let user_id = self.get_user_id(username).await?;
+        let user_id = self
+            .get_user_id(username.clone())
+            .await?
+            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
         let result = sqlx::query("SELECT secret_key FROM network WHERE user_id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
@@ -151,6 +154,7 @@ impl Database {
         let (encrypted_key, _): (EncryptedValueBincode, usize) =
             bincode::decode_from_slice(&bytes, bincode::config::standard())?;
         Ok(encrypted_key.value)
+        // Err(Error::from(anyhow!("{username} not found")))
     }
 
     /// Sets the secret key for the specified user.
@@ -159,7 +163,10 @@ impl Database {
             EncryptedValueBincode { value: secret_key },
             bincode::config::standard(),
         )?;
-        let user_id = self.get_user_id(username).await?;
+        let user_id = self
+            .get_user_id(username.clone())
+            .await?
+            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
         sqlx::query("INSERT INTO network (user_id, secret_key) VALUES (?,?)")
             .bind(user_id)
             .bind(secret_key_bytes)
@@ -169,8 +176,11 @@ impl Database {
     }
 
     /// Gets the endpoint node address for the specified user.
-    pub async fn get_endpoint_node(&self, username: String) -> Result<String> {
-        let user_id = self.get_user_id(username).await?;
+    pub async fn get_endpoint_node(&self, username: String) -> Result<Option<String>> {
+        let user_id = self
+            .get_user_id(username.clone())
+            .await?
+            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
         let result = sqlx::query("SELECT endpoint FROM network WHERE user_id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
@@ -184,7 +194,10 @@ impl Database {
         username: String,
         endpoint_address: String,
     ) -> Result<()> {
-        let user_id = self.get_user_id(username).await?;
+        let user_id = self
+            .get_user_id(username.clone())
+            .await?
+            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
         sqlx::query("UPDATE network SET endpoint = ? WHERE user_id = ?")
             .bind(endpoint_address)
             .bind(user_id)
@@ -195,7 +208,10 @@ impl Database {
 
     /// Gets the topic id for the specified user.
     pub async fn get_topic_id(&self, username: String) -> Result<Option<String>> {
-        let user_id = self.get_user_id(username).await?;
+        let user_id = self
+            .get_user_id(username.clone())
+            .await?
+            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
         let result = sqlx::query("SELECT topic_id FROM network WHERE user_id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
@@ -205,7 +221,10 @@ impl Database {
 
     /// Sets the topic id for the specified user.
     pub async fn set_topic_id(&self, username: String, topic_id: String) -> Result<()> {
-        let user_id = self.get_user_id(username).await?;
+        let user_id = self
+            .get_user_id(username.clone())
+            .await?
+            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
         sqlx::query("UPDATE network SET topic_id = ? WHERE user_id = ?")
             .bind(topic_id)
             .bind(user_id)
@@ -216,22 +235,32 @@ impl Database {
 
     /// Gets the peers for the specified username.
     pub async fn get_peers(&self, username: String) -> Result<Peers> {
-        let user_id = self.get_user_id(username).await?;
+        let user_id = self
+            .get_user_id(username.clone())
+            .await?
+            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
         let result = sqlx::query("SELECT peers FROM network where user_id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
             .await?;
-        let bytes: Vec<u8> = result.get("peers");
-        let (peers, _): (PeersBincode, usize) =
-            bincode::decode_from_slice(&bytes, bincode::config::standard())?;
-        Ok(peers.peers)
+        let bytes: Option<Vec<u8>> = result.get("peers");
+        if let Some(bytes) = bytes {
+            let (peers, _): (PeersBincode, usize) =
+                bincode::decode_from_slice(&bytes, bincode::config::standard())?;
+            Ok(peers.peers)
+        } else {
+            Ok(Peers { nodes: vec![] })
+        }
     }
 
     /// Sets the peers for the specified username.
     pub async fn set_peers(&self, username: String, peers: Peers) -> Result<()> {
         let peers_bytes =
             bincode::encode_to_vec(PeersBincode { peers }, bincode::config::standard())?;
-        let user_id = self.get_user_id(username).await?;
+        let user_id = self
+            .get_user_id(username.clone())
+            .await?
+            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
         sqlx::query("UPDATE network SET peers = ? WHERE user_id = ?")
             .bind(peers_bytes)
             .bind(user_id)

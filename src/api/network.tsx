@@ -21,7 +21,7 @@ export async function loadEndpoint(username: string) {
 /** Gets the endpoint address for the specfied user. */
 export async function getEndpointAddr(username: string) {
     try {
-        let endpointAddr = await invoke<string>('get_endpoint_addr', {
+        let endpointAddr = await invoke<string | null>('get_endpoint_addr', {
             username,
         });
         return endpointAddr;

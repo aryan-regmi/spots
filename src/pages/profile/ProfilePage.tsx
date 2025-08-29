@@ -20,7 +20,7 @@ export default function ProfilePage() {
     return (
         <Stack
             direction="column"
-            spacing="4.5em"
+            spacing="5em"
             sx={{ width: '100%' }}
             style={{ padding: '1em' }}
         >
