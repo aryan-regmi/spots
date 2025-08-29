@@ -45,6 +45,8 @@ export default function ProfilePage() {
                     <QRCode value={getEndpointAddr.data ?? ''}></QRCode>
                 </Stack>
             </Stack>
+
+            {/* TODO: Add share button: https://github.com/buildyourwebapp/tauri-plugin-sharesheet */}
         </Stack>
     );
 }

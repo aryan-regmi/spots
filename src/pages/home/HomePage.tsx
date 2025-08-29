@@ -26,7 +26,7 @@ export default function HomePage() {
     const closeEndpoint = useCloseEndpoint();
 
     const [menuIsOpen, setMenuIsOpen] = useState(false);
-    const [nav, setNav] = useState<NavState>('Home');
+    const [nav, setNav] = useState(NavState.Home);
 
     if (isLoading || !currentUser) {
         return <Loading />;
@@ -44,6 +44,28 @@ export default function HomePage() {
 
     async function showProfile() {
         await navigate('/home/profile');
+    }
+
+    function navDrawer(currentUser: string) {
+        return (
+            <NavDrawer
+                open={menuIsOpen}
+                onClose={toggleMenu}
+                style={{ backgroundColor: '#1f2f2f' }}
+            >
+                {/* Menu header */}
+                {menuHeader(currentUser)}
+                <Divider color="black" style={{ paddingTop: '0.05em' }} />
+
+                {/* Menu items */}
+                <List>
+                    <ListItemButton onClick={logout}>
+                        <Logout />
+                        Logout
+                    </ListItemButton>
+                </List>
+            </NavDrawer>
+        );
     }
 
     function menuHeader(currentUser: string) {
@@ -97,26 +119,15 @@ export default function HomePage() {
         );
     }
 
-    function navDrawer(currentUser: string) {
-        return (
-            <NavDrawer
-                open={menuIsOpen}
-                onClose={toggleMenu}
-                style={{ backgroundColor: '#1f2f2f' }}
-            >
-                {/* Menu header */}
-                {menuHeader(currentUser)}
-                <Divider color="black" style={{ paddingTop: '0.05em' }} />
-
-                {/* Menu items */}
-                <List>
-                    <ListItemButton onClick={logout}>
-                        <Logout />
-                        Logout
-                    </ListItemButton>
-                </List>
-            </NavDrawer>
-        );
+    function displayNavigatedPage(nav: NavState) {
+        switch (nav) {
+            case NavState.Home:
+                return <div>Home</div>;
+            case NavState.Search:
+                return <div>Search</div>;
+            case NavState.Playlists:
+                return <div>Playlists</div>;
+        }
     }
 
     return (
@@ -137,6 +148,7 @@ export default function HomePage() {
                 className="home-content"
                 sx={{ flexGrow: 1 }}
             >
+                {displayNavigatedPage(nav)}
                 {/*  TODO: Display playlists here! */}
             </Stack>
 
@@ -146,4 +158,8 @@ export default function HomePage() {
     );
 }
 
-type NavState = 'Home';
+enum NavState {
+    Home = 0,
+    Search,
+    Playlists,
+}
