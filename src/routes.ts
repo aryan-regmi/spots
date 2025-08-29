@@ -12,16 +12,14 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                Component: Loading,
                 loader: async () => {
                     const authUser = await getAuthUser();
-                    if (!authUser.username) {
-                        return redirect('/login');
-                    } else {
+                    if (authUser.username) {
                         return redirect('/home');
+                    } else {
+                        return redirect('/login');
                     }
                 },
-                HydrateFallback: Loading,
             },
             {
                 path: '/home',
@@ -38,11 +36,23 @@ export const router = createBrowserRouter([
                 path: '/login',
                 Component: LoginPage,
                 HydrateFallback: Loading,
+                loader: async () => {
+                    const authUser = await getAuthUser();
+                    if (authUser.username) {
+                        return redirect('/home');
+                    }
+                },
             },
             {
                 path: '/signup',
                 Component: SignupPage,
                 HydrateFallback: Loading,
+                loader: async () => {
+                    const authUser = await getAuthUser();
+                    if (authUser.username) {
+                        return redirect('/home');
+                    }
+                },
             },
         ],
     },

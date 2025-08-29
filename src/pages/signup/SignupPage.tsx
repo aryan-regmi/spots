@@ -12,15 +12,19 @@ import { StyledButton, StyledTextField } from '@/utils/form/styled';
 import { getUser, hashPassword } from '@/api/users';
 
 export default function SignupPage() {
-    const { authorize, isLoading } = useAuth();
+    let { authorize, isLoading } = useAuth();
     const navigate = useNavigate();
     const insertUser = useInsertUser();
     const createNewEndpoint = useCreateNewEndpoint();
 
     const [errMsg, setErrMsg] = useState<string>();
     const [isValid, setIsValid] = useState(true);
+    const [validating, setValidating] = useState(false);
     const isBusy =
-        isLoading || insertUser.isPending || createNewEndpoint.isPending;
+        isLoading ||
+        insertUser.isPending ||
+        createNewEndpoint.isPending ||
+        validating;
 
     /* TODO: Add password validation also! */
     async function validateLogin(e: FormEvent<HTMLFormElement>) {
@@ -28,6 +32,7 @@ export default function SignupPage() {
         const formData = new FormData(e.currentTarget);
         const username = formData.get('username');
         const password = formData.get('password');
+        setValidating(true);
 
         if (typeof username === 'string' && typeof password === 'string') {
             const user = await getUser(username);
@@ -51,9 +56,11 @@ export default function SignupPage() {
                 await createNewEndpoint.mutateAsync(username);
 
                 // Go to homepage
-                await navigate('/home', { replace: true });
+                setValidating(false);
+                await navigate('/', { replace: true });
             } else {
                 setIsValid(false);
+                setValidating(false);
                 setErrMsg('Username already exists!');
             }
         }
@@ -65,6 +72,7 @@ export default function SignupPage() {
                 id="back-btn"
                 size="large"
                 onClick={() => navigate('/login', { replace: true })}
+                disabled={isBusy}
             >
                 <ArrowBack />
             </IconButton>

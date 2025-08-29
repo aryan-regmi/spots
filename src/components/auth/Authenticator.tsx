@@ -13,7 +13,8 @@ export function AuthProvider(props: { children: any }) {
     const { data: authUser, isLoading } = useGetAuthUser();
     const removeAuthUser = useRemoveAuthUser();
     const setAuthUser = useSetAuthUser();
-    const isAuthenticated = !isLoading && Boolean(authUser);
+    const isAuthenticated =
+        !isLoading && Boolean(authUser) && Boolean(authUser?.username);
 
     if (isLoading) {
         return <Loading />;

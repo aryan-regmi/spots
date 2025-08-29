@@ -16,13 +16,15 @@ export default function LoginPage() {
 
     const [isValid, setIsValid] = useState({ username: true, password: true });
     const [errMsg, setErrMsg] = useState<string>();
-    const isBusy = isLoading || loadEndpoint.isPending;
+    const [validating, setValidating] = useState(false);
+    const isBusy = isLoading || loadEndpoint.isPending || validating;
 
     async function validateLogin(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const username = formData.get('username');
         const password = formData.get('password');
+        setValidating(true);
 
         if (typeof username === 'string' && typeof password === 'string') {
             // Validate username
@@ -30,6 +32,7 @@ export default function LoginPage() {
             if (!user) {
                 setIsValid({ username: false, password: isValid.password });
                 setErrMsg('Username not found!');
+                setValidating(false);
                 return;
             }
 
@@ -38,6 +41,7 @@ export default function LoginPage() {
             if (!verified) {
                 setIsValid({ username: isValid.username, password: false });
                 setErrMsg('Incorrect password!');
+                setValidating(false);
                 return;
             }
 
@@ -51,6 +55,7 @@ export default function LoginPage() {
             await loadEndpoint.mutateAsync(username);
 
             // Go to homepage
+            setValidating(false);
             await navigate('/home', { replace: true });
         }
     }
