@@ -13,7 +13,7 @@ export const router = createBrowserRouter([
             {
                 index: true,
                 loader: async () => {
-                    let authUser = await getAuthUser();
+                    const authUser = await getAuthUser();
                     if (!authUser.username) {
                         return redirect('/login');
                     } else {
@@ -23,21 +23,39 @@ export const router = createBrowserRouter([
                 HydrateFallback: Loading,
             },
             {
+                path: '/home',
+                Component: HomePage,
+                HydrateFallback: Loading,
+                loader: async () => {
+                    const authUser = await getAuthUser();
+                    if (!authUser.username) {
+                        return redirect('/login');
+                    }
+                },
+            },
+            {
                 path: '/login',
                 Component: LoginPage,
                 action: loginAction,
                 HydrateFallback: Loading,
-            },
-            {
-                path: '/home',
-                Component: HomePage,
-                HydrateFallback: Loading,
+                loader: async () => {
+                    const authUser = await getAuthUser();
+                    if (authUser.username) {
+                        return redirect('/home');
+                    }
+                },
             },
             {
                 path: '/signup',
                 Component: SignupPage,
                 action: signupAction,
                 HydrateFallback: Loading,
+                loader: async () => {
+                    const authUser = await getAuthUser();
+                    if (authUser.username) {
+                        return redirect('/home');
+                    }
+                },
             },
         ],
     },

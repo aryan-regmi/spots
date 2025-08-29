@@ -2,14 +2,19 @@ import '../../App.css';
 import './SignupPage.css';
 import Banner from '../../components/banner/Banner';
 import { Alert, IconButton, Stack } from '@mui/material';
-import { ActionFunctionArgs, useFetcher, useNavigate } from 'react-router-dom';
+import {
+    ActionFunctionArgs,
+    redirect,
+    useFetcher,
+    useNavigate,
+} from 'react-router-dom';
 import { StyledButton, StyledTextField } from '../../common/form/styled';
 import { ArrowBack } from '@mui/icons-material';
 import { getUser, hashPassword, insertUser } from '../../api/users';
 import useValidateAction, {
     ActionResponse,
 } from '../../common/hooks/useValidateAction';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createNewEndpoint } from '../../api/network';
 import useAuth from '../../components/auth/useAuth';
 
@@ -21,26 +26,26 @@ export default function SignupPage() {
     const [isValid, setIsValid] = useState(true);
     const [errMsg, setErrMsg] = useState<string>();
 
-    function onValidLogin(data: ResponseData) {
+    async function onValidLogin(data: ResponseData) {
         setIsValid(true);
         console.info('Registered user: ', data.username);
 
-        // Create salt and hash password
-        hashPassword(data.password).then((hash) => {
-            // Save user to database
-            insertUser(data.username, hash);
-        });
+        // Hash password
+        const hashedPassword = await hashPassword(data.password);
+
+        // Save user to database
+        await insertUser(data.username, hashedPassword);
 
         // Authorize username
-        authorize(data.username);
+        await authorize(data.username);
 
         // Create network endpoint
-        createNewEndpoint(data.username).then(() =>
-            console.info('Network endpoint created')
-        );
+        console.debug('Creating new endpoint...');
+        await createNewEndpoint(data.username);
+        console.debug('Endpoint created!');
 
         // Go to homepage
-        navigate('/home', { replace: true });
+        await navigate('/home', { replace: true });
     }
 
     function onInvalidLogin(response: ActionResponse<ResponseData>) {

@@ -13,15 +13,22 @@ export type ActionResponse<T, E = string> =
 /** Handles the response from an `action`. */
 export default function useValidateAction<T, E = string>(
     fetcher: FetcherWithComponents<any>,
-    onValid: (data: T) => void,
-    onInvalid: (response: ActionResponse<T, E>) => void
+    onValid: (data: T) => Promise<void>,
+    onInvalid: (response: ActionResponse<T, E>) => Promise<void>
 ) {
     useEffect(() => {
-        let response: ActionResponse<T, E> = fetcher.data;
-        if (fetcher.state === 'idle' && response?.ok && response.data) {
-            onValid(response.data);
-        } else if (response?.error) {
-            onInvalid(response);
+        async function run() {
+            let response: ActionResponse<T, E> = fetcher.data;
+            if (fetcher.state === 'idle' && response?.ok && response.data) {
+                await onValid(response.data);
+            } else if (response?.error) {
+                await onInvalid(response);
+            } else {
+                if (response?.data) {
+                    await onValid(response.data);
+                }
+            }
         }
-    }, [fetcher.data]);
+        run();
+    }, [fetcher.state, fetcher.data]);
 }

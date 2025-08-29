@@ -20,7 +20,7 @@ import { useState } from 'react';
 export default function LoginPage() {
     const { authorize } = useAuth();
     const navigate = useNavigate();
-    const fetcher = useFetcher();
+    let fetcher = useFetcher();
     useValidateAction<string, ResponseError>(
         fetcher,
         onValidLogin,
@@ -29,23 +29,26 @@ export default function LoginPage() {
     const [isValid, setIsValid] = useState({ username: true, password: true });
     const [errMsg, setErrMsg] = useState<string>();
 
-    function onValidLogin(username: string) {
-        setIsValid({ username: true, password: true });
+    async function onValidLogin(username: string) {
         console.info('Logged in user: ', username);
+        setIsValid({ username: true, password: true });
 
         // Authorize username
-        authorize(username);
+        await authorize(username);
 
         // Load network endpoint
-        loadEndpoint(username).then(() =>
-            console.info('Network endpoint loaded')
-        );
+        console.debug('Loading network endpoint...');
+        await loadEndpoint(username);
+        console.info('Network endpoint loaded');
 
         // Go to homepage
-        navigate('/home', { replace: true });
+        await navigate('/home', { replace: true });
     }
 
-    function onInvalidLogin(response: ActionResponse<string, ResponseError>) {
+    async function onInvalidLogin(
+        response: ActionResponse<string, ResponseError>
+    ) {
+        console.debug('Errored');
         const error = response?.error;
         if (!error) {
             setIsValid({ username: false, password: false });
@@ -117,7 +120,7 @@ export default function LoginPage() {
                             disabled={fetcher.state !== 'idle'}
                             color="primary"
                         >
-                            {fetcher.state === 'submitting'
+                            {fetcher.state !== 'idle'
                                 ? 'Logging in...'
                                 : 'Login'}
                         </StyledButton>
