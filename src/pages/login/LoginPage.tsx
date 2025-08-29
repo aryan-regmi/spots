@@ -3,7 +3,7 @@ import '@/pages/login/LoginPage.css';
 import Banner from '@/components/banner/Banner';
 import useAuth from '@/components/auth/useAuth';
 import useLoadEndpoint from '@/utils/hooks/network/useLoadEndpoint';
-import { Alert, Stack } from '@mui/material';
+import { Alert, CircularProgress, Stack } from '@mui/material';
 import { Form, Link, useNavigate } from 'react-router-dom';
 import { FormEvent, useState } from 'react';
 import { StyledButton, StyledTextField } from '@/utils/form/styled';
@@ -106,6 +106,13 @@ export default function LoginPage() {
                         >
                             {isBusy ? 'Logging in...' : 'Login'}
                         </StyledButton>
+                    </div>
+                    <div
+                        style={{
+                            textAlign: 'center',
+                        }}
+                    >
+                        {isBusy ? <CircularProgress /> : null}
                     </div>
                 </Stack>
             </Form>
