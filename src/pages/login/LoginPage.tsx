@@ -1,13 +1,13 @@
 import '../../App.css';
 import './LoginPage.css';
-import { Form, Link, useNavigate } from 'react-router-dom';
 import Banner from '../../components/banner/Banner';
 import useAuth from '../../components/auth/useAuth';
+import useLoadEndpoint from '@/utils/hooks/network/useLoadEndpoint';
 import { Alert, Stack } from '@mui/material';
-import { StyledButton, StyledTextField } from '../../common/form/styled';
-import { getUser, verifyPassword } from '../../api/users';
+import { Form, Link, useNavigate } from 'react-router-dom';
 import { FormEvent, useState } from 'react';
-import useLoadEndpoint from '../../common/network/useLoadEndpoint';
+import { StyledButton, StyledTextField } from '@/utils/form/styled';
+import { getUser, verifyPassword } from '@/api/users';
 
 export default function LoginPage() {
     const { authorize, isLoading } = useAuth();
@@ -124,8 +124,3 @@ export default function LoginPage() {
         </Stack>
     );
 }
-
-type ResponseError =
-    | 'Missing username or password'
-    | 'Username not found'
-    | 'Incorrect password';

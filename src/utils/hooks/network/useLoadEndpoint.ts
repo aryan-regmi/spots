@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { loadEndpoint } from '../../api/network';
+import { loadEndpoint } from '@/api/network';
 
 /** Loads the stored endpoint for the user. */
 export default function useLoadEndpoint() {

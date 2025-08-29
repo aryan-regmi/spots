@@ -1,8 +1,8 @@
 import '../../App.css';
 import './HomePage.css';
+import Loading from '@/components/loading/Loading';
+import useAuth from '@/components/auth/useAuth';
 import { useNavigate } from 'react-router-dom';
-import useAuth from '../../components/auth/useAuth';
-import Loading from '../../components/loading/Loading';
 import {
     Avatar,
     Button,
@@ -12,11 +12,11 @@ import {
     ListItemButton,
     Stack,
 } from '@mui/material';
-import { stringAvatar } from '../../common/stringAvatar';
-import { useState } from 'react';
-import NavDrawer from '../../components/nav/NavDrawer';
+import NavDrawer from '@/components/nav/NavDrawer';
+import useCloseEndpoint from '@/utils/hooks/network/useCloseEndpoint';
 import { Logout } from '@mui/icons-material';
-import useCloseEndpoint from '../../common/network/useCloseEndpoint';
+import { stringAvatar } from '@/utils/stringAvatar';
+import { useState } from 'react';
 
 export default function HomePage() {
     let { unauthorize, currentUser, isLoading } = useAuth();
