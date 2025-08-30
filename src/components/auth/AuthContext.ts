@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-type AuthContextType = {
+export type AuthContextType = {
     isAuthenticated: boolean;
     isLoading: boolean;
     currentUser?: string;
