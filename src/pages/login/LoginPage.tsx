@@ -1,23 +1,39 @@
 import '@/App.css';
 import '@/pages/login/LoginPage.css';
 import Banner from '@/components/banner/Banner';
-import useLoadEndpoint from '@/utils/hooks/network/useLoadEndpoint';
 import { Alert, CircularProgress, Stack } from '@mui/material';
 import { Form, Link, useNavigate } from 'react-router-dom';
-import { FormEvent, useState } from 'react';
+import { FormEvent } from 'react';
 import { StyledButton, StyledTextField } from '@/utils/form/styled';
-import { authContextAtom } from '@/components/auth/Auth';
-import { getUser, verifyPassword } from '@/api/users';
-import { useAtomValue } from 'jotai';
+import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
+import { getUserAtom } from '@/utils/users/atoms';
+import { loadEndpointAtom } from '@/utils/network/atoms';
+import { atom, useAtom, useAtomValue } from 'jotai';
+import { verifyPassword } from '@/api/users';
+import { useParamAtom } from '@/utils/hooks/useParamAtom';
+
+/* State atoms */
+const currentUsernameAtom = atom('');
+
+/* Validating atoms */
+const isValidAtom = atom({ username: true, password: true });
+const errorMessageAtom = atom<string>();
+const validatingAtom = atom(false);
 
 export default function LoginPage() {
-    const { authorize, isLoading } = useAtomValue(authContextAtom);
     const navigate = useNavigate();
-    const loadEndpoint = useLoadEndpoint();
+    const { isLoading } = useAtomValue(authContextAtom);
+    const { authorize } = useAtomValue(authContextActionAtom);
+    const loadEndpoint = useAtomValue(loadEndpointAtom);
 
-    const [isValid, setIsValid] = useState({ username: true, password: true });
-    const [errMsg, setErrMsg] = useState<string>();
-    const [validating, setValidating] = useState(false);
+    /* State */
+    const [currentUsername, setCurrentUsername] = useAtom(currentUsernameAtom);
+    const user = useParamAtom(getUserAtom, currentUsername);
+
+    /* Validation */
+    const [isValid, setIsValid] = useAtom(isValidAtom);
+    const [errMsg, setErrMsg] = useAtom(errorMessageAtom);
+    const [validating, setValidating] = useAtom(validatingAtom);
     const isBusy = isLoading || loadEndpoint.isPending || validating;
 
     async function validateLogin(e: FormEvent<HTMLFormElement>) {
@@ -28,8 +44,9 @@ export default function LoginPage() {
         setValidating(true);
 
         if (typeof username === 'string' && typeof password === 'string') {
+            setCurrentUsername(username);
+
             // Validate username
-            const user = await getUser(username);
             if (!user) {
                 setIsValid({ username: false, password: isValid.password });
                 setErrMsg('Username not found!');
@@ -110,7 +127,7 @@ export default function LoginPage() {
                             disabled={isBusy}
                             color="primary"
                         >
-                            {isBusy ? 'Logging in...' : 'Login'}
+                            {validating ? 'Logging in...' : 'Login'}
                         </StyledButton>
                     </div>
                     <div

@@ -1,30 +1,35 @@
 import '@/App.css';
 import '@/pages/signup/SignupPage.css';
 import Banner from '@/components/banner/Banner';
-import useCreateNewEndpoint from '@/utils/hooks/network/useCreateNewEndpoint';
-import useInsertUser from '@/utils/hooks/users/useInsertUser';
 import { Alert, CircularProgress, IconButton, Stack } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { Form, useNavigate } from 'react-router-dom';
-import { FormEvent, useState } from 'react';
+import { FormEvent } from 'react';
 import { StyledButton, StyledTextField } from '@/utils/form/styled';
-import { authContextAtom } from '@/components/auth/Auth';
+import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
+import { createEndpointAtom } from '@/utils/network/atoms';
 import { getUser, hashPassword } from '@/api/users';
-import { useAtomValue } from 'jotai';
+import { insertUserAtom } from '@/utils/users/atoms';
+import { atom, useAtom, useAtomValue } from 'jotai';
+
+const errorMessageAtom = atom<string>();
+const isValidAtom = atom(true);
+const validatingAtom = atom(false);
 
 export default function SignupPage() {
-    const { authorize, isLoading } = useAtomValue(authContextAtom);
+    const { isLoading } = useAtomValue(authContextAtom);
+    const { authorize } = useAtomValue(authContextActionAtom);
     const navigate = useNavigate();
-    const insertUser = useInsertUser();
-    const createNewEndpoint = useCreateNewEndpoint();
+    const insertUser = useAtomValue(insertUserAtom);
+    const createEndpoint = useAtomValue(createEndpointAtom);
 
-    const [errMsg, setErrMsg] = useState<string>();
-    const [isValid, setIsValid] = useState(true);
-    const [validating, setValidating] = useState(false);
+    const [errMsg, setErrMsg] = useAtom(errorMessageAtom);
+    const [isValid, setIsValid] = useAtom(isValidAtom);
+    const [validating, setValidating] = useAtom(validatingAtom);
     const isBusy =
         isLoading ||
         insertUser.isPending ||
-        createNewEndpoint.isPending ||
+        createEndpoint.isPending ||
         validating;
 
     /* TODO: Add password validation also! */
@@ -54,7 +59,7 @@ export default function SignupPage() {
                 await authorize(username);
 
                 // Create network endpoint
-                await createNewEndpoint.mutateAsync(username);
+                await createEndpoint.mutateAsync(username);
 
                 // Go to homepage
                 setValidating(false);

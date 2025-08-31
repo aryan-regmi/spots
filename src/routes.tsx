@@ -10,9 +10,12 @@ import { getAuthUser } from '@/api/auth';
 export const router = createBrowserRouter([
     {
         Component: App,
+        hydrateFallbackElement: <Loading />,
         children: [
             {
                 index: true,
+                Component: Loading,
+                hydrateFallbackElement: <Loading />,
                 loader: async () => {
                     const authUser = await getAuthUser();
                     if (authUser.username) {
@@ -36,7 +39,7 @@ export const router = createBrowserRouter([
             {
                 path: '/login',
                 Component: LoginPage,
-                HydrateFallback: Loading,
+                hydrateFallbackElement: <Loading />,
                 loader: async () => {
                     const authUser = await getAuthUser();
                     if (authUser.username) {
@@ -47,7 +50,7 @@ export const router = createBrowserRouter([
             {
                 path: '/signup',
                 Component: SignupPage,
-                HydrateFallback: Loading,
+                hydrateFallbackElement: <Loading />,
                 loader: async () => {
                     const authUser = await getAuthUser();
                     if (authUser.username) {
@@ -58,7 +61,7 @@ export const router = createBrowserRouter([
             {
                 path: '/home/profile',
                 Component: ProfilePage,
-                HydrateFallback: Loading,
+                hydrateFallbackElement: <Loading />,
             },
         ],
     },
