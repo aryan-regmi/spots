@@ -8,10 +8,15 @@ import { FormEvent } from 'react';
 import { StyledButton, StyledTextField } from '@/utils/form/styled';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
-import { getUser, hashPassword } from '@/api/users';
-import { insertUserAtom } from '@/utils/users/atoms';
+import { hashPassword } from '@/api/users';
+import { getUserAtom, insertUserAtom } from '@/utils/users/atoms';
 import { atom, useAtom, useAtomValue } from 'jotai';
+import { useParamAtom } from '@/utils/hooks/useParamAtom';
 
+/* State atoms */
+const currentUsernameAtom = atom('');
+
+/* Validation atoms */
 const errorMessageAtom = atom<string>();
 const isValidAtom = atom(true);
 const validatingAtom = atom(false);
@@ -22,6 +27,10 @@ export default function SignupPage() {
     const navigate = useNavigate();
     const insertUser = useAtomValue(insertUserAtom);
     const createEndpoint = useAtomValue(createEndpointAtom);
+
+    /* State */
+    const [currentUsername, setCurrentUsername] = useAtom(currentUsernameAtom);
+    const user = useParamAtom(getUserAtom, currentUsername);
 
     /* Validation */
     const [errMsg, setErrMsg] = useAtom(errorMessageAtom);
@@ -42,7 +51,10 @@ export default function SignupPage() {
         setValidating(true);
 
         if (typeof username === 'string' && typeof password === 'string') {
-            const user = await getUser(username);
+            setCurrentUsername(username);
+            console.debug(user);
+
+            // Validate username
             if (!user) {
                 setIsValid(true);
                 console.info('Registered user: ', username);
@@ -97,7 +109,13 @@ export default function SignupPage() {
                         fullWidth
                         required
                         error={!isValid}
-                        onChange={(_) => (isValid ? null : setIsValid(true))}
+                        /* onChange={(_) => (isValid ? null : setIsValid(true))} */
+                        onChange={(_) => {
+                            if (!isValid) {
+                                setIsValid(true);
+                                setErrMsg(undefined);
+                            }
+                        }}
                     ></StyledTextField>
 
                     <StyledTextField

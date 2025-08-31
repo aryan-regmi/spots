@@ -95,14 +95,12 @@ impl Database {
     }
 
     /// Gets the password hash for the specified user.
-    pub async fn get_password_hash(&self, username: String) -> Result<String> {
-        Ok(
-            sqlx::query("SELECT password FROM users WHERE username = ? LIMIT 1")
-                .bind(username)
-                .fetch_one(&self.pool)
-                .await?
-                .get("password"),
-        )
+    pub async fn get_password_hash(&self, username: String) -> Result<Option<String>> {
+        Ok(sqlx::query("SELECT password FROM users WHERE username = ?")
+            .bind(username)
+            .fetch_one(&self.pool)
+            .await?
+            .get("password"))
     }
 }
 

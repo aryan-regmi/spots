@@ -15,7 +15,7 @@ import { useParamAtom } from '@/utils/hooks/useParamAtom';
 /* State atoms */
 const currentUsernameAtom = atom('');
 
-/* Validating atoms */
+/* Validation atoms */
 const isValidAtom = atom({ username: true, password: true });
 const errorMessageAtom = atom<string>();
 const validatingAtom = atom(false);
@@ -93,14 +93,15 @@ export default function LoginPage() {
                         fullWidth
                         required
                         error={!isValid.username}
-                        onChange={(_) =>
-                            isValid.username
-                                ? null
-                                : setIsValid({
-                                      username: true,
-                                      password: isValid.password,
-                                  })
-                        }
+                        onChange={(_) => {
+                            if (!isValid.username) {
+                                setIsValid({
+                                    username: true,
+                                    password: isValid.password,
+                                });
+                                setErrMsg(undefined);
+                            }
+                        }}
                     />
                     <StyledTextField
                         label="Password"
@@ -110,14 +111,15 @@ export default function LoginPage() {
                         fullWidth
                         required
                         error={!isValid.password}
-                        onChange={(_) =>
-                            isValid.password
-                                ? null
-                                : setIsValid({
-                                      username: isValid.username,
-                                      password: true,
-                                  })
-                        }
+                        onChange={(_) => {
+                            if (!isValid.password) {
+                                setIsValid({
+                                    username: isValid.username,
+                                    password: true,
+                                });
+                                setErrMsg(undefined);
+                            }
+                        }}
                     />
 
                     <div id="login-btn">

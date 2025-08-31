@@ -14,7 +14,6 @@ export default function ProfilePage() {
     const getEndpointAddr = authUser
         ? useParamAtom(getEndpointAddressAtom, authUser)
         : null;
-    /* userAtom ?? atom(() => ({ data: null })) */
 
     /* Handle incomplete state */
     const isBusy = isLoading || !authUser;

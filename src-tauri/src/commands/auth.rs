@@ -25,7 +25,8 @@ pub async fn verify_password(
     let hash = database
         .get_password_hash(username)
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "No entry found for user")?;
     let parsed = PasswordHash::new(&hash).map_err(|e| e.to_string())?;
     Ok(Argon2::default()
         .verify_password(password.as_bytes(), &parsed)
