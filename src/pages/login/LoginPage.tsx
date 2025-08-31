@@ -47,7 +47,7 @@ export default function LoginPage() {
             setCurrentUsername(username);
 
             // Validate username
-            if (!user) {
+            if (!user.data) {
                 setIsValid({ username: false, password: isValid.password });
                 setErrMsg('Username not found!');
                 setValidating(false);

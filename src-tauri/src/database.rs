@@ -79,9 +79,10 @@ impl Database {
     pub async fn get_user_id(&self, username: String) -> Result<Option<u32>> {
         let result = sqlx::query("SELECT id FROM users WHERE username = ?")
             .bind(username)
-            .fetch_one(&self.pool)
-            .await?;
-        Ok(result.get("id"))
+            .fetch_optional(&self.pool)
+            .await?
+            .map(|user| user.get("id"));
+        Ok(result)
     }
 
     /// Inserts the given user into the database, and returns the id of the inserted record.
@@ -97,10 +98,10 @@ impl Database {
     /// Gets the password hash for the specified user.
     pub async fn get_password_hash(&self, username: String) -> Result<Option<String>> {
         Ok(sqlx::query("SELECT password FROM users WHERE username = ?")
-            .bind(username)
-            .fetch_one(&self.pool)
+            .bind(username.clone())
+            .fetch_optional(&self.pool)
             .await?
-            .get("password"))
+            .map(|user| user.get("password")))
     }
 }
 
