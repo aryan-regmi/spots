@@ -11,18 +11,16 @@ import { ArrowBack } from '@mui/icons-material';
 import { CSSProperties, FormEvent } from 'react';
 import { Form, useNavigate } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
-import { useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
-import {
-    errorMessageAtom,
-    isValidAtom,
-    validatingAtom,
-} from '@/pages/signup/atoms';
 import { getUser, hashPassword } from '@/api/users';
 import { insertUserAtom } from '@/utils/users/atoms';
 
 /* Validation atoms */
+export const errorMessageAtom = atom<string>();
+export const isValidAtom = atom(true);
+export const validatingAtom = atom(false);
 
 export default function SignupPage() {
     const navigate = useNavigate();
@@ -82,8 +80,6 @@ export default function SignupPage() {
             }
         }
     }
-
-    const GlassyContainer = Glassy(Container);
 
     return (
         <GlassyContainer direction="column">
@@ -181,3 +177,5 @@ function SignupButton(isBusy: boolean) {
         </>
     );
 }
+
+const GlassyContainer = Glassy(Container);

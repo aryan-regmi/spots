@@ -4,15 +4,15 @@ import { Alert, CircularProgress, Stack, styled } from '@mui/material';
 import { Form, Link, useNavigate } from 'react-router-dom';
 import { FormEvent } from 'react';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
-import { useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { getUser, verifyPassword } from '@/api/users';
-import {
-    errorMessageAtom,
-    isValidAtom,
-    validatingAtom,
-} from '@/pages/login/atoms';
 import { loadEndpointAtom } from '@/utils/network/atoms';
+
+/* Validation atoms */
+export const isValidAtom = atom({ username: true, password: true });
+export const errorMessageAtom = atom<string>();
+export const validatingAtom = atom(false);
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -67,8 +67,6 @@ export default function LoginPage() {
             await navigate('/dashboard', { replace: true });
         }
     }
-
-    const GlassyContainer = Glassy(Container);
 
     return (
         <GlassyContainer direction="column">
@@ -160,3 +158,5 @@ const Container = styled(Stack)({
     boxSizing: 'content-box',
     textAlign: 'center',
 });
+
+const GlassyContainer = Glassy(Container);

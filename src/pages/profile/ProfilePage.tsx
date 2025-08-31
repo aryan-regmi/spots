@@ -24,8 +24,6 @@ export default function ProfilePage() {
         return <Loading />;
     }
 
-    const GlassyContainer = Glassy(Container);
-
     return (
         <GlassyContainer direction="column">
             <IconButton
@@ -73,3 +71,5 @@ const Container = styled(Stack)({
     padding: '2em',
     gap: '5em',
 });
+
+const GlassyContainer = Glassy(Container);

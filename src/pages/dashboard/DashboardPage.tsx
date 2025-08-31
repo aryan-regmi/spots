@@ -10,13 +10,14 @@ import {
 } from '@mui/material';
 import { Logout } from '@mui/icons-material';
 import { NavState } from '@/pages/dashboard/NavState';
-import { useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
 import { useNavigate } from 'react-router-dom';
 import Glassy from '@/components/Glassy';
-import { navAtom } from '@/pages/dashboard/atoms';
+
+export const navAtom = atom(NavState.Home);
 
 export default function DashboardPage() {
     const navigate = useNavigate();
@@ -53,8 +54,6 @@ export default function DashboardPage() {
                 return <div>Playlists</div>;
         }
     }
-
-    const GlassyDashboard = Glassy(DashboardContainer);
 
     return (
         <GlassyDashboard direction="column">
@@ -99,3 +98,5 @@ const DashboardContainer = styled(Stack)({
 const MenuItem = styled(ListItemButton)({
     paddingLeft: '1.5em',
 });
+
+const GlassyDashboard = Glassy(DashboardContainer);
