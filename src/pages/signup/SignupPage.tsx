@@ -10,9 +10,12 @@ import { Form, useNavigate } from 'react-router-dom';
 import { FormEvent, useState } from 'react';
 import { StyledButton, StyledTextField } from '@/utils/form/styled';
 import { getUser, hashPassword } from '@/api/users';
+import { authContextAtom } from '@/components/auth/Auth';
+import { useAtom, useAtomValue } from 'jotai';
 
 export default function SignupPage() {
-    let { authorize, isLoading } = useAuth();
+    const { authorize, isLoading } = useAtomValue(authContextAtom);
+    /* let { authorize, isLoading } = useAuth(); */
     const navigate = useNavigate();
     const insertUser = useInsertUser();
     const createNewEndpoint = useCreateNewEndpoint();
