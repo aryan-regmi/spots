@@ -83,7 +83,9 @@ export default function DashboardPage() {
             </Stack>
 
             {/* Bottom Navigation */}
-            <BottomNav nav={nav} setNav={setNav} />
+            <div style={{ paddingBottom: '3em' }}>
+                <BottomNav nav={nav} setNav={setNav} />
+            </div>
         </GlassyDashboard>
     );
 }
