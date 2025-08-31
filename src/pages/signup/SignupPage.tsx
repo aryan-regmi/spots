@@ -76,6 +76,28 @@ export default function SignupPage() {
         }
     }
 
+    const SignupButton = (
+        <>
+            <div id="signup-btn">
+                <StyledButton
+                    type="submit"
+                    variant="contained"
+                    disabled={isBusy}
+                    color="primary"
+                >
+                    {isBusy ? 'Logging in...' : 'Sign Up'}
+                </StyledButton>
+            </div>
+            <div
+                style={{
+                    textAlign: 'center',
+                }}
+            >
+                {isBusy ? <CircularProgress /> : null}
+            </div>{' '}
+        </>
+    );
+
     return (
         <Stack className="content auth-page" direction="column">
             <IconButton
@@ -100,14 +122,13 @@ export default function SignupPage() {
                         fullWidth
                         required
                         error={!isValid}
-                        /* onChange={(_) => (isValid ? null : setIsValid(true))} */
                         onChange={(_) => {
                             if (!isValid) {
                                 setIsValid(true);
                                 setErrMsg(undefined);
                             }
                         }}
-                    ></StyledTextField>
+                    />
 
                     <StyledTextField
                         label="Password"
@@ -116,25 +137,9 @@ export default function SignupPage() {
                         placeholder="Enter a password..."
                         fullWidth
                         required
-                    ></StyledTextField>
+                    />
 
-                    <div id="signup-btn">
-                        <StyledButton
-                            type="submit"
-                            variant="contained"
-                            disabled={isBusy}
-                            color="primary"
-                        >
-                            {isBusy ? 'Logging in...' : 'Sign Up'}
-                        </StyledButton>
-                    </div>
-                    <div
-                        style={{
-                            textAlign: 'center',
-                        }}
-                    >
-                        {isBusy ? <CircularProgress /> : null}
-                    </div>
+                    {SignupButton}
                 </Stack>
             </Form>
 

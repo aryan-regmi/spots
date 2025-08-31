@@ -2,14 +2,12 @@ import '@/App.css';
 import Loading from '@/components/loading/Loading';
 import {
     Avatar,
-    BottomNavigation,
-    BottomNavigationAction,
     IconButton,
     ListItemButton,
     Stack,
     styled,
 } from '@mui/material';
-import { Logout, Home, Search, List as ListIcon } from '@mui/icons-material';
+import { Logout } from '@mui/icons-material';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
@@ -17,6 +15,7 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { NavState } from '@/pages/dashboard/NavState';
 import MenuDrawer, { menuIsOpenAtom } from '@/pages/dashboard/MenuDrawer';
+import BottomNav from './BottomNav';
 
 const navAtom = atom(NavState.Home);
 
@@ -45,37 +44,6 @@ export default function DashboardPage() {
         setMenuIsOpen(!menuIsOpen);
     }
 
-    function bottomNav() {
-        return (
-            <BottomNavigation
-                showLabels
-                value={nav}
-                onChange={(_, newNav) => setNav(newNav)}
-                style={{
-                    backgroundColor: '#54414E',
-                    borderRadius: '1em',
-                    opacity: 0.9,
-                }}
-            >
-                <BottomNavigationAction
-                    label="Home"
-                    icon={<Home />}
-                    style={{ color: 'white' }}
-                />
-                <BottomNavigationAction
-                    label="Search"
-                    icon={<Search />}
-                    style={{ color: 'white' }}
-                />
-                <BottomNavigationAction
-                    label="Playlists"
-                    icon={<ListIcon />}
-                    style={{ color: 'white' }}
-                />
-            </BottomNavigation>
-        );
-    }
-
     function displayNavigatedPage(nav: NavState) {
         switch (nav) {
             case NavState.Home:
@@ -86,16 +54,6 @@ export default function DashboardPage() {
                 return <div>Playlists</div>;
         }
     }
-
-    const DashboardContainer = styled(Stack)({
-        flex: '1 0 300px',
-        margin: '10px',
-        minHeight: '90vh',
-    });
-
-    const MenuItem = styled(ListItemButton)({
-        paddingLeft: '1.75em',
-    });
 
     return (
         <DashboardContainer direction="column">
@@ -122,7 +80,17 @@ export default function DashboardPage() {
             </Stack>
 
             {/* Bottom Navigation */}
-            {bottomNav()}
+            <BottomNav nav={nav} setNav={setNav} />
         </DashboardContainer>
     );
 }
+
+const DashboardContainer = styled(Stack)({
+    flex: '1 0 300px',
+    margin: '10px',
+    minHeight: '90vh',
+});
+
+const MenuItem = styled(ListItemButton)({
+    paddingLeft: '1.75em',
+});
