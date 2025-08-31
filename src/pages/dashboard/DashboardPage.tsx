@@ -1,5 +1,4 @@
 import '@/App.css';
-import '@/pages/dashboard/DashboardPage.css';
 import Loading from '@/components/loading/Loading';
 import {
     Avatar,
@@ -8,6 +7,7 @@ import {
     IconButton,
     ListItemButton,
     Stack,
+    styled,
 } from '@mui/material';
 import { Logout, Home, Search, List as ListIcon } from '@mui/icons-material';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
@@ -87,34 +87,42 @@ export default function DashboardPage() {
         }
     }
 
+    const DashboardContainer = styled(Stack)({
+        flex: '1 0 300px',
+        margin: '10px',
+        minHeight: '90vh',
+    });
+
+    const MenuItem = styled(ListItemButton)({
+        paddingLeft: '1.75em',
+    });
+
     return (
-        <Stack
-            direction="column"
-            className="content home-container"
-            style={{ minHeight: '90vh' }}
-        >
-            <IconButton id="avatar" onClick={toggleMenu}>
+        <DashboardContainer direction="column">
+            <IconButton
+                style={{
+                    justifyContent: 'left',
+                    width: 'fit-content',
+                }}
+                onClick={toggleMenu}
+            >
                 <Avatar {...stringAvatar(authUser)} />
             </IconButton>
 
             {/* Menu drawer  */}
             <MenuDrawer currentUser={authUser}>
-                <ListItemButton onClick={logout}>
+                <MenuItem onClick={logout}>
                     <Logout />
                     Logout
-                </ListItemButton>
+                </MenuItem>
             </MenuDrawer>
 
-            <Stack
-                direction="column"
-                className="home-content"
-                sx={{ flexGrow: 1 }}
-            >
+            <Stack direction="column" sx={{ flexGrow: 1 }}>
                 {displayNavigatedPage(nav)}
             </Stack>
 
             {/* Bottom Navigation */}
             {bottomNav()}
-        </Stack>
+        </DashboardContainer>
     );
 }
