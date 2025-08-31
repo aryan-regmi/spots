@@ -1,5 +1,5 @@
 import '@/App.css';
-import '@/pages/home/HomePage.css';
+import '@/pages/dashboard/DashboardPage.css';
 import Loading from '@/components/loading/Loading';
 import NavDrawer from '@/components/nav/NavDrawer';
 import {
@@ -19,12 +19,12 @@ import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { NavState } from '@/pages/home/NavState';
+import { NavState } from '@/pages/dashboard/NavState';
 
 const menuIsOpenAtom = atom(false);
 const navAtom = atom(NavState.Home);
 
-export default function HomePage() {
+export default function DashboardPage() {
     const navigate = useNavigate();
     const { authUser, isLoading } = useAtomValue(authContextAtom);
     const { unauthorize } = useAtomValue(authContextActionAtom);
@@ -51,7 +51,7 @@ export default function HomePage() {
 
     async function showProfile() {
         toggleMenu();
-        await navigate('/home/profile');
+        await navigate('/dashboard/profile');
     }
 
     function navDrawer(currentUser: string) {

@@ -1,5 +1,5 @@
 import App from '@/App';
-import HomePage from '@/pages/home/HomePage';
+import DashboardPage from '@/pages/dashboard/DashboardPage';
 import Loading from '@/components/loading/Loading';
 import LoginPage from '@/pages/login/LoginPage';
 import ProfilePage from '@/pages/profile/ProfilePage';
@@ -19,15 +19,15 @@ export const router = createBrowserRouter([
                 loader: async () => {
                     const authUser = await getAuthUser();
                     if (authUser.username) {
-                        return redirect('/home');
+                        return redirect('/dashboard');
                     } else {
                         return redirect('/login');
                     }
                 },
             },
             {
-                path: '/home',
-                Component: HomePage,
+                path: '/dashboard',
+                Component: DashboardPage,
                 HydrateFallback: Loading,
                 loader: async () => {
                     const authUser = await getAuthUser();
@@ -43,7 +43,7 @@ export const router = createBrowserRouter([
                 loader: async () => {
                     const authUser = await getAuthUser();
                     if (authUser.username) {
-                        return redirect('/home');
+                        return redirect('/dashboard');
                     }
                 },
             },
@@ -54,12 +54,12 @@ export const router = createBrowserRouter([
                 loader: async () => {
                     const authUser = await getAuthUser();
                     if (authUser.username) {
-                        return redirect('/home');
+                        return redirect('/dashboard');
                     }
                 },
             },
             {
-                path: '/home/profile',
+                path: '/dashboard/profile',
                 Component: ProfilePage,
                 hydrateFallbackElement: <Loading />,
             },
