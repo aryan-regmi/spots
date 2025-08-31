@@ -12,6 +12,7 @@ import {
     List,
     ListItemButton,
     Stack,
+    styled,
 } from '@mui/material';
 import { Logout, Home, Search, List as ListIcon } from '@mui/icons-material';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
@@ -20,6 +21,7 @@ import { stringAvatar } from '@/utils/stringAvatar';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { NavState } from '@/pages/dashboard/NavState';
+import { CSSProperties } from 'react';
 
 const menuIsOpenAtom = atom(false);
 const navAtom = atom(NavState.Home);
@@ -77,9 +79,30 @@ export default function DashboardPage() {
     }
 
     function menuHeader(currentUser: string) {
+        const MenuHeaderBtn = styled(Button)({
+            backgroundColor: '#1f1f1f',
+            paddingTop: '1em',
+            paddingLeft: '1.5em',
+            marginBottom: 0,
+            paddingBottom: 0,
+            cursor: 'pointer',
+            userSelect: 'none',
+            justifyContent: 'left',
+        });
+
+        const MenuHedaderInnerRow = styled(Stack)({
+            justifyContent: 'left',
+            gap: '0.1em',
+        });
+
+        const avatarTextStyle: CSSProperties = {
+            color: 'white',
+            paddingLeft: '0.25em',
+            fontSize: '2em',
+        };
+
         return (
-            <Button
-                id="menu-header-btn"
+            <MenuHeaderBtn
                 sx={{
                     textTransform: 'none',
                     borderRadius: 0,
@@ -87,13 +110,13 @@ export default function DashboardPage() {
                 onClick={showProfile}
             >
                 <Stack direction="column">
-                    <Stack id="menu-header-inner-row" direction="row">
+                    <MenuHedaderInnerRow direction="row">
                         <Avatar {...stringAvatar(currentUser)} />
-                        <div id="avatar-text">{currentUser}</div>
-                    </Stack>
+                        <div style={avatarTextStyle}>{currentUser}</div>
+                    </MenuHedaderInnerRow>
                     <a id="view-profile-text">View Profile</a>
                 </Stack>
-            </Button>
+            </MenuHeaderBtn>
         );
     }
 

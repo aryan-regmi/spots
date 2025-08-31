@@ -1,4 +1,3 @@
-import '@/components/banner/Banner.css';
 import { GraphicEq } from '@mui/icons-material';
 import { Icon, Stack, styled } from '@mui/material';
 
@@ -18,12 +17,12 @@ const StyledStack = styled(Stack)({
 export default function Banner() {
     return (
         <StyledStack direction="row">
-            <div className="stack-item">
+            <div>
                 <Icon fontSize="large">
                     <GraphicEq fontSize="large"></GraphicEq>
                 </Icon>
             </div>
-            <div className="stack-item">
+            <div>
                 <h2>Spots</h2>
             </div>
         </StyledStack>

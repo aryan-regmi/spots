@@ -10,19 +10,19 @@ export default function NavDrawer(props: {
     const { open, onClose, children, style } = props;
 
     const drawerSlotStyle = {
-        paper: {
-            sx: {
-                backgroundColor: '#1f2f2f',
-                width: '80%',
-                borderTopRightRadius: '1em',
-                borderBottomRightRadius: '1em',
-                ...style,
-            },
-        },
+        backgroundColor: '#1f2f2f',
+        width: '80%',
+        borderTopRightRadius: '1em',
+        borderBottomRightRadius: '1em',
+        ...style,
     };
 
     return (
-        <Drawer open={open} onClose={onClose} slotProps={drawerSlotStyle}>
+        <Drawer
+            open={open}
+            onClose={onClose}
+            slotProps={{ paper: { sx: { ...drawerSlotStyle } } }}
+        >
             {children}
         </Drawer>
     );
