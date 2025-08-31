@@ -6,6 +6,7 @@ import {
     Avatar,
     BottomNavigation,
     BottomNavigationAction,
+    Button,
     Divider,
     IconButton,
     List,
@@ -13,7 +14,6 @@ import {
     Stack,
 } from '@mui/material';
 import { Logout, Home, Search, List as ListIcon } from '@mui/icons-material';
-import { StyledButton } from '@/utils/home/styled';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
@@ -78,7 +78,8 @@ export default function DashboardPage() {
 
     function menuHeader(currentUser: string) {
         return (
-            <StyledButton
+            <Button
+                id="menu-header-btn"
                 sx={{
                     textTransform: 'none',
                     borderRadius: 0,
@@ -92,7 +93,7 @@ export default function DashboardPage() {
                     </Stack>
                     <a id="view-profile-text">View Profile</a>
                 </Stack>
-            </StyledButton>
+            </Button>
         );
     }
 

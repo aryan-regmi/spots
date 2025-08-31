@@ -14,6 +14,8 @@ import { Outlet } from 'react-router-dom';
 // TODO: Add transitions (CSSTransitions component)
 //
 // TODO: Make buttons responsive (show loading state on click etc...)
+//
+// TODO: Move styles to styled.ts (for components?)
 
 export default function App() {
     return (

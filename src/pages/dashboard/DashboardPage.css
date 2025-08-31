@@ -14,6 +14,17 @@
   gap: 0.1em;
 }
 
+#menu-header-btn {
+  background-color: #1f1f1f;
+  padding-top: 1em;
+  padding-left: 1.5em;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  cursor: pointer;
+  user-select: none;
+  justify-content: left;
+}
+
 #view-profile-text {
   font-size: 0.8em;
   padding-top: 0;
