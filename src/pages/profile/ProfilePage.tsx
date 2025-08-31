@@ -1,13 +1,14 @@
 import Loading from '@/components/loading/Loading';
 import QRCode from 'react-qr-code';
-import useAuth from '@/components/auth/useAuth';
 import useGetEndpointAddr from '@/utils/hooks/network/useGetEndpointAddr';
 import { ArrowBack } from '@mui/icons-material';
 import { IconButton, Stack } from '@mui/material';
+import { authContextAtom } from '@/components/auth/Auth';
+import { useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProfilePage() {
-    const { currentUser, isLoading } = useAuth();
+    const { currentUser, isLoading } = useAtomValue(authContextAtom);
     const navigate = useNavigate();
     const getEndpointAddr = useGetEndpointAddr(currentUser ?? '');
 

@@ -2,9 +2,6 @@ import '@/App.css';
 import '@/pages/home/HomePage.css';
 import Loading from '@/components/loading/Loading';
 import NavDrawer from '@/components/nav/NavDrawer';
-import useAuth from '@/components/auth/useAuth';
-import useCloseEndpoint from '@/utils/hooks/network/useCloseEndpoint';
-import { Logout, Home, Search, List as ListIcon } from '@mui/icons-material';
 import {
     Avatar,
     BottomNavigation,
@@ -15,13 +12,18 @@ import {
     ListItemButton,
     Stack,
 } from '@mui/material';
+import useCloseEndpoint from '@/utils/hooks/network/useCloseEndpoint';
+import { Logout, Home, Search, List as ListIcon } from '@mui/icons-material';
 import { StyledButton } from '@/utils/home/styled';
+import { authContextAtom } from '@/components/auth/Auth';
 import { stringAvatar } from '@/utils/stringAvatar';
+import { useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 export default function HomePage() {
-    let { unauthorize, currentUser, isLoading } = useAuth();
+    const { unauthorize, currentUser, isLoading } =
+        useAtomValue(authContextAtom);
     const navigate = useNavigate();
     const closeEndpoint = useCloseEndpoint();
 

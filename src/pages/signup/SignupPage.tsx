@@ -1,7 +1,6 @@
 import '@/App.css';
 import '@/pages/signup/SignupPage.css';
 import Banner from '@/components/banner/Banner';
-import useAuth from '@/components/auth/useAuth';
 import useCreateNewEndpoint from '@/utils/hooks/network/useCreateNewEndpoint';
 import useInsertUser from '@/utils/hooks/users/useInsertUser';
 import { Alert, CircularProgress, IconButton, Stack } from '@mui/material';
@@ -9,13 +8,12 @@ import { ArrowBack } from '@mui/icons-material';
 import { Form, useNavigate } from 'react-router-dom';
 import { FormEvent, useState } from 'react';
 import { StyledButton, StyledTextField } from '@/utils/form/styled';
-import { getUser, hashPassword } from '@/api/users';
 import { authContextAtom } from '@/components/auth/Auth';
-import { useAtom, useAtomValue } from 'jotai';
+import { getUser, hashPassword } from '@/api/users';
+import { useAtomValue } from 'jotai';
 
 export default function SignupPage() {
     const { authorize, isLoading } = useAtomValue(authContextAtom);
-    /* let { authorize, isLoading } = useAuth(); */
     const navigate = useNavigate();
     const insertUser = useInsertUser();
     const createNewEndpoint = useCreateNewEndpoint();

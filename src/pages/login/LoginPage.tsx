@@ -1,16 +1,17 @@
 import '@/App.css';
 import '@/pages/login/LoginPage.css';
 import Banner from '@/components/banner/Banner';
-import useAuth from '@/components/auth/useAuth';
 import useLoadEndpoint from '@/utils/hooks/network/useLoadEndpoint';
 import { Alert, CircularProgress, Stack } from '@mui/material';
 import { Form, Link, useNavigate } from 'react-router-dom';
 import { FormEvent, useState } from 'react';
 import { StyledButton, StyledTextField } from '@/utils/form/styled';
+import { authContextAtom } from '@/components/auth/Auth';
 import { getUser, verifyPassword } from '@/api/users';
+import { useAtomValue } from 'jotai';
 
 export default function LoginPage() {
-    const { authorize, isLoading } = useAuth();
+    const { authorize, isLoading } = useAtomValue(authContextAtom);
     const navigate = useNavigate();
     const loadEndpoint = useLoadEndpoint();
 
