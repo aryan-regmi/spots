@@ -75,7 +75,10 @@ export default function DashboardPage() {
                 </MenuItem>
             </MenuDrawer>
 
-            <Stack direction="column" sx={{ flexGrow: 1 }}>
+            <Stack
+                direction="column"
+                sx={{ flexGrow: 1, paddingLeft: '1em', paddingRight: '1em' }}
+            >
                 {displayNavigatedPage(nav)}
             </Stack>
 
@@ -89,8 +92,9 @@ const DashboardContainer = styled(Stack)({
     flex: '1 0 300px',
     margin: '10px',
     minHeight: '90vh',
+    padding: '1em',
 });
 
 const MenuItem = styled(ListItemButton)({
-    paddingLeft: '1.75em',
+    paddingLeft: '1.5em',
 });

@@ -30,7 +30,11 @@ export default function MenuDrawer(props: {
         <NavDrawer
             open={menuIsOpen}
             onClose={toggleMenu}
-            style={{ backgroundColor: '#1f2f2f' }}
+            style={{
+                backgroundColor: 'rgba(122, 97, 116, 0.2)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+            }}
         >
             {/* Menu header */}
             <MenuHeaderBtn sx={menuHeaderInnerStyle} onClick={showProfile}>
@@ -45,15 +49,15 @@ export default function MenuDrawer(props: {
             <Divider color="black" style={{ paddingTop: '0.05em' }} />
 
             {/* Menu items */}
-            <List>{children}</List>
+            <List style={{ color: 'darkgray' }}>{children}</List>
         </NavDrawer>
     );
 }
 
 const MenuHeaderBtn = styled(Button)({
     backgroundColor: '#1f1f1f',
-    paddingTop: '1.75em',
-    paddingLeft: '1.85em',
+    paddingTop: '1em',
+    paddingLeft: '1.25em',
     marginBottom: 0,
     paddingBottom: 0,
     cursor: 'pointer',
@@ -79,12 +83,9 @@ const avatarTextStyle: CSSProperties = {
 
 const viewProfileTextStyle: CSSProperties = {
     fontSize: '0.8em',
-    paddingTop: 0,
-    paddingBottom: 0,
-    paddingLeft: '1.5em',
-    marginTop: '-0.5em',
-    marginBottom: 0,
     color: 'gray',
+    paddingLeft: '1.75em',
+    marginTop: '-0.5em',
     userSelect: 'none',
     WebkitUserSelect: 'none',
     MozUserSelect: 'none',
