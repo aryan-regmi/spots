@@ -1,18 +1,13 @@
 import '@/App.css';
 import '@/pages/dashboard/DashboardPage.css';
 import Loading from '@/components/loading/Loading';
-import NavDrawer from '@/components/nav/NavDrawer';
 import {
     Avatar,
     BottomNavigation,
     BottomNavigationAction,
-    Button,
-    Divider,
     IconButton,
-    List,
     ListItemButton,
     Stack,
-    styled,
 } from '@mui/material';
 import { Logout, Home, Search, List as ListIcon } from '@mui/icons-material';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
@@ -21,9 +16,8 @@ import { stringAvatar } from '@/utils/stringAvatar';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { NavState } from '@/pages/dashboard/NavState';
-import { CSSProperties } from 'react';
+import MenuDrawer, { menuIsOpenAtom } from '@/pages/dashboard/MenuDrawer';
 
-const menuIsOpenAtom = atom(false);
 const navAtom = atom(NavState.Home);
 
 export default function DashboardPage() {
@@ -49,75 +43,6 @@ export default function DashboardPage() {
 
     async function toggleMenu() {
         setMenuIsOpen(!menuIsOpen);
-    }
-
-    async function showProfile() {
-        toggleMenu();
-        await navigate('/dashboard/profile');
-    }
-
-    function navDrawer(currentUser: string) {
-        return (
-            <NavDrawer
-                open={menuIsOpen}
-                onClose={toggleMenu}
-                style={{ backgroundColor: '#1f2f2f' }}
-            >
-                {/* Menu header */}
-                {menuHeader(currentUser)}
-                <Divider color="black" style={{ paddingTop: '0.05em' }} />
-
-                {/* Menu items */}
-                <List>
-                    <ListItemButton onClick={logout}>
-                        <Logout />
-                        Logout
-                    </ListItemButton>
-                </List>
-            </NavDrawer>
-        );
-    }
-
-    function menuHeader(currentUser: string) {
-        const MenuHeaderBtn = styled(Button)({
-            backgroundColor: '#1f1f1f',
-            paddingTop: '1em',
-            paddingLeft: '1.5em',
-            marginBottom: 0,
-            paddingBottom: 0,
-            cursor: 'pointer',
-            userSelect: 'none',
-            justifyContent: 'left',
-        });
-
-        const MenuHedaderInnerRow = styled(Stack)({
-            justifyContent: 'left',
-            gap: '0.1em',
-        });
-
-        const avatarTextStyle: CSSProperties = {
-            color: 'white',
-            paddingLeft: '0.25em',
-            fontSize: '2em',
-        };
-
-        return (
-            <MenuHeaderBtn
-                sx={{
-                    textTransform: 'none',
-                    borderRadius: 0,
-                }}
-                onClick={showProfile}
-            >
-                <Stack direction="column">
-                    <MenuHedaderInnerRow direction="row">
-                        <Avatar {...stringAvatar(currentUser)} />
-                        <div style={avatarTextStyle}>{currentUser}</div>
-                    </MenuHedaderInnerRow>
-                    <a id="view-profile-text">View Profile</a>
-                </Stack>
-            </MenuHeaderBtn>
-        );
     }
 
     function bottomNav() {
@@ -173,7 +98,12 @@ export default function DashboardPage() {
             </IconButton>
 
             {/* Menu drawer  */}
-            {navDrawer(authUser)}
+            <MenuDrawer currentUser={authUser}>
+                <ListItemButton onClick={logout}>
+                    <Logout />
+                    Logout
+                </ListItemButton>
+            </MenuDrawer>
 
             <Stack
                 direction="column"
@@ -181,7 +111,6 @@ export default function DashboardPage() {
                 sx={{ flexGrow: 1 }}
             >
                 {displayNavigatedPage(nav)}
-                {/*  TODO: Display playlists here! */}
             </Stack>
 
             {/* Bottom Navigation */}
