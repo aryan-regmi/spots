@@ -19,7 +19,7 @@ import { Outlet } from 'react-router-dom';
 
 export default function App() {
     return (
-        <div id="main-content" className="container">
+        <div style={{ display: 'flex' }}>
             <Outlet></Outlet>
         </div>
     );

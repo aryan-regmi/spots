@@ -1,16 +1,21 @@
 import '@/App.css';
-import '@/pages/signup/SignupPage.css';
 import Banner from '@/components/banner/Banner';
-import { Alert, CircularProgress, IconButton, Stack } from '@mui/material';
+import {
+    Alert,
+    CircularProgress,
+    IconButton,
+    Stack,
+    styled,
+} from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
+import { CSSProperties, FormEvent } from 'react';
 import { Form, useNavigate } from 'react-router-dom';
-import { FormEvent } from 'react';
-import { StyledButton, StyledTextField } from '@/utils/form/styled';
+import { StyledButton, StyledTextField } from '@/components/form/styled';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
 import { getUser, hashPassword } from '@/api/users';
 import { insertUserAtom } from '@/utils/users/atoms';
-import { atom, useAtom, useAtomValue } from 'jotai';
 
 /* Validation atoms */
 const errorMessageAtom = atom<string>();
@@ -78,7 +83,7 @@ export default function SignupPage() {
 
     const SignupButton = (
         <>
-            <div id="signup-btn">
+            <div style={{ textAlign: 'center' }}>
                 <StyledButton
                     type="submit"
                     variant="contained"
@@ -99,10 +104,9 @@ export default function SignupPage() {
     );
 
     return (
-        <Stack className="content auth-page" direction="column">
+        <Container direction="column">
             <IconButton
-                id="back-btn"
-                size="large"
+                sx={backBtnStyle}
                 onClick={() => navigate('/login', { replace: true })}
                 disabled={isBusy}
             >
@@ -113,7 +117,7 @@ export default function SignupPage() {
 
             {/* Signup form */}
             <Form onSubmit={validateLogin}>
-                <Stack className="form-content" direction="column">
+                <Stack spacing="1em" direction="column">
                     <StyledTextField
                         label="Username"
                         name="username"
@@ -149,6 +153,25 @@ export default function SignupPage() {
                     {errMsg}
                 </Alert>
             ) : null}
-        </Stack>
+        </Container>
     );
 }
+
+const backBtnStyle: CSSProperties = {
+    width: 'fit-content',
+    marginBottom: '-3.5em',
+    fontSize: 'large',
+    color: 'white',
+    marginLeft: '-0.5em',
+};
+
+const Container = styled(Stack)({
+    display: 'flex',
+    flex: '1 0 300px',
+    margin: '10px',
+    width: '100%',
+    justifyContent: 'center',
+    padding: '1em',
+    paddingTop: '1.75em',
+    gap: '5em',
+});

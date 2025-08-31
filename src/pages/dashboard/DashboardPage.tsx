@@ -1,4 +1,3 @@
-import '@/App.css';
 import Loading from '@/components/loading/Loading';
 import {
     Avatar,

@@ -2,20 +2,3 @@ body {
   font-family: sans-serif;
   color: white;
 }
-
-.container {
-  display: flex;
-}
-
-.content {
-  flex: 1 0 300px;
-  margin: 10px;
-}
-
-.auth-page {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding-top: 2.5em;
-  gap: 5em;
-}

@@ -1,19 +1,21 @@
 import Loading from '@/components/loading/Loading';
 import QRCode from 'react-qr-code';
 import { ArrowBack } from '@mui/icons-material';
-import { IconButton, Stack } from '@mui/material';
+import { CSSProperties } from 'react';
+import { IconButton, Stack, styled } from '@mui/material';
 import { authContextAtom } from '@/utils/auth/atoms';
+import { getEndpointAddressAtom } from '@/utils/network/atoms';
 import { useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { getEndpointAddressAtom } from '@/utils/network/atoms';
 import { useParamAtom } from '@/utils/hooks/useParamAtom';
 
 export default function ProfilePage() {
     const navigate = useNavigate();
     const { authUser, isLoading } = useAtomValue(authContextAtom);
-    const getEndpointAddr = authUser
-        ? useParamAtom(getEndpointAddressAtom, authUser)
-        : null;
+    const getEndpointAddr = useParamAtom(
+        getEndpointAddressAtom,
+        authUser ?? ''
+    );
 
     /* Handle incomplete state */
     const isBusy = isLoading || !authUser;
@@ -21,17 +23,10 @@ export default function ProfilePage() {
         return <Loading />;
     }
 
-    /* const getEndpointAddr = useParamAtom(getEndpointAddressAtom, authUser); */
-
     return (
-        <Stack
-            direction="column"
-            spacing="5em"
-            sx={{ width: '100%' }}
-            style={{ padding: '1em' }}
-        >
+        <Container direction="column">
             <IconButton
-                id="back-btn"
+                style={backBtnStyle}
                 size="large"
                 onClick={() => navigate(-1)}
                 disabled={isBusy}
@@ -55,6 +50,29 @@ export default function ProfilePage() {
             </Stack>
 
             {/* TODO: Add share button: https://github.com/buildyourwebapp/tauri-plugin-sharesheet */}
-        </Stack>
+        </Container>
     );
 }
+
+const backBtnStyle: CSSProperties = {
+    width: 'fit-content',
+    marginBottom: '-3.5em',
+    fontSize: 'large',
+    color: 'white',
+    marginLeft: '-0.5em',
+};
+
+const Container = styled(Stack)({
+    display: 'flex',
+    flex: '1 0 300px',
+    margin: '10px',
+    width: '100%',
+    justifyContent: 'center',
+    padding: '1em',
+    paddingTop: '1.75em',
+    gap: '5em',
+    backgroundColor: 'rgba(30, 34, 45, 0.8)',
+    backdropFilter: 'blur(10px)',
+    /* background-color: rgba(30, 34, 45, 0.8); */
+    /* backdrop-filter: blur(10px); */
+});

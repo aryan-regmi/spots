@@ -1,5 +1,3 @@
-// FIXME: Move to @/components instead!
-
 import { Button, styled, TextField } from '@mui/material';
 
 export const StyledTextField = styled(TextField)({

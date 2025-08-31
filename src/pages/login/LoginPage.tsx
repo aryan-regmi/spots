@@ -1,16 +1,13 @@
 import '@/App.css';
-import '@/pages/login/LoginPage.css';
 import Banner from '@/components/banner/Banner';
-import { Alert, CircularProgress, Stack } from '@mui/material';
+import { Alert, CircularProgress, Stack, styled } from '@mui/material';
 import { Form, Link, useNavigate } from 'react-router-dom';
 import { FormEvent } from 'react';
-import { StyledButton, StyledTextField } from '@/utils/form/styled';
-import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
-import { getUserAtom } from '@/utils/users/atoms';
-import { loadEndpointAtom } from '@/utils/network/atoms';
+import { StyledButton, StyledTextField } from '@/components/form/styled';
 import { atom, useAtom, useAtomValue } from 'jotai';
+import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { getUser, verifyPassword } from '@/api/users';
-import { useParamAtom } from '@/utils/hooks/useParamAtom';
+import { loadEndpointAtom } from '@/utils/network/atoms';
 
 /* Validation atoms */
 const isValidAtom = atom({ username: true, password: true });
@@ -72,12 +69,20 @@ export default function LoginPage() {
     }
 
     return (
-        <Stack className="content auth-page" direction="column">
+        <Container
+            style={{
+                flex: '1 0 300px',
+                margin: '10px',
+                justifyContent: 'center',
+                textAlign: 'center',
+            }}
+            direction="column"
+        >
             <Banner />
 
             {/* Login form */}
             <Form onSubmit={validateLogin}>
-                <Stack className="form-content" direction="column">
+                <Stack spacing="1em" direction="column">
                     <StyledTextField
                         label="Username"
                         name="username"
@@ -115,7 +120,7 @@ export default function LoginPage() {
                         }}
                     />
 
-                    <div id="login-btn">
+                    <div style={{ textAlign: 'center' }}>
                         <StyledButton
                             type="submit"
                             variant="contained"
@@ -136,7 +141,7 @@ export default function LoginPage() {
             </Form>
 
             {/* Sign up link */}
-            <Link to={'/signup'} id="signup-link">
+            <Link to={'/signup'} style={{ marginTop: '-4em' }}>
                 Sign Up
             </Link>
 
@@ -146,6 +151,17 @@ export default function LoginPage() {
                     {errMsg}
                 </Alert>
             ) : null}
-        </Stack>
+        </Container>
     );
 }
+
+const Container = styled(Stack)({
+    flex: '1 0 300px',
+    margin: '10px',
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    padding: '1em',
+    paddingTop: '2.5em',
+    gap: '5em',
+});
