@@ -25,11 +25,12 @@ const menuIsOpenAtom = atom(false);
 const navAtom = atom(NavState.Home);
 
 export default function HomePage() {
+    const navigate = useNavigate();
     const { authUser, isLoading } = useAtomValue(authContextAtom);
     const { unauthorize } = useAtomValue(authContextActionAtom);
-    const navigate = useNavigate();
     const closeEndpoint = useAtomValue(closeEndpointAtom);
 
+    /* State */
     const [menuIsOpen, setMenuIsOpen] = useAtom(menuIsOpenAtom);
     const [nav, setNav] = useAtom(navAtom);
 

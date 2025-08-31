@@ -23,6 +23,7 @@ export default function SignupPage() {
     const insertUser = useAtomValue(insertUserAtom);
     const createEndpoint = useAtomValue(createEndpointAtom);
 
+    /* Validation */
     const [errMsg, setErrMsg] = useAtom(errorMessageAtom);
     const [isValid, setIsValid] = useAtom(isValidAtom);
     const [validating, setValidating] = useAtom(validatingAtom);

@@ -12,6 +12,7 @@ export const getEndpointAddressAtom = (username: string) => {
     return atomWithQuery(() => ({
         queryKey: ['endpointAddr', username],
         queryFn: ({ queryKey: [, username] }) => getEndpointAddr(username),
+        enabled: !!username, // Prevent calling with empty username
     }));
 };
 

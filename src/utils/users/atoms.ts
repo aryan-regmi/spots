@@ -7,6 +7,7 @@ export const getUserAtom = (username: string) => {
     return atomWithQuery(() => ({
         queryKey: ['getUser', username],
         queryFn: ({ queryKey: [, username] }) => getUser(username),
+        enabled: !!username, // Prevent calling with empty username
     }));
 };
 

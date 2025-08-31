@@ -3,7 +3,7 @@ import QRCode from 'react-qr-code';
 import { ArrowBack } from '@mui/icons-material';
 import { IconButton, Stack } from '@mui/material';
 import { authContextAtom } from '@/utils/auth/atoms';
-import { useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { getEndpointAddressAtom } from '@/utils/network/atoms';
 import { useParamAtom } from '@/utils/hooks/useParamAtom';
@@ -11,6 +11,10 @@ import { useParamAtom } from '@/utils/hooks/useParamAtom';
 export default function ProfilePage() {
     const { authUser, isLoading } = useAtomValue(authContextAtom);
     const navigate = useNavigate();
+    const getEndpointAddr = authUser
+        ? useParamAtom(getEndpointAddressAtom, authUser)
+        : null;
+    /* userAtom ?? atom(() => ({ data: null })) */
 
     /* Handle incomplete state */
     const isBusy = isLoading || !authUser;
@@ -18,7 +22,7 @@ export default function ProfilePage() {
         return <Loading />;
     }
 
-    const getEndpointAddr = useParamAtom(getEndpointAddressAtom, authUser);
+    /* const getEndpointAddr = useParamAtom(getEndpointAddressAtom, authUser); */
 
     return (
         <Stack
@@ -45,7 +49,7 @@ export default function ProfilePage() {
                         borderRadius: '1em',
                     }}
                 >
-                    <QRCode value={getEndpointAddr.data ?? ''}></QRCode>
+                    <QRCode value={getEndpointAddr?.data ?? ''}></QRCode>
                 </Stack>
             </Stack>
 
