@@ -1,22 +1,24 @@
 import Loading from '@/components/loading/Loading';
 import QRCode from 'react-qr-code';
-import useGetEndpointAddr from '@/utils/hooks/network/useGetEndpointAddr';
 import { ArrowBack } from '@mui/icons-material';
 import { IconButton, Stack } from '@mui/material';
-import { authContextAtom } from '@/components/auth/Auth';
+import { authContextAtom } from '@/utils/auth/atoms';
 import { useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
+import { getEndpointAddressAtom } from '@/utils/network/atoms';
+import { useParamAtom } from '@/utils/hooks/useParamAtom';
 
 export default function ProfilePage() {
-    const { currentUser, isLoading } = useAtomValue(authContextAtom);
+    const { authUser, isLoading } = useAtomValue(authContextAtom);
     const navigate = useNavigate();
-    const getEndpointAddr = useGetEndpointAddr(currentUser ?? '');
 
-    const isBusy = isLoading || !currentUser;
-
+    /* Handle incomplete state */
+    const isBusy = isLoading || !authUser;
     if (isBusy) {
         return <Loading />;
     }
+
+    const getEndpointAddr = useParamAtom(getEndpointAddressAtom, authUser);
 
     return (
         <Stack

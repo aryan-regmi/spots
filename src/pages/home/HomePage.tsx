@@ -12,29 +12,33 @@ import {
     ListItemButton,
     Stack,
 } from '@mui/material';
-import useCloseEndpoint from '@/utils/hooks/network/useCloseEndpoint';
 import { Logout, Home, Search, List as ListIcon } from '@mui/icons-material';
 import { StyledButton } from '@/utils/home/styled';
-import { authContextAtom } from '@/components/auth/Auth';
+import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
+import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
-import { useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { NavState } from '@/pages/home/NavState';
+
+const menuIsOpenAtom = atom(false);
+const navAtom = atom(NavState.Home);
 
 export default function HomePage() {
-    const { unauthorize, currentUser, isLoading } =
-        useAtomValue(authContextAtom);
+    const { authUser, isLoading } = useAtomValue(authContextAtom);
+    const { unauthorize } = useAtomValue(authContextActionAtom);
     const navigate = useNavigate();
-    const closeEndpoint = useCloseEndpoint();
+    const closeEndpoint = useAtomValue(closeEndpointAtom);
 
-    const [menuIsOpen, setMenuIsOpen] = useState(false);
-    const [nav, setNav] = useState(NavState.Home);
+    const [menuIsOpen, setMenuIsOpen] = useAtom(menuIsOpenAtom);
+    const [nav, setNav] = useAtom(navAtom);
 
-    if (isLoading || !currentUser) {
+    if (isLoading || !authUser) {
         return <Loading />;
     }
 
     async function logout() {
+        toggleMenu();
         await unauthorize();
         await closeEndpoint.mutateAsync();
         navigate('/login', { replace: true });
@@ -45,6 +49,7 @@ export default function HomePage() {
     }
 
     async function showProfile() {
+        toggleMenu();
         await navigate('/home/profile');
     }
 
@@ -139,11 +144,11 @@ export default function HomePage() {
             style={{ minHeight: '90vh' }}
         >
             <IconButton id="avatar" onClick={toggleMenu}>
-                <Avatar {...stringAvatar(currentUser)} />
+                <Avatar {...stringAvatar(authUser)} />
             </IconButton>
 
             {/* Menu drawer  */}
-            {navDrawer(currentUser)}
+            {navDrawer(authUser)}
 
             <Stack
                 direction="column"
@@ -158,10 +163,4 @@ export default function HomePage() {
             {bottomNav()}
         </Stack>
     );
-}
-
-enum NavState {
-    Home = 0,
-    Search,
-    Playlists,
 }

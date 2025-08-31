@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 
 /** Creates a new network endpoint for the user. */
-export async function createNewEndpoint(username: string) {
+export async function createEndpoint(username: string) {
     try {
         await invoke('create_new_endpoint', { username });
     } catch (e: any) {

@@ -2,7 +2,6 @@ import { atom } from 'jotai';
 import { atomWithMutation, atomWithQuery } from 'jotai-tanstack-query';
 import { getAuthUser, removeAuthUser, setAuthUser } from '@/api/auth';
 import { queryClient } from '@/utils/queryClient';
-import { AuthContextType } from './AuthContext';
 
 /** The currently authenticated user. */
 const authUserAtom = atomWithQuery(() => ({
@@ -37,20 +36,20 @@ const setAuthUserAtom = atomWithMutation(() => ({
 }));
 
 /** Gets the authentication context. */
-export const authContextAtom = atom<AuthContextType>((get) => ({
+export const authContextAtom = atom((get) => ({
     isAuthenticated: get(isAuthenticatedAtom),
     isLoading: get(isLoadingAtom),
-    currentUser: get(authUserAtom).data?.username ?? undefined,
-    authorize: async (username) => {
-        const setAuthUserMutation = get(setAuthUserAtom);
-        await setAuthUserMutation.mutateAsync(username);
-        console.info(`Authenticated user: ${username}`);
+    authUser: get(authUserAtom).data?.username ?? undefined,
+}));
+
+/** The functions to authorize/unauthorize a user. */
+export const authContextActionAtom = atom((get) => ({
+    authorize: async (username: string) => {
+        const mutation = get(setAuthUserAtom);
+        await mutation.mutateAsync(username);
     },
     unauthorize: async () => {
-        const removeAuthUserMutation = get(removeAuthUserAtom);
-        await removeAuthUserMutation.mutateAsync();
-        console.info(
-            `Unauthenticated user: ${get(authUserAtom).data?.username}`
-        );
+        const mutation = get(removeAuthUserAtom);
+        await mutation.mutateAsync();
     },
 }));
