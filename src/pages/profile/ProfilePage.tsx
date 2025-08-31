@@ -8,6 +8,7 @@ import { getEndpointAddressAtom } from '@/utils/network/atoms';
 import { useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { useParamAtom } from '@/utils/hooks/useParamAtom';
+import Glassy from '@/components/Glassy';
 
 export default function ProfilePage() {
     const navigate = useNavigate();
@@ -23,8 +24,10 @@ export default function ProfilePage() {
         return <Loading />;
     }
 
+    const GlassyContainer = Glassy(Container);
+
     return (
-        <Container direction="column">
+        <GlassyContainer direction="column">
             <IconButton
                 style={backBtnStyle}
                 size="large"
@@ -50,7 +53,7 @@ export default function ProfilePage() {
             </Stack>
 
             {/* TODO: Add share button: https://github.com/buildyourwebapp/tauri-plugin-sharesheet */}
-        </Container>
+        </GlassyContainer>
     );
 }
 
@@ -64,15 +67,9 @@ const backBtnStyle: CSSProperties = {
 
 const Container = styled(Stack)({
     display: 'flex',
-    flex: '1 0 300px',
-    margin: '10px',
+    margin: 0,
+    height: '100vh',
     width: '100%',
-    justifyContent: 'center',
-    padding: '1em',
-    paddingTop: '1.75em',
+    padding: '2em',
     gap: '5em',
-    backgroundColor: 'rgba(30, 34, 45, 0.8)',
-    backdropFilter: 'blur(10px)',
-    /* background-color: rgba(30, 34, 45, 0.8); */
-    /* backdrop-filter: blur(10px); */
 });

@@ -1,4 +1,6 @@
+import BottomNav from './BottomNav';
 import Loading from '@/components/loading/Loading';
+import MenuDrawer, { menuIsOpenAtom } from '@/pages/dashboard/MenuDrawer';
 import {
     Avatar,
     IconButton,
@@ -7,16 +9,14 @@ import {
     styled,
 } from '@mui/material';
 import { Logout } from '@mui/icons-material';
+import { NavState } from '@/pages/dashboard/NavState';
+import { useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
-import { atom, useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { NavState } from '@/pages/dashboard/NavState';
-import MenuDrawer, { menuIsOpenAtom } from '@/pages/dashboard/MenuDrawer';
-import BottomNav from './BottomNav';
-
-const navAtom = atom(NavState.Home);
+import Glassy from '@/components/Glassy';
+import { navAtom } from '@/pages/dashboard/atoms';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
@@ -54,8 +54,10 @@ export default function DashboardPage() {
         }
     }
 
+    const GlassyDashboard = Glassy(DashboardContainer);
+
     return (
-        <DashboardContainer direction="column">
+        <GlassyDashboard direction="column">
             <IconButton
                 style={{
                     justifyContent: 'left',
@@ -83,14 +85,14 @@ export default function DashboardPage() {
 
             {/* Bottom Navigation */}
             <BottomNav nav={nav} setNav={setNav} />
-        </DashboardContainer>
+        </GlassyDashboard>
     );
 }
 
 const DashboardContainer = styled(Stack)({
     flex: '1 0 300px',
-    margin: '10px',
     minHeight: '90vh',
+    height: '100vh',
     padding: '1em',
 });
 

@@ -1,18 +1,18 @@
-import '@/App.css';
 import Banner from '@/components/banner/Banner';
+import Glassy from '@/components/Glassy';
 import { Alert, CircularProgress, Stack, styled } from '@mui/material';
 import { Form, Link, useNavigate } from 'react-router-dom';
 import { FormEvent } from 'react';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { getUser, verifyPassword } from '@/api/users';
+import {
+    errorMessageAtom,
+    isValidAtom,
+    validatingAtom,
+} from '@/pages/login/atoms';
 import { loadEndpointAtom } from '@/utils/network/atoms';
-
-/* Validation atoms */
-const isValidAtom = atom({ username: true, password: true });
-const errorMessageAtom = atom<string>();
-const validatingAtom = atom(false);
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -68,16 +68,10 @@ export default function LoginPage() {
         }
     }
 
+    const GlassyContainer = Glassy(Container);
+
     return (
-        <Container
-            style={{
-                flex: '1 0 300px',
-                margin: '10px',
-                justifyContent: 'center',
-                textAlign: 'center',
-            }}
-            direction="column"
-        >
+        <GlassyContainer direction="column">
             <Banner />
 
             {/* Login form */}
@@ -151,17 +145,18 @@ export default function LoginPage() {
                     {errMsg}
                 </Alert>
             ) : null}
-        </Container>
+        </GlassyContainer>
     );
 }
 
 const Container = styled(Stack)({
-    flex: '1 0 300px',
-    margin: '10px',
     width: '100%',
+    height: '100vh',
     display: 'flex',
     justifyContent: 'center',
-    padding: '1em',
-    paddingTop: '2.5em',
+    margin: 0,
+    padding: '2em',
     gap: '5em',
+    boxSizing: 'content-box',
+    textAlign: 'center',
 });

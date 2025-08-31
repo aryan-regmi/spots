@@ -1,4 +1,3 @@
-import '@/App.css';
 import Banner from '@/components/banner/Banner';
 import {
     Alert,
@@ -7,25 +6,28 @@ import {
     Stack,
     styled,
 } from '@mui/material';
+import Glassy from '@/components/Glassy';
 import { ArrowBack } from '@mui/icons-material';
 import { CSSProperties, FormEvent } from 'react';
 import { Form, useNavigate } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
+import {
+    errorMessageAtom,
+    isValidAtom,
+    validatingAtom,
+} from '@/pages/signup/atoms';
 import { getUser, hashPassword } from '@/api/users';
 import { insertUserAtom } from '@/utils/users/atoms';
 
 /* Validation atoms */
-const errorMessageAtom = atom<string>();
-const isValidAtom = atom(true);
-const validatingAtom = atom(false);
 
 export default function SignupPage() {
+    const navigate = useNavigate();
     const { isLoading } = useAtomValue(authContextAtom);
     const { authorize } = useAtomValue(authContextActionAtom);
-    const navigate = useNavigate();
     const insertUser = useAtomValue(insertUserAtom);
     const createEndpoint = useAtomValue(createEndpointAtom);
 
@@ -72,7 +74,7 @@ export default function SignupPage() {
 
                 // Go to homepage
                 setValidating(false);
-                await navigate('/', { replace: true });
+                await navigate('/dashboard', { replace: true });
             } else {
                 setIsValid(false);
                 setValidating(false);
@@ -81,30 +83,10 @@ export default function SignupPage() {
         }
     }
 
-    const SignupButton = (
-        <>
-            <div style={{ textAlign: 'center' }}>
-                <StyledButton
-                    type="submit"
-                    variant="contained"
-                    disabled={isBusy}
-                    color="primary"
-                >
-                    {isBusy ? 'Logging in...' : 'Sign Up'}
-                </StyledButton>
-            </div>
-            <div
-                style={{
-                    textAlign: 'center',
-                }}
-            >
-                {isBusy ? <CircularProgress /> : null}
-            </div>{' '}
-        </>
-    );
+    const GlassyContainer = Glassy(Container);
 
     return (
-        <Container direction="column">
+        <GlassyContainer direction="column">
             <IconButton
                 sx={backBtnStyle}
                 onClick={() => navigate('/login', { replace: true })}
@@ -143,7 +125,7 @@ export default function SignupPage() {
                         required
                     />
 
-                    {SignupButton}
+                    {SignupButton(isBusy)}
                 </Stack>
             </Form>
 
@@ -153,7 +135,7 @@ export default function SignupPage() {
                     {errMsg}
                 </Alert>
             ) : null}
-        </Container>
+        </GlassyContainer>
     );
 }
 
@@ -166,12 +148,36 @@ const backBtnStyle: CSSProperties = {
 };
 
 const Container = styled(Stack)({
-    display: 'flex',
-    flex: '1 0 300px',
-    margin: '10px',
     width: '100%',
-    justifyContent: 'center',
-    padding: '1em',
-    paddingTop: '1.75em',
+    height: '100vh',
+    display: 'flex',
+    margin: 0,
+    padding: '2em',
     gap: '5em',
+    boxSizing: 'content-box',
+    textAlign: 'center',
 });
+
+function SignupButton(isBusy: boolean) {
+    return (
+        <>
+            <div style={{ textAlign: 'center' }}>
+                <StyledButton
+                    type="submit"
+                    variant="contained"
+                    disabled={isBusy}
+                    color="primary"
+                >
+                    {isBusy ? 'Logging in...' : 'Sign Up'}
+                </StyledButton>
+            </div>
+            <div
+                style={{
+                    textAlign: 'center',
+                }}
+            >
+                {isBusy ? <CircularProgress /> : null}
+            </div>{' '}
+        </>
+    );
+}
