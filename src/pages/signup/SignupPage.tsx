@@ -72,7 +72,10 @@ export default function SignupPage() {
 
                 // Go to homepage
                 setValidating(false);
-                await navigate('/dashboard', { replace: true });
+                await navigate('/dashboard', {
+                    replace: true,
+                    viewTransition: true,
+                });
             } else {
                 setIsValid(false);
                 setValidating(false);
@@ -85,7 +88,9 @@ export default function SignupPage() {
         <GlassyContainer direction="column">
             <IconButton
                 sx={backBtnStyle}
-                onClick={() => navigate('/login', { replace: true })}
+                onClick={() =>
+                    navigate('/login', { replace: true, viewTransition: true })
+                }
                 disabled={isBusy}
             >
                 <ArrowBack />

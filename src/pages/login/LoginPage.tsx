@@ -64,7 +64,10 @@ export default function LoginPage() {
 
             // Go to homepage
             setValidating(false);
-            await navigate('/dashboard', { replace: true });
+            await navigate('/dashboard', {
+                replace: true,
+                viewTransition: true,
+            });
         }
     }
 

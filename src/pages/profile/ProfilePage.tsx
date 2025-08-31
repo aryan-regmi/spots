@@ -29,7 +29,15 @@ export default function ProfilePage() {
             <IconButton
                 style={backBtnStyle}
                 size="large"
-                onClick={() => navigate(-1)}
+                onClick={() => {
+                    if (document.startViewTransition) {
+                        document.startViewTransition(() => {
+                            navigate(-1);
+                        });
+                    } else {
+                        navigate(-1);
+                    }
+                }}
                 disabled={isBusy}
             >
                 <ArrowBack />

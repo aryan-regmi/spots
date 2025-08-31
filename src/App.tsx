@@ -1,6 +1,7 @@
 import '@/App.css';
-import { Fade } from '@mui/material';
+import { Fade, Stack } from '@mui/material';
 import { Outlet } from 'react-router-dom';
+import Glassy from './components/Glassy';
 
 // TODO: Add theme context
 //
@@ -21,9 +22,11 @@ import { Outlet } from 'react-router-dom';
 export default function App() {
     return (
         <Fade in={true} timeout={500} appear={true}>
-            <div style={{ width: '100%', height: '100%' }}>
+            <GlassyStack style={{ width: '100vw', height: '100vh' }}>
                 <Outlet></Outlet>
-            </div>
+            </GlassyStack>
         </Fade>
     );
 }
+
+const GlassyStack = Glassy(Stack);

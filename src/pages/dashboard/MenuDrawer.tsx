@@ -23,7 +23,7 @@ export default function MenuDrawer(props: {
 
     async function showProfile() {
         toggleMenu();
-        await navigate('/dashboard/profile');
+        await navigate('/dashboard/profile', { viewTransition: true });
     }
 
     return (

@@ -37,7 +37,7 @@ export default function DashboardPage() {
         toggleMenu();
         await unauthorize();
         await closeEndpoint.mutateAsync();
-        navigate('/login', { replace: true });
+        navigate('/login', { replace: true, viewTransition: true });
     }
 
     async function toggleMenu() {
