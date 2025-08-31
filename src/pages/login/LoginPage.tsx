@@ -9,11 +9,8 @@ import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { getUserAtom } from '@/utils/users/atoms';
 import { loadEndpointAtom } from '@/utils/network/atoms';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { verifyPassword } from '@/api/users';
+import { getUser, verifyPassword } from '@/api/users';
 import { useParamAtom } from '@/utils/hooks/useParamAtom';
-
-/* State atoms */
-const currentUsernameAtom = atom('');
 
 /* Validation atoms */
 const isValidAtom = atom({ username: true, password: true });
@@ -25,10 +22,6 @@ export default function LoginPage() {
     const { isLoading } = useAtomValue(authContextAtom);
     const { authorize } = useAtomValue(authContextActionAtom);
     const loadEndpoint = useAtomValue(loadEndpointAtom);
-
-    /* State */
-    const [currentUsername, setCurrentUsername] = useAtom(currentUsernameAtom);
-    const user = useParamAtom(getUserAtom, currentUsername);
 
     /* Validation */
     const [isValid, setIsValid] = useAtom(isValidAtom);
@@ -44,10 +37,10 @@ export default function LoginPage() {
         setValidating(true);
 
         if (typeof username === 'string' && typeof password === 'string') {
-            setCurrentUsername(username);
+            const user = await getUser(username);
 
             // Validate username
-            if (!user.data) {
+            if (!user) {
                 setIsValid({ username: false, password: isValid.password });
                 setErrMsg('Username not found!');
                 setValidating(false);

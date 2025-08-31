@@ -22,10 +22,13 @@ pub async fn verify_password(
     username: String,
     password: String,
 ) -> Result<bool> {
-    let hash = match database.get_password_hash(username).await {
-        Ok(hash) => hash,
-        Err(err) => {
-            eprintln!("{err}");
+    let hash = match database
+        .get_password_hash(username)
+        .await
+        .map_err(|e| e.to_string())?
+    {
+        Some(hash) => hash,
+        None => {
             return Ok(false);
         }
     };
