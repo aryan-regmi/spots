@@ -6,12 +6,11 @@ import { IconButton, Stack, styled } from '@mui/material';
 import { authContextAtom } from '@/utils/auth/atoms';
 import { getEndpointAddressAtom } from '@/utils/network/atoms';
 import { useAtomValue } from 'jotai';
-import { useNavigate } from 'react-router-dom';
 import { useParamAtom } from '@/utils/hooks/useParamAtom';
-import Glassy from '@/components/Glassy';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 
 export default function ProfilePage() {
-    const navigate = useNavigate();
+    const transitionNavigate = useTransitionNavigate();
     const { authUser, isLoading } = useAtomValue(authContextAtom);
     const getEndpointAddr = useParamAtom(
         getEndpointAddressAtom,
@@ -25,18 +24,19 @@ export default function ProfilePage() {
     }
 
     return (
-        <GlassyContainer direction="column">
+        <Container direction="column">
             <IconButton
                 style={backBtnStyle}
                 size="large"
                 onClick={() => {
-                    if (document.startViewTransition) {
-                        document.startViewTransition(() => {
-                            navigate(-1);
-                        });
-                    } else {
-                        navigate(-1);
-                    }
+                    /* if (document.startViewTransition) { */
+                    /*     document.startViewTransition(() => { */
+                    /*         navigate(-1); */
+                    /*     }); */
+                    /* } else { */
+                    /*     navigate(-1); */
+                    /* } */
+                    transitionNavigate(-1);
                 }}
                 disabled={isBusy}
             >
@@ -59,7 +59,7 @@ export default function ProfilePage() {
             </Stack>
 
             {/* TODO: Add share button: https://github.com/buildyourwebapp/tauri-plugin-sharesheet */}
-        </GlassyContainer>
+        </Container>
     );
 }
 
@@ -79,5 +79,3 @@ const Container = styled(Stack)({
     padding: '2em',
     gap: '5em',
 });
-
-const GlassyContainer = Glassy(Container);

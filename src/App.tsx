@@ -1,10 +1,9 @@
 import '@/App.css';
-import { Fade, Stack, styled } from '@mui/material';
 import { Outlet } from 'react-router-dom';
-import Glassy from './components/Glassy';
-import { useEffect } from 'react';
-import { atom, useAtom } from 'jotai';
-import Loading from './components/loading/Loading';
+import { atom } from 'jotai';
+import FadeGlassy from './components/glassy/FadeGlassy';
+import Glassy from './components/glassy/Glassy';
+import { Stack } from '@mui/material';
 
 // TODO: Add theme context
 //
@@ -19,71 +18,23 @@ import Loading from './components/loading/Loading';
 // TODO: Add transitions (CSSTransitions component)
 //
 // TODO: Make buttons responsive (show loading state on click etc...)
-//
-// TODO: Move styles to styled.ts (for components?)
 
 /* State atoms */
-const fadeInAtom = atom(false);
-const showOutletAtom = atom(false);
+export const fadeInAtom = atom(false);
+export const showOutletAtom = atom(false);
 
 export default function App() {
-    const [fadeIn, setFadeIn] = useAtom(fadeInAtom);
-    const [showOutlet, setShowOutlet] = useAtom(showOutletAtom);
-    const fadeDuration = 300;
-
-    useEffect(() => {
-        // Start fade-in when mounted
-        setFadeIn(true);
-
-        // Wait for fade transition to complete (500ms as set below)
-        const timeout = setTimeout(() => {
-            setShowOutlet(true);
-        }, fadeDuration); // Match Fade `timeout={500}`
-
-        return () => clearTimeout(timeout);
-    }, []);
-
-    if (!showOutlet) {
-        return (
-            <GlassyStack
-                style={{
-                    width: '100vw',
-                    height: '100vh',
-                    backgroundColor: 'black',
-                    opacity: 0.6,
-                }}
-            >
-                <GlassyLoad />
-                {/* <Loading /> */}
-            </GlassyStack>
-        );
-    }
-
     return (
-        <div style={{ width: `100vw`, height: '100vh', display: 'flex' }}>
-            <Fade in={fadeIn} timeout={fadeDuration} appear={true}>
-                <GlassyStack
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        background:
-                            "url('./public/bg.jpeg') no-repeat center center",
-                        backgroundSize: 'cover',
-                    }}
-                >
-                    <Outlet />
-                </GlassyStack>
-            </Fade>
-        </div>
+        <FadeGlassy
+            fadeInAtom={fadeInAtom}
+            showOutletAtom={showOutletAtom}
+            fadeDuration={100}
+        >
+            <GlassyStack>
+                <Outlet />
+            </GlassyStack>
+        </FadeGlassy>
     );
 }
 
-const GlassyStack = Glassy(
-    styled(Stack)({
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-    })
-);
-
-const GlassyLoad = Glassy(Loading);
+const GlassyStack = Glassy(Stack);

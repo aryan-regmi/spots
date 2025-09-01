@@ -1,13 +1,13 @@
 import Banner from '@/components/banner/Banner';
-import Glassy from '@/components/Glassy';
 import { Alert, CircularProgress, Stack, styled } from '@mui/material';
-import { Form, Link, useNavigate } from 'react-router-dom';
+import { Form, Link } from 'react-router-dom';
 import { FormEvent } from 'react';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { getUser, verifyPassword } from '@/api/users';
 import { loadEndpointAtom } from '@/utils/network/atoms';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 
 /* Validation atoms */
 export const isValidAtom = atom({ username: true, password: true });
@@ -15,7 +15,7 @@ export const errorMessageAtom = atom<string>();
 export const validatingAtom = atom(false);
 
 export default function LoginPage() {
-    const navigate = useNavigate();
+    const transitionNavigate = useTransitionNavigate();
     const { isLoading } = useAtomValue(authContextAtom);
     const { authorize } = useAtomValue(authContextActionAtom);
     const loadEndpoint = useAtomValue(loadEndpointAtom);
@@ -64,15 +64,15 @@ export default function LoginPage() {
 
             // Go to homepage
             setValidating(false);
-            await navigate('/dashboard', {
+            await transitionNavigate('/dashboard', {
                 replace: true,
-                viewTransition: true,
+                /* viewTransition: true, */
             });
         }
     }
 
     return (
-        <GlassyContainer direction="column">
+        <Container direction="column">
             <Banner />
 
             {/* Login form */}
@@ -136,9 +136,16 @@ export default function LoginPage() {
             </Form>
 
             {/* Sign up link */}
-            <Link to={'/signup'} style={{ marginTop: '-4em' }}>
+            <a
+                href="#"
+                style={{ marginTop: '-4em' }}
+                onClick={(e) => {
+                    e.preventDefault();
+                    transitionNavigate('/signup');
+                }}
+            >
                 Sign Up
-            </Link>
+            </a>
 
             {/* Error alerts */}
             {errMsg ? (
@@ -146,7 +153,7 @@ export default function LoginPage() {
                     {errMsg}
                 </Alert>
             ) : null}
-        </GlassyContainer>
+        </Container>
     );
 }
 
@@ -161,5 +168,3 @@ const Container = styled(Stack)({
     justifyContent: 'center',
     boxSizing: 'border-box',
 });
-
-const GlassyContainer = Glassy(Container);

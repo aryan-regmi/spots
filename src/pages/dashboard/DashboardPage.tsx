@@ -14,13 +14,12 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
-import { useNavigate } from 'react-router-dom';
-import Glassy from '@/components/Glassy';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 
 export const navAtom = atom(NavState.Home);
 
 export default function DashboardPage() {
-    const navigate = useNavigate();
+    const transitionNavigate = useTransitionNavigate();
     const { authUser, isLoading } = useAtomValue(authContextAtom);
     const { unauthorize } = useAtomValue(authContextActionAtom);
     const closeEndpoint = useAtomValue(closeEndpointAtom);
@@ -37,7 +36,10 @@ export default function DashboardPage() {
         toggleMenu();
         await unauthorize();
         await closeEndpoint.mutateAsync();
-        navigate('/login', { replace: true, viewTransition: true });
+        transitionNavigate('/login', {
+            replace: true,
+            /* viewTransition: true  */
+        });
     }
 
     async function toggleMenu() {
@@ -56,7 +58,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <GlassyDashboard direction="column">
+        <Container direction="column">
             <IconButton
                 style={{
                     justifyContent: 'left',
@@ -86,11 +88,11 @@ export default function DashboardPage() {
             <div style={{ paddingBottom: '3em' }}>
                 <BottomNav nav={nav} setNav={setNav} />
             </div>
-        </GlassyDashboard>
+        </Container>
     );
 }
 
-const DashboardContainer = styled(Stack)({
+const Container = styled(Stack)({
     flex: '1 0 300px',
     minHeight: '90vh',
     height: '100vh',
@@ -100,5 +102,3 @@ const DashboardContainer = styled(Stack)({
 const MenuItem = styled(ListItemButton)({
     paddingLeft: '1.5em',
 });
-
-const GlassyDashboard = Glassy(DashboardContainer);

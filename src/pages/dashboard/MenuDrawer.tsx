@@ -2,8 +2,8 @@ import { Avatar, Button, Divider, List, Stack, styled } from '@mui/material';
 import { atom, useAtom } from 'jotai';
 import { CSSProperties } from 'react';
 import { stringAvatar } from '@/utils/stringAvatar';
-import { useNavigate } from 'react-router-dom';
 import NavDrawer from '@/components/nav/NavDrawer';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 
 export const menuIsOpenAtom = atom(false);
 
@@ -11,7 +11,7 @@ export default function MenuDrawer(props: {
     currentUser: string;
     children: any;
 }) {
-    const navigate = useNavigate();
+    const transitionNavigate = useTransitionNavigate();
     const { currentUser, children } = props;
 
     /* State */
@@ -23,7 +23,9 @@ export default function MenuDrawer(props: {
 
     async function showProfile() {
         toggleMenu();
-        await navigate('/dashboard/profile', { viewTransition: true });
+        await transitionNavigate('/dashboard/profile', {
+            /* viewTransition: true  */
+        });
     }
 
     return (

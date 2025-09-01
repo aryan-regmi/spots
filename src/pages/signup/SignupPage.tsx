@@ -6,16 +6,16 @@ import {
     Stack,
     styled,
 } from '@mui/material';
-import Glassy from '@/components/Glassy';
 import { ArrowBack } from '@mui/icons-material';
 import { CSSProperties, FormEvent } from 'react';
-import { Form, useNavigate } from 'react-router-dom';
+import { Form } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
 import { getUser, hashPassword } from '@/api/users';
 import { insertUserAtom } from '@/utils/users/atoms';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 
 /* Validation atoms */
 export const errorMessageAtom = atom<string>();
@@ -23,7 +23,7 @@ export const isValidAtom = atom(true);
 export const validatingAtom = atom(false);
 
 export default function SignupPage() {
-    const navigate = useNavigate();
+    const transitionNavigate = useTransitionNavigate();
     const { isLoading } = useAtomValue(authContextAtom);
     const { authorize } = useAtomValue(authContextActionAtom);
     const insertUser = useAtomValue(insertUserAtom);
@@ -72,9 +72,9 @@ export default function SignupPage() {
 
                 // Go to homepage
                 setValidating(false);
-                await navigate('/dashboard', {
+                await transitionNavigate('/dashboard', {
                     replace: true,
-                    viewTransition: true,
+                    /* viewTransition: true, */
                 });
             } else {
                 setIsValid(false);
@@ -85,11 +85,14 @@ export default function SignupPage() {
     }
 
     return (
-        <GlassyContainer direction="column">
+        <Container direction="column">
             <IconButton
                 sx={backBtnStyle}
                 onClick={() =>
-                    navigate('/login', { replace: true, viewTransition: true })
+                    transitionNavigate('/login', {
+                        replace: true,
+                        /* viewTransition: true, */
+                    })
                 }
                 disabled={isBusy}
             >
@@ -136,7 +139,7 @@ export default function SignupPage() {
                     {errMsg}
                 </Alert>
             ) : null}
-        </GlassyContainer>
+        </Container>
     );
 }
 
@@ -182,5 +185,3 @@ function SignupButton(isBusy: boolean) {
         </>
     );
 }
-
-const GlassyContainer = Glassy(Container);
