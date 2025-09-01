@@ -1,6 +1,6 @@
 import Banner from '@/components/banner/Banner';
 import { Alert, CircularProgress, Stack, styled } from '@mui/material';
-import { Form, Link } from 'react-router-dom';
+import { Form } from 'react-router-dom';
 import { FormEvent } from 'react';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
 import { atom, useAtom, useAtomValue } from 'jotai';

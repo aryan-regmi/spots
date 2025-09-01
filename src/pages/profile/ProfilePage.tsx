@@ -1,5 +1,6 @@
 import Loading from '@/components/loading/Loading';
 import QRCode from 'react-qr-code';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import { ArrowBack } from '@mui/icons-material';
 import { CSSProperties } from 'react';
 import { IconButton, Stack, styled } from '@mui/material';
@@ -7,7 +8,6 @@ import { authContextAtom } from '@/utils/auth/atoms';
 import { getEndpointAddressAtom } from '@/utils/network/atoms';
 import { useAtomValue } from 'jotai';
 import { useParamAtom } from '@/utils/hooks/useParamAtom';
-import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 
 export default function ProfilePage() {
     const transitionNavigate = useTransitionNavigate();

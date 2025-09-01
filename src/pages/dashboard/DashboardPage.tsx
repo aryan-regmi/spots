@@ -8,13 +8,13 @@ import {
     Stack,
     styled,
 } from '@mui/material';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import { Logout } from '@mui/icons-material';
 import { NavState } from '@/pages/dashboard/NavState';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
-import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 
 export const navAtom = atom(NavState.Home);
 

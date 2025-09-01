@@ -14,10 +14,6 @@ import { Stack } from '@mui/material';
 //      - Send logs to rust-tracing backend
 //
 // TODO: Make `Loading` component take prop for text content
-//
-// TODO: Add transitions (CSSTransitions component)
-//
-// TODO: Make buttons responsive (show loading state on click etc...)
 
 /* State atoms */
 export const fadeInAtom = atom(false);
