@@ -151,15 +151,15 @@ export default function LoginPage() {
 }
 
 const Container = styled(Stack)({
+    display: 'flex',
     width: '100%',
     height: '100vh',
-    display: 'flex',
-    justifyContent: 'center',
     margin: 0,
     padding: '2em',
     gap: '5em',
-    boxSizing: 'content-box',
     textAlign: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box',
 });
 
 const GlassyContainer = Glassy(Container);
