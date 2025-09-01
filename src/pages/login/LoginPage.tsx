@@ -8,6 +8,7 @@ import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { getUser, verifyPassword } from '@/api/users';
 import { loadEndpointAtom } from '@/utils/network/atoms';
 import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
+import Container from '@/components/Container';
 
 /* Validation atoms */
 export const isValidAtom = atom({ username: true, password: true });
@@ -72,7 +73,7 @@ export default function LoginPage() {
     }
 
     return (
-        <Container direction="column">
+        <StyledContainer direction="column">
             <Banner />
 
             {/* Login form */}
@@ -153,18 +154,11 @@ export default function LoginPage() {
                     {errMsg}
                 </Alert>
             ) : null}
-        </Container>
+        </StyledContainer>
     );
 }
 
-const Container = styled(Stack)({
-    display: 'flex',
-    width: '100%',
-    height: '100vh',
-    margin: 0,
-    padding: '2em',
-    gap: '5em',
+const StyledContainer = styled(Container)({
     textAlign: 'center',
     justifyContent: 'center',
-    boxSizing: 'border-box',
 });

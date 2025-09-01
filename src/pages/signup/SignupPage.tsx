@@ -16,6 +16,7 @@ import { createEndpointAtom } from '@/utils/network/atoms';
 import { getUser, hashPassword } from '@/api/users';
 import { insertUserAtom } from '@/utils/users/atoms';
 import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
+import Container from '@/components/Container';
 
 /* Validation atoms */
 export const errorMessageAtom = atom<string>();
@@ -85,7 +86,7 @@ export default function SignupPage() {
     }
 
     return (
-        <Container direction="column">
+        <StyledContainer direction="column">
             <IconButton
                 sx={backBtnStyle}
                 onClick={() =>
@@ -139,7 +140,7 @@ export default function SignupPage() {
                     {errMsg}
                 </Alert>
             ) : null}
-        </Container>
+        </StyledContainer>
     );
 }
 
@@ -151,14 +152,7 @@ const backBtnStyle: CSSProperties = {
     marginLeft: '-0.5em',
 };
 
-const Container = styled(Stack)({
-    width: '100%',
-    height: '100vh',
-    display: 'flex',
-    margin: 0,
-    padding: '2em',
-    gap: '5em',
-    boxSizing: 'content-box',
+const StyledContainer = styled(Container)({
     textAlign: 'center',
 });
 

@@ -3,7 +3,7 @@ import { useAtom } from 'jotai';
 import { NavigateOptions, To, useNavigate } from 'react-router-dom';
 
 /** Delays navigation until fade-out completes. */
-export default function useTransitionNavigate(duration = 100) {
+export default function useTransitionNavigate(duration = 300) {
     const navigate = useNavigate();
     const [, setFadeIn] = useAtom(fadeInAtom);
     const [, setShowOutlet] = useAtom(showOutletAtom);

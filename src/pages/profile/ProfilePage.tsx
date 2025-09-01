@@ -73,9 +73,10 @@ const backBtnStyle: CSSProperties = {
 
 const Container = styled(Stack)({
     display: 'flex',
-    margin: 0,
     height: '100vh',
     width: '100%',
+    margin: 0,
     padding: '2em',
     gap: '5em',
+    boxSizing: 'border-box',
 });

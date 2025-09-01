@@ -31,7 +31,7 @@ export default function FadeGlassy(props: {
         // Start fade-in animation
         const fadeTimer = setTimeout(() => {
             setFadeIn(true);
-        }, 300);
+        }, fadeDuration - 150);
 
         const showTimer = setTimeout(() => {
             setShowOutlet(true);

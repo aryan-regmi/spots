@@ -15,6 +15,7 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
+import Container from '@/components/Container';
 
 export const navAtom = atom(NavState.Home);
 
@@ -58,7 +59,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <Container direction="column">
+        <StyledContainer direction="column">
             <IconButton
                 style={{
                     justifyContent: 'left',
@@ -88,15 +89,12 @@ export default function DashboardPage() {
             <div style={{ paddingBottom: '3em' }}>
                 <BottomNav nav={nav} setNav={setNav} />
             </div>
-        </Container>
+        </StyledContainer>
     );
 }
 
-const Container = styled(Stack)({
-    flex: '1 0 300px',
-    minHeight: '90vh',
-    height: '100vh',
-    padding: '1em',
+const StyledContainer = styled(Container)({
+    justifyContent: 'center',
 });
 
 const MenuItem = styled(ListItemButton)({

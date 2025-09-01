@@ -57,11 +57,7 @@ export default function MenuDrawer(props: {
 }
 
 const MenuHeaderBtn = styled(Button)({
-    /* backgroundColor: '#1f1f1f', */
     backgroundColor: 'rgba(8,8,5,0.8)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderLeft: 'none',
-    borderBottom: 'none',
     paddingTop: '1em',
     paddingLeft: '1.25em',
     marginBottom: 0,
