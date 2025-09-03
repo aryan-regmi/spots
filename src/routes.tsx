@@ -34,6 +34,8 @@ export const router = createBrowserRouter([
                     if (!authUser.username) {
                         return redirect('/login');
                     }
+
+                    // TODO: Load music folder
                 },
             },
             {

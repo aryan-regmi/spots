@@ -29,9 +29,15 @@ export default function FadeGlassy(props: {
         setShowOutlet(false);
 
         // Start fade-in animation
+        let adjustedFadeDuration;
+        if (fadeDuration <= 150) {
+            adjustedFadeDuration = 50;
+        } else {
+            adjustedFadeDuration = fadeDuration - 150;
+        }
         const fadeTimer = setTimeout(() => {
             setFadeIn(true);
-        }, fadeDuration - 150);
+        }, adjustedFadeDuration);
 
         const showTimer = setTimeout(() => {
             setShowOutlet(true);

@@ -1,17 +1,19 @@
 mod commands;
 mod database;
+mod music;
 mod network;
 
 use std::sync::Arc;
 
 use crate::{database::Database, network::Network};
-use commands::{auth, database as db, network as net};
+use commands::{auth, database as db, music as msc, network as net};
 use tauri::Manager;
 use tokio::sync::Mutex;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             tauri::async_runtime::block_on(async move {
                 let handle = app.handle();
@@ -45,6 +47,7 @@ pub fn run() {
             net::load_endpoint,
             net::get_endpoint_addr,
             net::close_endpoint,
+            msc::load_music_library,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

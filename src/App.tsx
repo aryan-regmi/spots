@@ -15,8 +15,6 @@ import { Stack } from '@mui/material';
 //
 // TODO: Make `Loading` component take prop for text content
 
-export const fadeDuration = 200;
-
 /* State atoms */
 export const fadeInAtom = atom(false);
 export const showOutletAtom = atom(false);
@@ -26,7 +24,7 @@ export default function App() {
         <FadeGlassy
             fadeInAtom={fadeInAtom}
             showOutletAtom={showOutletAtom}
-            fadeDuration={fadeDuration}
+            fadeDuration={300}
         >
             <GlassyStack>
                 <Outlet />

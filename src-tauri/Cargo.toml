@@ -33,6 +33,9 @@ sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
 aes-gcm = "0.10.3"
 futures = "0.3.31"
 bincode = { version = "2.0.1", features = ["serde"] }
+base64 = "0.22.1"
+lofty = "0.22.4"
+tauri-plugin-fs = "2"
 
 # [profile.dev]
 # incremental = true

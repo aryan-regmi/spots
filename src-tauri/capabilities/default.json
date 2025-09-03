@@ -6,6 +6,19 @@
     "permissions": [
         "core:default",
         "core:window:allow-set-size",
-        "opener:default"
+        "opener:default",
+        "fs:default",
+        {
+            "identifier": "fs:scope-home-recursive",
+            "allow": [{ "path": "$HOME/Music/**" }]
+        },
+        {
+            "identifier": "fs:allow-create",
+            "allow": [{ "path": "$HOME/*" }]
+        },
+        {
+            "identifier": "fs:allow-exists",
+            "allow": [{ "path": "$HOME/*" }]
+        }
     ]
 }
