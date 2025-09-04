@@ -5699,6 +5699,7 @@ dependencies = [
  "argon2",
  "base64 0.22.1",
  "bincode",
+ "dirs",
  "futures",
  "hex",
  "iroh",

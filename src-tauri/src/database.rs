@@ -1,13 +1,19 @@
+use std::pin::Pin;
+
 use anyhow::{anyhow, Error, Result};
+use futures::{stream::MapOk, Stream, TryStreamExt};
 use serde::Serialize;
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode},
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteRow},
     Pool, Row, Sqlite, SqlitePool,
 };
 use tauri::{AppHandle, Manager};
 use tokio::fs;
 
-use crate::network::{EncryptedValue, EncryptedValueBincode, Peers, PeersBincode};
+use crate::{
+    music::TrackMetadata,
+    network::{EncryptedValue, EncryptedValueBincode, Peers, PeersBincode},
+};
 
 pub struct Database {
     pub pool: Pool<Sqlite>,
@@ -205,7 +211,20 @@ impl Database {
         Ok(())
     }
 
-    /// Gets the topic id for the specified user.
+    /// Gets the network ID (ID field of the network table) for the specified user.
+    pub async fn get_network_id(&self, username: String) -> Result<u32> {
+        let user_id = self
+            .get_user_id(username.clone())
+            .await?
+            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
+        let result = sqlx::query("SELECT id FROM network WHERE user_id = ?")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(result.get("id"))
+    }
+
+    /// Gets the topic ID for the specified user.
     pub async fn get_topic_id(&self, username: String) -> Result<Option<String>> {
         let user_id = self
             .get_user_id(username.clone())
@@ -268,6 +287,71 @@ impl Database {
         Ok(())
     }
 }
+
+/// Methods for the `tracks` table.
+impl Database {
+    /// Inserts the track in the database, associating it with the given user.
+    pub async fn insert_track(&self, metadata: TrackMetadata, username: String) -> Result<()> {
+        let network_id = self.get_network_id(username).await?;
+        sqlx::query(
+            "INSERT INTO tracks (
+                network_id,
+                title,
+                artist,
+                album,
+                genre,
+                year,
+                cover_base64,
+                path
+            ) VALUES (?,?,?,?,?,?,?,?)",
+        )
+        .bind(network_id)
+        .bind(metadata.title)
+        .bind(metadata.artist)
+        .bind(metadata.album)
+        .bind(metadata.genre)
+        .bind(metadata.year)
+        .bind(metadata.cover_base64)
+        .bind(metadata.path)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    /// Returns a stream containing all of the tracks in the database.
+    pub async fn stream_tracks(&self) -> MapOk<TrackStream, impl TrackMap> {
+        sqlx::query("SELECT id, title, artist, album, genre, year, cover_base64, path FROM tracks")
+            .fetch(&self.pool)
+            .map_ok(|row: SqliteRow| StreamedTrackMetadata {
+                id: row.get("id"),
+                metadata: TrackMetadata {
+                    title: row.get("title"),
+                    artist: row.get("artist"),
+                    album: row.get("album"),
+                    genre: row.get("genre"),
+                    year: row.get("year"),
+                    cover_base64: row.get("cover_base64"),
+                    path: row.get("path"),
+                },
+            })
+    }
+}
+
+/// The track metadata along with the its ID.
+#[derive(Serialize, Clone)]
+pub struct StreamedTrackMetadata {
+    pub id: u32,
+    pub metadata: TrackMetadata,
+}
+
+/// A stream of [StreamedTrackMetadata].
+pub type TrackStream =
+    Pin<Box<dyn Stream<Item = std::result::Result<SqliteRow, sqlx::Error>> + std::marker::Send>>;
+
+/// A function that converts a [SqliteRow] to a [StreamedTrackMetadata].
+pub trait TrackMap: FnMut(sqlx::sqlite::SqliteRow) -> StreamedTrackMetadata {}
+impl<F: FnMut(sqlx::sqlite::SqliteRow) -> StreamedTrackMetadata> TrackMap for F {}
 
 /// Represents a user in the database.
 #[derive(Serialize)]

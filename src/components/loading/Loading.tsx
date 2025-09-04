@@ -11,6 +11,7 @@ const style: CSSProperties = {
     height: '90vh',
 };
 
+// TODO: Return a skeleton instead (props to pass in sizes and layout)
 export default function Loading() {
     return (
         <div style={style}>

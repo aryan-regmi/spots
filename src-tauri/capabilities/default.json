@@ -10,15 +10,35 @@
         "fs:default",
         {
             "identifier": "fs:scope-home-recursive",
-            "allow": [{ "path": "$HOME/Music/**" }]
+            "allow": [
+                {
+                    "path": "$HOME/**"
+                }
+            ]
         },
         {
             "identifier": "fs:allow-create",
-            "allow": [{ "path": "$HOME/*" }]
+            "allow": [
+                {
+                    "path": "$HOME/*"
+                }
+            ]
         },
         {
             "identifier": "fs:allow-exists",
-            "allow": [{ "path": "$HOME/*" }]
+            "allow": [
+                {
+                    "path": "$HOME/*"
+                }
+            ]
+        },
+        {
+            "identifier": "fs:allow-read",
+            "allow": [
+                {
+                    "path": "$HOME/*"
+                }
+            ]
         }
     ]
 }

@@ -1,7 +1,7 @@
 export enum NavState {
     Home = 0,
     Search,
-    Playlists,
+    Library,
 }
 
 export default NavState;

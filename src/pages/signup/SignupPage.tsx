@@ -10,7 +10,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { CSSProperties, FormEvent } from 'react';
 import { Form } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
 import { getUser, hashPassword } from '@/api/users';
@@ -18,10 +18,13 @@ import { insertUserAtom } from '@/utils/users/atoms';
 import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import Container from '@/components/Container';
 
+/* Global state atoms */
+export const firstRunAtom = atom(false);
+
 /* Validation atoms */
-export const errorMessageAtom = atom<string>();
-export const isValidAtom = atom(true);
-export const validatingAtom = atom(false);
+const errorMessageAtom = atom<string>();
+const isValidAtom = atom(true);
+const validatingAtom = atom(false);
 
 export default function SignupPage() {
     const transitionNavigate = useTransitionNavigate();
@@ -29,6 +32,7 @@ export default function SignupPage() {
     const { authorize } = useAtomValue(authContextActionAtom);
     const insertUser = useAtomValue(insertUserAtom);
     const createEndpoint = useAtomValue(createEndpointAtom);
+    const setFirstRun = useSetAtom(firstRunAtom);
 
     /* Validation */
     const [errMsg, setErrMsg] = useAtom(errorMessageAtom);
@@ -73,10 +77,8 @@ export default function SignupPage() {
 
                 // Go to homepage
                 setValidating(false);
-                await transitionNavigate('/dashboard', {
-                    replace: true,
-                    /* viewTransition: true, */
-                });
+                setFirstRun(true);
+                await transitionNavigate('/dashboard', { replace: true });
             } else {
                 setIsValid(false);
                 setValidating(false);

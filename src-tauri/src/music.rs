@@ -3,15 +3,15 @@ use lofty::{file::TaggedFileExt, probe::Probe, tag::Accessor};
 
 type Result<T> = anyhow::Result<T>;
 
-#[derive(serde::Serialize, Clone)]
+#[derive(serde::Serialize, Clone, Debug)]
 pub struct TrackMetadata {
-    title: Option<String>,
-    artist: Option<String>,
-    album: Option<String>,
-    genre: Option<String>,
-    year: Option<u32>,
-    cover_base64: Option<String>,
-    path: String,
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    pub album: Option<String>,
+    pub genre: Option<String>,
+    pub year: Option<u32>,
+    pub cover_base64: Option<String>,
+    pub path: String,
 }
 
 /// Parses the metadata from the given audio file.

@@ -16,6 +16,7 @@ import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
 import Container from '@/components/Container';
+import Library from './library/Library';
 
 export const navAtom = atom(NavState.Home);
 
@@ -53,8 +54,8 @@ export default function DashboardPage() {
                 return <div>Home</div>;
             case NavState.Search:
                 return <div>Search</div>;
-            case NavState.Playlists:
-                return <div>Playlists</div>;
+            case NavState.Library:
+                return <Library />;
         }
     }
 
@@ -78,6 +79,7 @@ export default function DashboardPage() {
                 </MenuItem>
             </MenuDrawer>
 
+            {/* Contents */}
             <Stack
                 direction="column"
                 sx={{ flexGrow: 1, paddingLeft: '1em', paddingRight: '1em' }}

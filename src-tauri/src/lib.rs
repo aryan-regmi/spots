@@ -48,6 +48,7 @@ pub fn run() {
             net::get_endpoint_addr,
             net::close_endpoint,
             msc::load_music_library,
+            msc::stream_tracks,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
