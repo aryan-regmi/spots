@@ -18,7 +18,7 @@ import { Stack } from '@mui/material';
 /* State atoms */
 export const fadeInAtom = atom(false);
 export const showOutletAtom = atom(false);
-export const fadeDurationAtom = atom(() => 10);
+export const fadeDurationAtom = atom(() => 50);
 
 export default function App() {
     return (

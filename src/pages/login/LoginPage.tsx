@@ -39,10 +39,11 @@ export default function LoginPage() {
     /** Validates the username and password, then redirects to the dashboard. */
     async function validateLoginAndRedirect(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
+        setValidating(true);
+
         const formData = new FormData(e.currentTarget);
         const username = formData.get('username');
         const password = formData.get('password');
-        setValidating(true);
 
         if (typeof username === 'string' && typeof password === 'string') {
             const user = await getUser({ type: 'username', value: username });

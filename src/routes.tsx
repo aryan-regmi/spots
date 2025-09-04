@@ -46,8 +46,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: '/signup',
-                Component: SignupPage,
-                hydrateFallbackElement: <Loading />,
+                element: <SignupPage />,
                 loader: async () => {
                     const authUser = await getAuthUser();
                     if (authUser?.username) {

@@ -7,7 +7,7 @@ import {
     styled,
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
-import { CSSProperties, FormEvent } from 'react';
+import { CSSProperties, FormEvent, useEffect } from 'react';
 import { Form } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
@@ -44,13 +44,25 @@ export default function SignupPage() {
         createEndpoint.isPending ||
         validating;
 
-    /* TODO: Add password validation also! */
-    async function validateLogin(e: FormEvent<HTMLFormElement>) {
+    /* Reset validation on unmount */
+    useEffect(() => {
+        return () => {
+            setIsValid(true);
+            setErrMsg(undefined);
+            setValidating(false);
+        };
+    }, []);
+
+    // TODO: Add password validation also!
+    //
+    /** Validates the username and password, then redirects to the dashboard. */
+    async function validateLoginAndRedirect(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
+        setValidating(true);
+
         const formData = new FormData(e.currentTarget);
         const username = formData.get('username');
         const password = formData.get('password');
-        setValidating(true);
 
         if (typeof username === 'string' && typeof password === 'string') {
             const user = await getUser({ type: 'username', value: username });
@@ -76,6 +88,7 @@ export default function SignupPage() {
                 await createEndpoint.mutateAsync(userId);
 
                 // Go to homepage
+                await new Promise((resolve) => setTimeout(resolve, 500));
                 setValidating(false);
                 setFirstRun(true);
                 await transitionNavigate('/dashboard', { replace: true });
@@ -100,7 +113,7 @@ export default function SignupPage() {
             <Banner />
 
             {/* Signup form */}
-            <Form onSubmit={validateLogin}>
+            <Form onSubmit={validateLoginAndRedirect}>
                 <Stack spacing="1em" direction="column">
                     <StyledTextField
                         label="Username"
@@ -127,7 +140,23 @@ export default function SignupPage() {
                         required
                     />
 
-                    {SignupButton(isBusy)}
+                    <div style={{ textAlign: 'center' }}>
+                        <StyledButton
+                            type="submit"
+                            variant="contained"
+                            disabled={isBusy}
+                            color="primary"
+                        >
+                            {validating ? 'Logging in...' : 'Sign Up'}
+                        </StyledButton>
+                    </div>
+                    <div
+                        style={{
+                            textAlign: 'center',
+                        }}
+                    >
+                        {validating ? <CircularProgress /> : null}
+                    </div>
                 </Stack>
             </Form>
 
@@ -152,27 +181,3 @@ const backBtnStyle: CSSProperties = {
 const StyledContainer = styled(Container)({
     textAlign: 'center',
 });
-
-function SignupButton(isBusy: boolean) {
-    return (
-        <>
-            <div style={{ textAlign: 'center' }}>
-                <StyledButton
-                    type="submit"
-                    variant="contained"
-                    disabled={isBusy}
-                    color="primary"
-                >
-                    {isBusy ? 'Logging in...' : 'Sign Up'}
-                </StyledButton>
-            </div>
-            <div
-                style={{
-                    textAlign: 'center',
-                }}
-            >
-                {isBusy ? <CircularProgress /> : null}
-            </div>{' '}
-        </>
-    );
-}

@@ -4,6 +4,7 @@ import { fadeDurationAtom } from '@/App';
 import { useAtom, useAtomValue, WritableAtom } from 'jotai';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import Loading from '../loading/Loading';
 
 export type WritableBooleanAtom = WritableAtom<boolean, [boolean], void>;
 
@@ -48,9 +49,7 @@ export default function FadeGlassy(props: {
                     height: '100vh',
                     opacity: 0.6,
                 }}
-            >
-                {/* <GlassyLoad /> */}
-            </GlassyStack>
+            />
         );
     }
 
