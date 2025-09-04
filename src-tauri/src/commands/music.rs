@@ -18,6 +18,7 @@ type DatabaseState<'a> = State<'a, Database>;
 #[tauri::command]
 pub async fn load_music_library(
     app_handle: AppHandle,
+    window: tauri::Window,
     db: DatabaseState<'_>,
     username: String,
 ) -> Result<()> {
@@ -49,10 +50,25 @@ pub async fn load_music_library(
             ) {
                 Ok(metadata) => {
                     // Add to database
-                    db.insert_track(metadata.clone(), username.clone())
+                    let inserted = db
+                        .insert_track(metadata.clone(), username.clone())
                         .await
                         .map_err(|e| e.to_string())?;
+
+                    // Emit loaded event
+                    if inserted.rows_affected() >= 1 {
+                        window
+                            .emit(
+                                "track-loaded",
+                                StreamedTrackMetadata {
+                                    id: inserted.last_insert_rowid(),
+                                    metadata,
+                                },
+                            )
+                            .map_err(|e| e.to_string())?;
+                    }
                 }
+
                 Err(error) => eprintln!("Failed to parse {}: {}", path.display(), error),
             }
         }
