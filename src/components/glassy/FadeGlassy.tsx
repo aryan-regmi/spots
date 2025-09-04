@@ -41,7 +41,8 @@ export default function FadeGlassy(props: {
 
         const showTimer = setTimeout(() => {
             setShowOutlet(true);
-        }, fadeDuration + 100);
+        }, adjustedFadeDuration);
+        /* }, fadeDuration + 100); */
 
         return () => {
             clearTimeout(fadeTimer);

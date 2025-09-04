@@ -24,7 +24,7 @@ export default function App() {
         <FadeGlassy
             fadeInAtom={fadeInAtom}
             showOutletAtom={showOutletAtom}
-            fadeDuration={300}
+            fadeDuration={50}
         >
             <GlassyStack>
                 <Outlet />
