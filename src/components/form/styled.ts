@@ -14,6 +14,7 @@ export const StyledTextField = styled(TextField)({
 
 export const StyledButton = styled(Button)({
     ':disabled': {
+        backgroundColor: '#1f1f1f',
         color: 'white',
     },
 });

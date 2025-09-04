@@ -30,11 +30,14 @@ export default function LoginPage() {
     /* Reset validation on unmount */
     useEffect(() => {
         return () => {
+            setIsValid({ username: true, password: true });
+            setErrMsg(undefined);
             setValidating(false);
         };
     }, []);
 
-    async function validateLogin(e: FormEvent<HTMLFormElement>) {
+    /** Validates the username and password, then redirects to the dashboard. */
+    async function validateLoginAndRedirect(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const username = formData.get('username');
@@ -81,7 +84,7 @@ export default function LoginPage() {
             <Banner />
 
             {/* Login form */}
-            <Form onSubmit={validateLogin}>
+            <Form onSubmit={validateLoginAndRedirect}>
                 <Stack spacing="1em" direction="column">
                     <StyledTextField
                         label="Username"
