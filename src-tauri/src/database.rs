@@ -15,6 +15,8 @@ use crate::{
     network::{EncryptedValue, EncryptedValueBincode, Peers, PeersBincode},
 };
 
+// FIXME: Make all funcs take ids instead!
+
 pub struct Database {
     pub pool: Pool<Sqlite>,
 }
@@ -345,6 +347,41 @@ impl Database {
                 path: row.get("path"),
             },
         })
+    }
+}
+
+// TODO: Finish
+//
+/// Methods for the `playlists` tables.
+impl Database {
+    /// Inserts the playlist in the database, associating it with the given user.
+    pub async fn insert_playlist(&self, name: String, username: String) -> Result<i64> {
+        let user_id = self
+            .get_user_id(username.clone())
+            .await?
+            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
+        let network_id = self.get_network_id(username.clone()).await?;
+        let result = sqlx::query(
+            "
+            INSERT INTO playlists (user_id, network_id, name) VALUES (?,?,?)
+            ",
+        )
+        .bind(user_id)
+        .bind(network_id)
+        .bind(name)
+        .execute(&self.pool)
+        .await?;
+        Ok(result.last_insert_rowid())
+    }
+
+    /// Adds the track to the specified playlist.
+    pub async fn add_track_to_playlist(&self, track_id: i64, playlist_id: i64) -> Result<()> {
+        sqlx::query("INSERT OR IGNORE INTO playlist_tracks (playlist_id, track_id) VALUES (?, ?)")
+            .bind(playlist_id)
+            .bind(track_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 }
 
