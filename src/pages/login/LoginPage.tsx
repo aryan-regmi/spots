@@ -1,14 +1,14 @@
 import Banner from '@/components/banner/Banner';
+import Container from '@/components/Container';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import { Alert, CircularProgress, Stack, styled } from '@mui/material';
 import { Form } from 'react-router-dom';
 import { FormEvent, useEffect } from 'react';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
-import { getUser, UserId, verifyPassword } from '@/api/users';
+import { getUser, verifyPassword } from '@/api/users';
 import { loadEndpointAtom } from '@/utils/network/atoms';
-import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
-import Container from '@/components/Container';
 
 /* Validation atoms */
 export const isValidAtom = atom({ username: true, password: true });

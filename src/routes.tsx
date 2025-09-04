@@ -6,6 +6,7 @@ import ProfilePage from '@/pages/profile/ProfilePage';
 import SignupPage from '@/pages/signup/SignupPage';
 import { createBrowserRouter, redirect } from 'react-router';
 import { getAuthUser } from '@/api/auth';
+import { Typography } from '@mui/material';
 
 export const router = createBrowserRouter([
     {

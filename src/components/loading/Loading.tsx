@@ -1,5 +1,5 @@
-import { CircularProgress } from '@mui/material';
-import { CSSProperties } from 'react';
+import { CircularProgress, Typography, TypographyProps } from '@mui/material';
+import { Component, CSSProperties } from 'react';
 
 const style: CSSProperties = {
     display: 'flex',
@@ -12,11 +12,20 @@ const style: CSSProperties = {
 };
 
 // TODO: Return a skeleton instead (props to pass in sizes and layout)
-export default function Loading() {
+export default function Loading(props: {
+    spinnerSize?: string | number;
+    spinnerStyle?: CSSProperties;
+    children?: any;
+}) {
+    const { spinnerSize, spinnerStyle, children } = props;
+
     return (
         <div style={style}>
-            <CircularProgress size="5em"></CircularProgress>
-            <h3>Loading...</h3>
+            <CircularProgress
+                size={spinnerSize}
+                style={spinnerStyle}
+            ></CircularProgress>
+            {children}
         </div>
     );
 }

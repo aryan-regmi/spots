@@ -1,25 +1,29 @@
 import BottomNav from './BottomNav';
+import Container from '@/components/Container';
+import Library from './library/Library';
 import Loading from '@/components/loading/Loading';
 import MenuDrawer, { menuIsOpenAtom } from '@/pages/dashboard/MenuDrawer';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import {
     Avatar,
+    Fade,
     IconButton,
     ListItemButton,
+    Modal,
     Stack,
     styled,
+    Typography,
 } from '@mui/material';
-import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import { Logout } from '@mui/icons-material';
 import { NavState } from '@/pages/dashboard/NavState';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
-import Container from '@/components/Container';
-import Library from './library/Library';
 import { useEffect } from 'react';
 
-export const navAtom = atom(NavState.Home);
+const navAtom = atom(NavState.Home);
+const isLoggingOutAtom = atom(false);
 
 export default function DashboardPage() {
     const transitionNavigate = useTransitionNavigate();
@@ -29,11 +33,15 @@ export default function DashboardPage() {
 
     /* State */
     const [menuIsOpen, setMenuIsOpen] = useAtom(menuIsOpenAtom);
+    const [isLoggingOut, setIsLoggingOut] = useAtom(isLoggingOutAtom);
     const [nav, setNav] = useAtom(navAtom);
 
     /* Reset nav when unmounted */
     useEffect(() => {
-        setNav(NavState.Home);
+        return () => {
+            setNav(NavState.Home);
+            setIsLoggingOut(false);
+        };
     }, []);
 
     /* Handle loading state */
@@ -43,12 +51,11 @@ export default function DashboardPage() {
 
     /* Removes authentication, closes network endpoint, and navigates to the login page.  */
     async function logout() {
+        setIsLoggingOut(true);
         toggleMenuDrawer();
         await unauthorize();
         await closeEndpoint.mutateAsync();
-        transitionNavigate('/login', {
-            replace: true,
-        });
+        transitionNavigate('/login', { replace: true });
     }
 
     /* Toggles the menu drawer. */
@@ -88,6 +95,21 @@ export default function DashboardPage() {
                 </MenuItem>
             </MenuDrawer>
 
+            {/* Loggin out spinner */}
+            <Modal open={isLoggingOut}>
+                <Fade>
+                    <Loading spinnerStyle={{ color: 'white' }}>
+                        <Typography
+                            variant="body1"
+                            color="darkgray"
+                            style={{ paddingTop: '1em' }}
+                        >
+                            Logging out...
+                        </Typography>
+                    </Loading>
+                </Fade>
+            </Modal>
+
             {/* Contents */}
             <Stack
                 direction="column"
@@ -97,7 +119,7 @@ export default function DashboardPage() {
             </Stack>
 
             {/* Bottom Navigation */}
-            <div style={{ paddingBottom: '3em' }}>
+            <div style={{ paddingBottom: '1em' }}>
                 <BottomNav nav={nav} setNav={setNav} />
             </div>
         </StyledContainer>

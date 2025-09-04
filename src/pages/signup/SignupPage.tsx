@@ -6,6 +6,8 @@ import {
     Stack,
     styled,
 } from '@mui/material';
+import Container from '@/components/Container';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import { ArrowBack } from '@mui/icons-material';
 import { CSSProperties, FormEvent, useEffect } from 'react';
 import { Form } from 'react-router-dom';
@@ -15,8 +17,6 @@ import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
 import { getUser, hashPassword } from '@/api/users';
 import { insertUserAtom } from '@/utils/users/atoms';
-import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
-import Container from '@/components/Container';
 
 /* Global state atoms */
 export const firstRunAtom = atom(false);

@@ -1,9 +1,9 @@
 import '@/App.css';
-import { Outlet } from 'react-router-dom';
-import { atom } from 'jotai';
 import FadeGlassy from './components/glassy/FadeGlassy';
 import Glassy from './components/glassy/Glassy';
+import { Outlet } from 'react-router-dom';
 import { Stack } from '@mui/material';
+import { atom } from 'jotai';
 
 // TODO: Add theme context
 //
@@ -18,7 +18,7 @@ import { Stack } from '@mui/material';
 /* State atoms */
 export const fadeInAtom = atom(false);
 export const showOutletAtom = atom(false);
-export const fadeDurationAtom = atom(() => 50);
+export const fadeDurationAtom = atom(50);
 
 export default function App() {
     return (
