@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 /** Loads the music library, and streams the each loaded track.
  *
  * # Note
- * The event emitted is "`track-loaded`".
+ * The event emitted is "`track-stream`".
  **/
 export async function loadMusicLibrary(username: string) {
     try {
@@ -16,7 +16,7 @@ export async function loadMusicLibrary(username: string) {
 /** Streams all the tracks in the library from the database by emitting an event with the metadata.
  *
  * # Note
- * The event emitted is "`track-loaded`".
+ * The event emitted is "`track-stream`".
  **/
 export async function streamTracks() {
     try {

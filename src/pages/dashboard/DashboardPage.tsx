@@ -17,6 +17,7 @@ import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
 import Container from '@/components/Container';
 import Library from './library/Library';
+import { useEffect } from 'react';
 
 export const navAtom = atom(NavState.Home);
 
@@ -30,24 +31,32 @@ export default function DashboardPage() {
     const [menuIsOpen, setMenuIsOpen] = useAtom(menuIsOpenAtom);
     const [nav, setNav] = useAtom(navAtom);
 
+    /* Reset nav when unmounted */
+    useEffect(() => {
+        setNav(NavState.Home);
+    }, []);
+
+    /* Handle loading state */
     if (isLoading || !authUser) {
         return <Loading />;
     }
 
+    /* Removes authentication, closes network endpoint, and navigates to the login page.  */
     async function logout() {
-        toggleMenu();
+        toggleMenuDrawer();
         await unauthorize();
         await closeEndpoint.mutateAsync();
         transitionNavigate('/login', {
             replace: true,
-            /* viewTransition: true  */
         });
     }
 
-    async function toggleMenu() {
+    /* Toggles the menu drawer. */
+    async function toggleMenuDrawer() {
         setMenuIsOpen(!menuIsOpen);
     }
 
+    /* Displays the currently selected dashboard page. */
     function displayNavigatedPage(nav: NavState) {
         switch (nav) {
             case NavState.Home:
@@ -66,7 +75,7 @@ export default function DashboardPage() {
                     justifyContent: 'left',
                     width: 'fit-content',
                 }}
-                onClick={toggleMenu}
+                onClick={toggleMenuDrawer}
             >
                 <Avatar {...stringAvatar(authUser)} />
             </IconButton>

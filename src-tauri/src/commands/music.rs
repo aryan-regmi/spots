@@ -4,7 +4,7 @@ use tokio::fs;
 
 use crate::{
     database::{Database, StreamedTrackMetadata},
-    music::parse_metadata,
+    music::TrackMetadata,
 };
 
 type Result<T> = anyhow::Result<T, String>;
@@ -44,32 +44,31 @@ pub async fn load_music_library(
             .map(|ext| ext == "mp3")
             .unwrap_or_else(|| false)
         {
-            match parse_metadata(
+            let metadata = TrackMetadata::parse_metadata(
                 path.to_str()
                     .ok_or_else(|| format!("Failed to parse path: {path:?}"))?,
-            ) {
-                Ok(metadata) => {
-                    // Add to database
-                    let inserted = db
-                        .insert_track(metadata.clone(), username.clone())
-                        .await
-                        .map_err(|e| e.to_string())?;
+            )
+            .map_err(|e| e.to_string())?;
 
-                    // Emit loaded event
-                    if inserted.rows_affected() >= 1 {
-                        window
-                            .emit(
-                                "track-loaded",
-                                StreamedTrackMetadata {
-                                    id: inserted.last_insert_rowid(),
-                                    metadata,
-                                },
-                            )
-                            .map_err(|e| e.to_string())?;
-                    }
-                }
+            // Add to database
+            let inserted = db
+                .insert_track(metadata.clone(), username.clone())
+                .await
+                .map_err(|e| e.to_string())?;
 
-                Err(error) => eprintln!("Failed to parse {}: {}", path.display(), error),
+            // FIXME: Add all unique tracks to the default `All Songs` playlist
+
+            // Emit loaded event
+            if inserted.rows_affected() >= 1 {
+                window
+                    .emit(
+                        "track-stream",
+                        StreamedTrackMetadata {
+                            id: inserted.last_insert_rowid(),
+                            metadata,
+                        },
+                    )
+                    .map_err(|e| e.to_string())?;
             }
         }
     }
@@ -83,7 +82,7 @@ pub async fn stream_tracks(window: tauri::Window, db: DatabaseState<'_>) -> Resu
     let mut tracks_stream = db.stream_tracks().await;
     while let Some(Ok(track)) = tracks_stream.next().await {
         window
-            .emit("track-loaded", track)
+            .emit("track-stream", track)
             .map_err(|e| e.to_string())?;
     }
     window

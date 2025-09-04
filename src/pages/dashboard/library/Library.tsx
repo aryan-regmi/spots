@@ -2,7 +2,7 @@ import { loadMusicLibrary, streamTracks } from '@/api/music';
 import { firstRunAtom } from '@/pages/signup/SignupPage';
 import { authContextAtom } from '@/utils/auth/atoms';
 import StreamedTrackMetadata from '@/utils/music/trackMetadata';
-import { Card, List, ListItemButton } from '@mui/material';
+import { Card, List, ListItemButton, Typography } from '@mui/material';
 import { listen } from '@tauri-apps/api/event';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useEffect } from 'react';
@@ -15,6 +15,11 @@ const displayAllSongsAtom = atom(false);
 // TODO: Add refresh button that will call `loadMusicLibrary`
 //
 // TODO: Show skeleton when `isStreamingTracks`
+//
+// TODO: Create `All Songs` playlist in the backend
+//  - Populate it with all the loaded songs.
+//  - Add command in backend to stream playlists, instead of directly streaming songs
+//  - Playlist code will stream songs
 
 export default function Library() {
     const { authUser } = useAtomValue(authContextAtom);
@@ -26,14 +31,16 @@ export default function Library() {
     const [displayAllSongs, setDisplayAllSongs] = useAtom(displayAllSongsAtom);
 
     useEffect(() => {
-        let isMounted = true;
+        // Reset songs display
+        setDisplayAllSongs(false);
 
-        let unlistenTrackLoaded: Promise<() => void>;
+        let unlistenTrackStream: Promise<() => void>;
         let unlistenTrackStreamStopped: Promise<() => void>;
 
-        const setupListeners = () => {
-            unlistenTrackLoaded = listen<StreamedTrackMetadata>(
-                'track-loaded',
+        /** Sets up listeners.  */
+        function setupListeners() {
+            unlistenTrackStream = listen<StreamedTrackMetadata>(
+                'track-stream',
                 (event) => {
                     // Deduplicate tracks
                     setAllTracks((prev) => {
@@ -52,7 +59,7 @@ export default function Library() {
             unlistenTrackStreamStopped = listen('track-stream-stopped', (_) => {
                 setIsStreamingTracks(false);
             });
-        };
+        }
 
         if (authUser) {
             setupListeners();
@@ -61,23 +68,17 @@ export default function Library() {
             const loadAndStream = async () => {
                 if (firstRun) {
                     await loadMusicLibrary(authUser); // loads and emits each track
-                    if (!isMounted) {
-                        return;
-                    }
                     setFirstRun(false);
                 }
 
                 // Always call this to emit existing tracks
-                if (!isMounted) {
-                    return;
-                }
                 await streamTracks();
             };
             loadAndStream();
         }
 
         return () => {
-            unlistenTrackLoaded?.then((off) => off());
+            unlistenTrackStream?.then((off) => off());
             unlistenTrackStreamStopped?.then((off) => off());
         };
     }, []);
@@ -90,9 +91,11 @@ export default function Library() {
         <>
             {/* TODO: Display all playlists/albums here */}
             <List>
-                <ListItemButton onClick={toggleAllSongsDisplay}>
-                    <Card>All Songs</Card>
-                </ListItemButton>
+                <Card>
+                    <ListItemButton onClick={toggleAllSongsDisplay}>
+                        <Typography>All Songs</Typography>
+                    </ListItemButton>
+                </Card>
             </List>
 
             <div hidden={displayAllSongs}>
