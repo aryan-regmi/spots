@@ -1,8 +1,8 @@
-import { useAtom, WritableAtom } from 'jotai';
-import { useEffect } from 'react';
-import Glassy from './Glassy';
+import Glassy from '@/components/glassy/Glassy';
 import { Fade, Stack, styled } from '@mui/material';
-import Loading from '../loading/Loading';
+import { fadeDurationAtom } from '@/App';
+import { useAtom, useAtomValue, WritableAtom } from 'jotai';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 export type WritableBooleanAtom = WritableAtom<boolean, [boolean], void>;
@@ -14,14 +14,14 @@ export type WritableBooleanAtom = WritableAtom<boolean, [boolean], void>;
 export default function FadeGlassy(props: {
     fadeInAtom: WritableBooleanAtom;
     showOutletAtom: WritableBooleanAtom;
-    fadeDuration: number;
     children: any;
 }) {
-    const { fadeInAtom, showOutletAtom, fadeDuration, children } = props;
+    const { fadeInAtom, showOutletAtom, children } = props;
 
     const location = useLocation();
     const [fadeIn, setFadeIn] = useAtom(fadeInAtom);
     const [showOutlet, setShowOutlet] = useAtom(showOutletAtom);
+    const fadeDuration = useAtomValue(fadeDurationAtom);
 
     useEffect(() => {
         // Reset on location change to restart animation
@@ -29,23 +29,13 @@ export default function FadeGlassy(props: {
         setShowOutlet(false);
 
         // Start fade-in animation
-        let adjustedFadeDuration;
-        if (fadeDuration <= 150) {
-            adjustedFadeDuration = 50;
-        } else {
-            adjustedFadeDuration = fadeDuration - 150;
-        }
-        const fadeTimer = setTimeout(() => {
-            setFadeIn(true);
-        }, adjustedFadeDuration);
+        setFadeIn(true);
 
         const showTimer = setTimeout(() => {
             setShowOutlet(true);
-        }, adjustedFadeDuration);
-        /* }, fadeDuration + 100); */
+        }, fadeDuration);
 
         return () => {
-            clearTimeout(fadeTimer);
             clearTimeout(showTimer);
         };
     }, [location.pathname, fadeDuration]);
@@ -59,7 +49,7 @@ export default function FadeGlassy(props: {
                     opacity: 0.6,
                 }}
             >
-                <GlassyLoad />
+                {/* <GlassyLoad /> */}
             </GlassyStack>
         );
     }
@@ -85,5 +75,3 @@ const GlassyStack = Glassy(
         display: 'flex',
     })
 );
-
-const GlassyLoad = Glassy(Loading);

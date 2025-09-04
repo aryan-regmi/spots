@@ -1,12 +1,13 @@
-import { fadeInAtom, showOutletAtom } from '@/App';
-import { useAtom } from 'jotai';
+import { fadeDurationAtom, fadeInAtom, showOutletAtom } from '@/App';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { NavigateOptions, To, useNavigate } from 'react-router-dom';
 
 /** Delays navigation until fade-out completes. */
-export default function useTransitionNavigate(duration = 50) {
+export default function useTransitionNavigate() {
     const navigate = useNavigate();
-    const [, setFadeIn] = useAtom(fadeInAtom);
-    const [, setShowOutlet] = useAtom(showOutletAtom);
+    const setFadeIn = useSetAtom(fadeInAtom);
+    const setShowOutlet = useSetAtom(showOutletAtom);
+    const fadeDuration = useAtomValue(fadeDurationAtom);
 
     return async (to: To | number, options?: NavigateOptions) => {
         // Start fade out
@@ -16,6 +17,6 @@ export default function useTransitionNavigate(duration = 50) {
         // Delay navigation to give time for fade out
         setTimeout(() => {
             typeof to === 'number' ? navigate(to) : navigate(to, options);
-        }, duration);
+        }, fadeDuration);
     };
 }

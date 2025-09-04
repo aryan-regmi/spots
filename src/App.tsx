@@ -18,14 +18,11 @@ import { Stack } from '@mui/material';
 /* State atoms */
 export const fadeInAtom = atom(false);
 export const showOutletAtom = atom(false);
+export const fadeDurationAtom = atom(() => 10);
 
 export default function App() {
     return (
-        <FadeGlassy
-            fadeInAtom={fadeInAtom}
-            showOutletAtom={showOutletAtom}
-            fadeDuration={50}
-        >
+        <FadeGlassy fadeInAtom={fadeInAtom} showOutletAtom={showOutletAtom}>
             <GlassyStack>
                 <Outlet />
             </GlassyStack>

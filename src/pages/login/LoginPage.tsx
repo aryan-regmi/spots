@@ -138,7 +138,7 @@ export default function LoginPage() {
                             textAlign: 'center',
                         }}
                     >
-                        {isBusy ? <CircularProgress /> : null}
+                        {validating ? <CircularProgress /> : null}
                     </div>
                 </Stack>
             </Form>
