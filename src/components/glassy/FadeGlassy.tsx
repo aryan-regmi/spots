@@ -1,10 +1,9 @@
 import Glassy from '@/components/glassy/Glassy';
 import { Fade, Stack, styled } from '@mui/material';
-import { fadeDurationAtom } from '@/App';
+import { fadeGlassyDurationAtom, fadeGlassyFallbackElementAtom } from '@/App';
 import { useAtom, useAtomValue, WritableAtom } from 'jotai';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import Loading from '../loading/Loading';
 
 export type WritableBooleanAtom = WritableAtom<boolean, [boolean], void>;
 
@@ -22,7 +21,8 @@ export default function FadeGlassy(props: {
     const location = useLocation();
     const [fadeIn, setFadeIn] = useAtom(fadeInAtom);
     const [showOutlet, setShowOutlet] = useAtom(showOutletAtom);
-    const fadeDuration = useAtomValue(fadeDurationAtom);
+    const fadeDuration = useAtomValue(fadeGlassyDurationAtom);
+    const fallbackElement = useAtomValue(fadeGlassyFallbackElementAtom);
 
     useEffect(() => {
         // Reset on location change to restart animation
@@ -49,7 +49,9 @@ export default function FadeGlassy(props: {
                     height: '100vh',
                     opacity: 0.6,
                 }}
-            />
+            >
+                {fallbackElement}
+            </GlassyStack>
         );
     }
 

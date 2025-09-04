@@ -9,6 +9,7 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { getUser, verifyPassword } from '@/api/users';
 import { loadEndpointAtom } from '@/utils/network/atoms';
+import { useResetFadeGlassyFallback } from '@/utils/hooks/useResetFadeGlassyFallback';
 
 /* Validation atoms */
 export const isValidAtom = atom({ username: true, password: true });
@@ -20,6 +21,7 @@ export default function LoginPage() {
     const { isLoading } = useAtomValue(authContextAtom);
     const { authorize } = useAtomValue(authContextActionAtom);
     const loadEndpoint = useAtomValue(loadEndpointAtom);
+    useResetFadeGlassyFallback();
 
     /* Validation */
     const [isValid, setIsValid] = useAtom(isValidAtom);

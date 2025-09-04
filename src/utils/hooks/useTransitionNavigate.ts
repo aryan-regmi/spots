@@ -1,4 +1,4 @@
-import { fadeDurationAtom, fadeInAtom, showOutletAtom } from '@/App';
+import { fadeGlassyDurationAtom, fadeInAtom, showOutletAtom } from '@/App';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { NavigateOptions, To, useNavigate } from 'react-router-dom';
 
@@ -7,7 +7,7 @@ export default function useTransitionNavigate() {
     const navigate = useNavigate();
     const setFadeIn = useSetAtom(fadeInAtom);
     const setShowOutlet = useSetAtom(showOutletAtom);
-    const fadeDuration = useAtomValue(fadeDurationAtom);
+    const fadeDuration = useAtomValue(fadeGlassyDurationAtom);
 
     return async (to: To | number, options?: NavigateOptions) => {
         // Start fade out

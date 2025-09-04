@@ -16,11 +16,13 @@ import {
 } from '@mui/material';
 import { Logout } from '@mui/icons-material';
 import { NavState } from '@/pages/dashboard/NavState';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
 import { useEffect } from 'react';
+import { fadeGlassyDurationAtom, fadeGlassyFallbackElementAtom } from '@/App';
+import { useResetFadeGlassyFallback } from '@/utils/hooks/useResetFadeGlassyFallback';
 
 const navAtom = atom(NavState.Home);
 const isLoggingOutAtom = atom(false);
@@ -30,6 +32,7 @@ export default function DashboardPage() {
     const { authUser, isLoading } = useAtomValue(authContextAtom);
     const { unauthorize } = useAtomValue(authContextActionAtom);
     const closeEndpoint = useAtomValue(closeEndpointAtom);
+    useResetFadeGlassyFallback();
 
     /* State */
     const [menuIsOpen, setMenuIsOpen] = useAtom(menuIsOpenAtom);
