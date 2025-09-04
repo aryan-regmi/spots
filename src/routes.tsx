@@ -18,7 +18,7 @@ export const router = createBrowserRouter([
                 hydrateFallbackElement: <Loading />,
                 loader: async () => {
                     const authUser = await getAuthUser();
-                    if (authUser.username) {
+                    if (authUser?.username) {
                         return redirect('/dashboard');
                     } else {
                         return redirect('/login');
@@ -31,11 +31,9 @@ export const router = createBrowserRouter([
                 HydrateFallback: Loading,
                 loader: async () => {
                     const authUser = await getAuthUser();
-                    if (!authUser.username) {
+                    if (!authUser?.username) {
                         return redirect('/login');
                     }
-
-                    // TODO: Load music folder
                 },
             },
             {
@@ -44,7 +42,7 @@ export const router = createBrowserRouter([
                 hydrateFallbackElement: <Loading />,
                 loader: async () => {
                     const authUser = await getAuthUser();
-                    if (authUser.username) {
+                    if (authUser?.username) {
                         return redirect('/dashboard');
                     }
                 },
@@ -55,7 +53,7 @@ export const router = createBrowserRouter([
                 hydrateFallbackElement: <Loading />,
                 loader: async () => {
                     const authUser = await getAuthUser();
-                    if (authUser.username) {
+                    if (authUser?.username) {
                         return redirect('/dashboard');
                     }
                 },

@@ -12,10 +12,6 @@ import { useParamAtom } from '@/utils/hooks/useParamAtom';
 export default function ProfilePage() {
     const transitionNavigate = useTransitionNavigate();
     const { authUser, isLoading } = useAtomValue(authContextAtom);
-    const getEndpointAddr = useParamAtom(
-        getEndpointAddressAtom,
-        authUser ?? ''
-    );
 
     /* Handle incomplete state */
     const isBusy = isLoading || !authUser;
@@ -23,19 +19,14 @@ export default function ProfilePage() {
         return <Loading />;
     }
 
+    const getEndpointAddr = useParamAtom(getEndpointAddressAtom, authUser.id);
+
     return (
         <Container direction="column">
             <IconButton
                 style={backBtnStyle}
                 size="large"
                 onClick={() => {
-                    /* if (document.startViewTransition) { */
-                    /*     document.startViewTransition(() => { */
-                    /*         navigate(-1); */
-                    /*     }); */
-                    /* } else { */
-                    /*     navigate(-1); */
-                    /* } */
                     transitionNavigate(-1);
                 }}
                 disabled={isBusy}

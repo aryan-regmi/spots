@@ -1,8 +1,7 @@
 use std::pin::Pin;
 
-use anyhow::{anyhow, Error, Result};
 use futures::{stream::MapOk, Stream, TryStreamExt};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteQueryResult, SqliteRow},
     Pool, Row, Sqlite, SqlitePool,
@@ -13,6 +12,7 @@ use tokio::fs;
 use crate::{
     music::TrackMetadata,
     network::{EncryptedValue, EncryptedValueBincode, Peers, PeersBincode},
+    Result,
 };
 
 // FIXME: Make all funcs take ids instead!
@@ -54,43 +54,43 @@ impl Database {
 
 /// Methods for the `users` table.
 impl Database {
-    // FIXME: Remove this and replace with things that get specific user instead!
-    //
-    /// Gets all the users from the database.
-    pub async fn get_users(&self) -> Result<Vec<User>> {
-        let users = sqlx::query("SELECT id, username FROM users")
-            .fetch_all(&self.pool)
-            .await?
-            .iter()
-            .map(|row| User {
-                id: row.get("id"),
-                username: row.get("username"),
-            })
-            .collect::<Vec<_>>();
-        Ok(users)
+    /// Gets the user with the specified id from the database.
+    pub async fn get_user_by_id(&self, user_id: i64) -> Option<User> {
+        let user = sqlx::query("SELECT id, username FROM users WHERE id = ?")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| eprintln!("{e}"))
+            .ok()
+            .map(|record| User {
+                id: record.get("id"),
+                username: record.get("username"),
+            });
+        user
     }
 
     /// Gets the user with the specified username from the database.
-    pub async fn get_user(&self, username: String) -> Result<Option<User>> {
+    pub async fn get_user_by_username(&self, username: &str) -> Option<User> {
         let user = sqlx::query("SELECT id, username FROM users WHERE username = ?")
             .bind(username)
-            .fetch_optional(&self.pool)
-            .await?
-            .map(|result| User {
-                id: result.get("id"),
-                username: result.get("username"),
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| eprintln!("{e}"))
+            .ok()
+            .map(|record| User {
+                id: record.get("id"),
+                username: record.get("username"),
             });
-        Ok(user)
+        user
     }
 
-    /// Gets the user ID for the given username.
-    pub async fn get_user_id(&self, username: String) -> Result<Option<u32>> {
-        let result = sqlx::query("SELECT id FROM users WHERE username = ?")
-            .bind(username)
-            .fetch_optional(&self.pool)
-            .await?
-            .map(|user| user.get("id"));
-        Ok(result)
+    /// Gets the user by an identifier ([UserId]).
+    pub async fn get_user(&self, identifier: UserId) -> Option<User> {
+        let user = match identifier {
+            UserId::Username(username) => self.get_user_by_username(&username).await,
+            UserId::Id(user_id) => self.get_user_by_id(user_id).await,
+        };
+        user
     }
 
     /// Inserts the given user into the database, and returns the id of the inserted record.
@@ -104,27 +104,39 @@ impl Database {
     }
 
     /// Gets the password hash for the specified user.
-    pub async fn get_password_hash(&self, username: String) -> Result<Option<String>> {
-        Ok(sqlx::query("SELECT password FROM users WHERE username = ?")
-            .bind(username.clone())
-            .fetch_optional(&self.pool)
-            .await?
-            .map(|user| user.get("password")))
+    pub async fn get_password_hash(&self, user_id: i64) -> Option<String> {
+        let password_hash = sqlx::query("SELECT password FROM users WHERE user_id = ?")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| eprintln!("{e}"))
+            .ok()
+            .map(|record| record.get("password"));
+        password_hash
     }
 }
 
 /// Methods for the `auth` table.
 impl Database {
     /// Gets the currently authenticated user.
-    pub async fn get_auth_user(&self) -> Result<AuthUser> {
-        let auth_record = sqlx::query("SELECT username FROM auth LIMIT 1")
-            .fetch_one(&self.pool)
-            .await?;
-        let username: Option<String> = auth_record.get("username");
-        let auth_user = username.map_or(AuthUser { username: None }, |username| AuthUser {
-            username: Some(username),
+    pub async fn get_auth_user(&self) -> Option<User> {
+        let auth_user = sqlx::query(
+            "
+            SELECT users.id, users.username
+            FROM auth
+            JOIN users ON users.username = auth.username
+            WHERE auth.id = 1
+            ",
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| eprintln!("{e}"))
+        .ok()
+        .map(|record| User {
+            id: record.get("id"),
+            username: record.get("username"),
         });
-        Ok(auth_user)
+        auth_user
     }
 
     /// Sets the authenticated user.
@@ -148,11 +160,7 @@ impl Database {
 /// Methods for the `network` table.
 impl Database {
     /// Gets the secret key for the specified user.
-    pub async fn get_secret_key(&self, username: String) -> Result<EncryptedValue> {
-        let user_id = self
-            .get_user_id(username.clone())
-            .await?
-            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
+    pub async fn get_secret_key(&self, user_id: i64) -> Result<EncryptedValue> {
         let result = sqlx::query("SELECT secret_key FROM network WHERE user_id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
@@ -165,15 +173,11 @@ impl Database {
     }
 
     /// Sets the secret key for the specified user.
-    pub async fn set_secret_key(&self, username: String, secret_key: EncryptedValue) -> Result<()> {
+    pub async fn set_secret_key(&self, user_id: i64, secret_key: EncryptedValue) -> Result<()> {
         let secret_key_bytes = bincode::encode_to_vec(
             EncryptedValueBincode { value: secret_key },
             bincode::config::standard(),
         )?;
-        let user_id = self
-            .get_user_id(username.clone())
-            .await?
-            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
         sqlx::query("INSERT INTO network (user_id, secret_key) VALUES (?,?)")
             .bind(user_id)
             .bind(secret_key_bytes)
@@ -183,11 +187,7 @@ impl Database {
     }
 
     /// Gets the endpoint node address for the specified user.
-    pub async fn get_endpoint_node(&self, username: String) -> Result<Option<String>> {
-        let user_id = self
-            .get_user_id(username.clone())
-            .await?
-            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
+    pub async fn get_endpoint_node(&self, user_id: i64) -> Result<Option<String>> {
         let result = sqlx::query("SELECT endpoint FROM network WHERE user_id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
@@ -196,15 +196,7 @@ impl Database {
     }
 
     /// Sets the endpoint node address for the specified user.
-    pub async fn set_endpoint_node(
-        &self,
-        username: String,
-        endpoint_address: String,
-    ) -> Result<()> {
-        let user_id = self
-            .get_user_id(username.clone())
-            .await?
-            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
+    pub async fn set_endpoint_node(&self, user_id: i64, endpoint_address: String) -> Result<()> {
         sqlx::query("UPDATE network SET endpoint = ? WHERE user_id = ?")
             .bind(endpoint_address)
             .bind(user_id)
@@ -214,11 +206,7 @@ impl Database {
     }
 
     /// Gets the network ID (ID field of the network table) for the specified user.
-    pub async fn get_network_id(&self, username: String) -> Result<u32> {
-        let user_id = self
-            .get_user_id(username.clone())
-            .await?
-            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
+    pub async fn get_network_id(&self, user_id: i64) -> Result<u32> {
         let result = sqlx::query("SELECT id FROM network WHERE user_id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
@@ -227,11 +215,7 @@ impl Database {
     }
 
     /// Gets the topic ID for the specified user.
-    pub async fn get_topic_id(&self, username: String) -> Result<Option<String>> {
-        let user_id = self
-            .get_user_id(username.clone())
-            .await?
-            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
+    pub async fn get_topic_id(&self, user_id: i64) -> Result<Option<String>> {
         let result = sqlx::query("SELECT topic_id FROM network WHERE user_id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
@@ -240,11 +224,7 @@ impl Database {
     }
 
     /// Sets the topic id for the specified user.
-    pub async fn set_topic_id(&self, username: String, topic_id: String) -> Result<()> {
-        let user_id = self
-            .get_user_id(username.clone())
-            .await?
-            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
+    pub async fn set_topic_id(&self, user_id: i64, topic_id: String) -> Result<()> {
         sqlx::query("UPDATE network SET topic_id = ? WHERE user_id = ?")
             .bind(topic_id)
             .bind(user_id)
@@ -254,11 +234,7 @@ impl Database {
     }
 
     /// Gets the peers for the specified username.
-    pub async fn get_peers(&self, username: String) -> Result<Peers> {
-        let user_id = self
-            .get_user_id(username.clone())
-            .await?
-            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
+    pub async fn get_peers(&self, user_id: i64) -> Result<Peers> {
         let result = sqlx::query("SELECT peers FROM network where user_id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
@@ -274,13 +250,9 @@ impl Database {
     }
 
     /// Sets the peers for the specified username.
-    pub async fn set_peers(&self, username: String, peers: Peers) -> Result<()> {
+    pub async fn set_peers(&self, user_id: i64, peers: Peers) -> Result<()> {
         let peers_bytes =
             bincode::encode_to_vec(PeersBincode { peers }, bincode::config::standard())?;
-        let user_id = self
-            .get_user_id(username.clone())
-            .await?
-            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
         sqlx::query("UPDATE network SET peers = ? WHERE user_id = ?")
             .bind(peers_bytes)
             .bind(user_id)
@@ -296,9 +268,9 @@ impl Database {
     pub async fn insert_track(
         &self,
         metadata: TrackMetadata,
-        username: String,
+        user_id: i64,
     ) -> Result<SqliteQueryResult> {
-        let network_id = self.get_network_id(username).await?;
+        let network_id = self.get_network_id(user_id).await?;
         let result = sqlx::query(
             "INSERT OR IGNORE INTO tracks (
                 network_id,
@@ -335,32 +307,26 @@ impl Database {
         ",
         )
         .fetch(&self.pool)
-        .map_ok(|row: SqliteRow| StreamedTrackMetadata {
-            id: row.get("id"),
+        .map_ok(|record| StreamedTrackMetadata {
+            id: record.get("id"),
             metadata: TrackMetadata {
-                title: row.get("title"),
-                artist: row.get("artist"),
-                album: row.get("album"),
-                genre: row.get("genre"),
-                year: row.get("year"),
-                cover_base64: row.get("cover_base64"),
-                path: row.get("path"),
+                title: record.get("title"),
+                artist: record.get("artist"),
+                album: record.get("album"),
+                genre: record.get("genre"),
+                year: record.get("year"),
+                cover_base64: record.get("cover_base64"),
+                path: record.get("path"),
             },
         })
     }
 }
 
-// TODO: Finish
-//
 /// Methods for the `playlists` tables.
 impl Database {
     /// Inserts the playlist in the database, associating it with the given user.
-    pub async fn insert_playlist(&self, name: String, username: String) -> Result<i64> {
-        let user_id = self
-            .get_user_id(username.clone())
-            .await?
-            .ok_or_else(|| Error::from(anyhow!("{username} not found")))?;
-        let network_id = self.get_network_id(username.clone()).await?;
+    pub async fn insert_playlist(&self, name: String, user_id: i64) -> Result<i64> {
+        let network_id = self.get_network_id(user_id).await?;
         let result = sqlx::query(
             "
             INSERT INTO playlists (user_id, network_id, name) VALUES (?,?,?)
@@ -382,6 +348,34 @@ impl Database {
             .execute(&self.pool)
             .await?;
         Ok(())
+    }
+
+    // FIXME: Finish impl!
+    //
+    /// Returns a stream containing all of the playlists in the database.
+    pub async fn stream_playlists(&self) -> () {
+        // sqlx::query(
+        //     "
+        //     SELECT id, title, artist, album, genre, year, cover_base64, path
+        //     FROM tracks
+        //     GROUP BY path
+        // ",
+        // )
+        // .fetch(&self.pool)
+        // .map_ok(|record| StreamedTrackMetadata {
+        //     id: record.get("id"),
+        //     metadata: TrackMetadata {
+        //         title: record.get("title"),
+        //         artist: record.get("artist"),
+        //         album: record.get("album"),
+        //         genre: record.get("genre"),
+        //         year: record.get("year"),
+        //         cover_base64: record.get("cover_base64"),
+        //         path: record.get("path"),
+        //     },
+        // })
+
+        todo!()
     }
 }
 
@@ -407,8 +401,10 @@ pub struct User {
     username: String,
 }
 
-/// Represents an authenticated user.
-#[derive(Serialize)]
-pub struct AuthUser {
-    username: Option<String>,
+/// Represents a user identifier.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", tag = "type", content = "value")]
+pub enum UserId {
+    Id(i64),
+    Username(String),
 }

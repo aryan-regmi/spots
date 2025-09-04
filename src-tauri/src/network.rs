@@ -12,9 +12,7 @@ use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
-use crate::database::Database;
-
-type Result<T> = anyhow::Result<T, String>;
+use crate::{database::Database, StringErrResult};
 
 pub struct Network {
     pub endpoint: Option<Endpoint>,
@@ -34,7 +32,7 @@ impl Network {
     }
 
     /// Closes the endpoint and associated resources.
-    pub async fn close(&mut self) -> Result<()> {
+    pub async fn close(&mut self) -> StringErrResult<()> {
         if let Some(endpoint) = &self.endpoint {
             endpoint.close().await;
         }
@@ -43,7 +41,7 @@ impl Network {
     }
 
     /// Generates an encrypted secret key and encrypts it.
-    pub fn generate_secret_key(&self) -> Result<EncryptedValue> {
+    pub fn generate_secret_key(&self) -> StringErrResult<EncryptedValue> {
         // Create new key
         let rng = OsRng;
         let iroh_secret_key = SecretKey::generate(rng);
@@ -68,7 +66,10 @@ impl Network {
     }
 
     /// Decrypts the given encrypted [SecretKey].
-    pub fn decrypt_secret_key(&self, encrypted_secret_key: EncryptedValue) -> Result<SecretKey> {
+    pub fn decrypt_secret_key(
+        &self,
+        encrypted_secret_key: EncryptedValue,
+    ) -> StringErrResult<SecretKey> {
         let bytes = encrypted_secret_key.decrypt_to_bytes()?;
         Ok(SecretKey::from_bytes(
             &bytes.try_into().map_err(|_| "Invalid secret key")?,
@@ -76,12 +77,16 @@ impl Network {
     }
 
     /// Initializes the endpoint and stores it in the database.
-    pub async fn init_endpoint(&mut self, app_handle: &AppHandle, username: String) -> Result<()> {
+    pub async fn init_endpoint(
+        &mut self,
+        app_handle: &AppHandle,
+        user_id: i64,
+    ) -> StringErrResult<()> {
         // Get secret key from database
         let db = app_handle.state::<Database>();
         let secret_key = {
             let encrypted_key = db
-                .get_secret_key(username.clone())
+                .get_secret_key(user_id)
                 .await
                 .map_err(|e| e.to_string())?;
             self.decrypt_secret_key(encrypted_key)?
@@ -97,7 +102,7 @@ impl Network {
             .map_err(|e| e.to_string())?;
 
         // Store endpoint address in the database
-        db.set_endpoint_node(username, endpoint.node_id().to_string())
+        db.set_endpoint_node(user_id, endpoint.node_id().to_string())
             .await
             .map_err(|e| e.to_string())?;
 
@@ -116,7 +121,11 @@ impl Network {
     }
 
     /// Create and subscribe to new topic.
-    pub async fn init_topic(&mut self, app_handle: &AppHandle, username: String) -> Result<()> {
+    pub async fn init_topic(
+        &mut self,
+        app_handle: &AppHandle,
+        user_id: i64,
+    ) -> StringErrResult<()> {
         let db = app_handle.state::<Database>();
 
         // Create new topic
@@ -132,10 +141,10 @@ impl Network {
         let (sender, receiver) = topic.split();
 
         // Add topic data to the database
-        db.set_topic_id(username.clone(), topic_id.to_string())
+        db.set_topic_id(user_id, topic_id.to_string())
             .await
             .map_err(|e| e.to_string())?;
-        db.set_peers(username.clone(), Peers { nodes: peers })
+        db.set_peers(user_id, Peers { nodes: peers })
             .await
             .map_err(|e| e.to_string())?;
 
@@ -150,27 +159,27 @@ impl Network {
     }
 
     /// Loads the stored topic.
-    pub async fn load_topic(&mut self, app_handle: &AppHandle, username: String) -> Result<()> {
+    pub async fn load_topic(
+        &mut self,
+        app_handle: &AppHandle,
+        user_id: i64,
+    ) -> StringErrResult<()> {
         let db = app_handle.state::<Database>();
 
         // Load topic from database
         let topic_id = {
-            if let Some(id) = db
-                .get_topic_id(username.clone())
-                .await
-                .map_err(|e| e.to_string())?
-            {
+            if let Some(id) = db.get_topic_id(user_id).await.map_err(|e| e.to_string())? {
                 TopicId::from_str(&id).map_err(|e| e.to_string())?
             } else {
                 Err(format!(
-                    "No topic id found in database for user `{username}`"
+                    "No topic id found in database for user `{user_id}`"
                 ))?
             }
         };
 
         // Load peers from database
         let peers = db
-            .get_peers(username.clone())
+            .get_peers(user_id)
             .await
             .map_err(|e| e.to_string())?
             .nodes;

@@ -6,20 +6,15 @@ export type User = {
     username: string;
 };
 
-/** Gets all users from the database. */
-export async function getUsers() {
-    try {
-        let users = await invoke<User[]>('get_users');
-        return users;
-    } catch (e: any) {
-        throw new Error(e);
-    }
-}
+/** Represents a user identifier. */
+export type UserId =
+    | { type: 'id'; value: number }
+    | { type: 'username'; value: string };
 
 /** Gets the specified user from the database. */
-export async function getUser(username: string) {
+export async function getUser(userId: UserId) {
     try {
-        let user = await invoke<User | null>('get_user', { username });
+        let user = await invoke<User | null>('get_user', { user_id: userId });
         return user;
     } catch (e: any) {
         throw new Error(e);
@@ -52,9 +47,12 @@ export async function hashPassword(password: string) {
  * Checks that the provided password is the same as the hash stored in the
  * database for the specified username.
  **/
-export async function verifyPassword(username: string, password: string) {
+export async function verifyPassword(userId: number, password: string) {
     try {
-        return await invoke<boolean>('verify_password', { username, password });
+        return await invoke<boolean>('verify_password', {
+            user_id: userId,
+            password,
+        });
     } catch (e: any) {
         throw new Error(e);
     }

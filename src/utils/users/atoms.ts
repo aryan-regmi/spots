@@ -1,21 +1,15 @@
-import { getUser, getUsers, insertUser } from '@/api/users';
+import { getUser, insertUser, UserId } from '@/api/users';
 import { atomWithMutation, atomWithQuery } from 'jotai-tanstack-query';
 import { queryClient } from '../queryClient';
 
 /** Gets the specfied user from the database. */
-export const getUserAtom = (username: string) => {
+export const getUserAtom = (userId: UserId) => {
     return atomWithQuery(() => ({
-        queryKey: ['getUser', username],
-        queryFn: ({ queryKey: [, username] }) => getUser(username),
-        enabled: !!username, // Prevent calling with empty username
+        queryKey: ['getUser', userId],
+        queryFn: ({ queryKey: [, userId] }) => getUser(userId as UserId),
+        enabled: !!userId, // Prevent calling with empty username
     }));
 };
-
-/** Gets all users from the database. */
-export const getAllUsersAtom = atomWithQuery(() => ({
-    queryKey: ['getUsers'],
-    queryFn: getUsers,
-}));
 
 /** Inserts the given user into the database, and returns the id of the inserted
  * record. */

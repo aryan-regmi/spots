@@ -5,9 +5,9 @@ import { invoke } from '@tauri-apps/api/core';
  * # Note
  * The event emitted is "`track-stream`".
  **/
-export async function loadMusicLibrary(username: string) {
+export async function loadMusicLibrary(userId: number) {
     try {
-        await invoke('load_music_library', { username });
+        await invoke('load_music_library', { user_id: userId });
     } catch (e: any) {
         throw new Error(e);
     }

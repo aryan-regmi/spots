@@ -53,7 +53,7 @@ export default function SignupPage() {
         setValidating(true);
 
         if (typeof username === 'string' && typeof password === 'string') {
-            const user = await getUser(username);
+            const user = await getUser({ type: 'username', value: username });
 
             // Validate username
             if (!user) {
@@ -64,7 +64,7 @@ export default function SignupPage() {
                 const hashedPassword = await hashPassword(password);
 
                 // Save user to database
-                await insertUser.mutateAsync({
+                const user_id = await insertUser.mutateAsync({
                     username,
                     password: hashedPassword,
                 });
@@ -73,7 +73,7 @@ export default function SignupPage() {
                 await authorize(username);
 
                 // Create network endpoint
-                await createEndpoint.mutateAsync(username);
+                await createEndpoint.mutateAsync(user_id);
 
                 // Go to homepage
                 setValidating(false);
@@ -91,12 +91,7 @@ export default function SignupPage() {
         <StyledContainer direction="column">
             <IconButton
                 sx={backBtnStyle}
-                onClick={() =>
-                    transitionNavigate('/login', {
-                        replace: true,
-                        /* viewTransition: true, */
-                    })
-                }
+                onClick={() => transitionNavigate('/login', { replace: true })}
                 disabled={isBusy}
             >
                 <ArrowBack />

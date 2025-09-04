@@ -1,7 +1,7 @@
 import { loadMusicLibrary, streamTracks } from '@/api/music';
 import { firstRunAtom } from '@/pages/signup/SignupPage';
 import { authContextAtom } from '@/utils/auth/atoms';
-import StreamedTrackMetadata from '@/utils/music/trackMetadata';
+import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
 import { Card, List, ListItemButton, Typography } from '@mui/material';
 import { listen } from '@tauri-apps/api/event';
 import { atom, useAtom, useAtomValue } from 'jotai';
@@ -67,7 +67,7 @@ export default function Library() {
 
             const loadAndStream = async () => {
                 if (firstRun) {
-                    await loadMusicLibrary(authUser); // loads and emits each track
+                    await loadMusicLibrary(authUser.id); // loads and emits each track
                     setFirstRun(false);
                 }
 

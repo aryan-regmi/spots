@@ -8,11 +8,12 @@ import { atomWithMutation, atomWithQuery } from 'jotai-tanstack-query';
 import { queryClient } from '../queryClient';
 
 /** Gets the endpoint address for the user. */
-export const getEndpointAddressAtom = (username: string) => {
+export const getEndpointAddressAtom = (userId: number) => {
     return atomWithQuery(() => ({
-        queryKey: ['endpointAddr', username],
-        queryFn: ({ queryKey: [, username] }) => getEndpointAddr(username),
-        enabled: !!username, // Prevent calling with empty username
+        queryKey: ['endpointAddr', userId],
+        queryFn: ({ queryKey: [, userId] }) =>
+            getEndpointAddr(userId as number),
+        enabled: !!userId, // Prevent calling with empty username
     }));
 };
 

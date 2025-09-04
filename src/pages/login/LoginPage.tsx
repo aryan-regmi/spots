@@ -35,7 +35,7 @@ export default function LoginPage() {
         setValidating(true);
 
         if (typeof username === 'string' && typeof password === 'string') {
-            const user = await getUser(username);
+            const user = await getUser({ type: 'username', value: username });
 
             // Validate username
             if (!user) {
@@ -46,7 +46,7 @@ export default function LoginPage() {
             }
 
             // Validate password
-            const verified = await verifyPassword(username, password);
+            const verified = await verifyPassword(user.id, password);
             if (!verified) {
                 setIsValid({ username: isValid.username, password: false });
                 setErrMsg('Incorrect password!');
@@ -61,14 +61,11 @@ export default function LoginPage() {
             await authorize(username);
 
             // Load network endpoint
-            await loadEndpoint.mutateAsync(username);
+            await loadEndpoint.mutateAsync(user.id);
 
             // Go to homepage
             setValidating(false);
-            await transitionNavigate('/dashboard', {
-                replace: true,
-                /* viewTransition: true, */
-            });
+            await transitionNavigate('/dashboard', { replace: true });
         }
     }
 

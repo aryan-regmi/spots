@@ -20,7 +20,7 @@ pub async fn load_music_library(
     app_handle: AppHandle,
     window: tauri::Window,
     db: DatabaseState<'_>,
-    username: String,
+    user_id: i64,
 ) -> Result<()> {
     // Read the music directory
     let path_resolver = app_handle.path();
@@ -52,7 +52,7 @@ pub async fn load_music_library(
 
             // Add to database
             let inserted = db
-                .insert_track(metadata.clone(), username.clone())
+                .insert_track(metadata.clone(), user_id)
                 .await
                 .map_err(|e| e.to_string())?;
 

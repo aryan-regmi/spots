@@ -39,7 +39,7 @@ const setAuthUserAtom = atomWithMutation(() => ({
 export const authContextAtom = atom((get) => ({
     isAuthenticated: get(isAuthenticatedAtom),
     isLoading: get(isLoadingAtom),
-    authUser: get(authUserAtom).data?.username ?? undefined,
+    authUser: get(authUserAtom).data ?? undefined,
 }));
 
 /** The functions to authorize/unauthorize a user. */

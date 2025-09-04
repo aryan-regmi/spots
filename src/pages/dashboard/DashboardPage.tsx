@@ -77,11 +77,11 @@ export default function DashboardPage() {
                 }}
                 onClick={toggleMenuDrawer}
             >
-                <Avatar {...stringAvatar(authUser)} />
+                <Avatar {...stringAvatar(authUser.username)} />
             </IconButton>
 
             {/* Menu drawer  */}
-            <MenuDrawer currentUser={authUser}>
+            <MenuDrawer currentUser={authUser.username}>
                 <MenuItem onClick={logout}>
                     <Logout />
                     Logout

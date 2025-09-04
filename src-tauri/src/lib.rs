@@ -2,6 +2,9 @@ mod commands;
 mod database;
 mod music;
 mod network;
+mod utils;
+
+pub use utils::*;
 
 use std::sync::Arc;
 
@@ -37,12 +40,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             auth::hash_password,
             auth::verify_password,
-            db::get_users,
+            auth::get_auth_user,
+            auth::set_auth_user,
+            auth::remove_auth_user,
             db::get_user,
             db::insert_user,
-            db::get_auth_user,
-            db::set_auth_user,
-            db::remove_auth_user,
             net::create_new_endpoint,
             net::load_endpoint,
             net::get_endpoint_addr,

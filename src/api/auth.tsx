@@ -1,12 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
-
-/** The authenticated user data returned by the database. */
-export type AuthUser = { username: string | null };
+import { User } from '@/api/users';
 
 /** Gets the authenticated user from the database. */
 export async function getAuthUser() {
     try {
-        let authUser = await invoke<AuthUser>('get_auth_user');
+        let authUser = await invoke<User | null>('get_auth_user');
         return authUser;
     } catch (e: any) {
         throw new Error(e);
