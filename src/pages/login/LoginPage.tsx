@@ -1,7 +1,7 @@
 import Banner from '@/components/banner/Banner';
 import { Alert, CircularProgress, Stack, styled } from '@mui/material';
 import { Form } from 'react-router-dom';
-import { FormEvent } from 'react';
+import { FormEvent, useEffect } from 'react';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
@@ -26,6 +26,13 @@ export default function LoginPage() {
     const [errMsg, setErrMsg] = useAtom(errorMessageAtom);
     const [validating, setValidating] = useAtom(validatingAtom);
     const isBusy = isLoading || loadEndpoint.isPending || validating;
+
+    /* Reset validation on unmount */
+    useEffect(() => {
+        return () => {
+            setValidating(false);
+        };
+    }, []);
 
     async function validateLogin(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -139,7 +146,9 @@ export default function LoginPage() {
                 style={{ marginTop: '-4em' }}
                 onClick={(e) => {
                     e.preventDefault();
-                    transitionNavigate('/signup');
+                    if (!validating) {
+                        transitionNavigate('/signup');
+                    }
                 }}
             >
                 Sign Up
