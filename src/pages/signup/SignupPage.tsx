@@ -64,7 +64,7 @@ export default function SignupPage() {
                 const hashedPassword = await hashPassword(password);
 
                 // Save user to database
-                const user_id = await insertUser.mutateAsync({
+                const userId = await insertUser.mutateAsync({
                     username,
                     password: hashedPassword,
                 });
@@ -73,7 +73,7 @@ export default function SignupPage() {
                 await authorize(username);
 
                 // Create network endpoint
-                await createEndpoint.mutateAsync(user_id);
+                await createEndpoint.mutateAsync(userId);
 
                 // Go to homepage
                 setValidating(false);

@@ -31,9 +31,6 @@ export default function Library() {
     const [displayAllSongs, setDisplayAllSongs] = useAtom(displayAllSongsAtom);
 
     useEffect(() => {
-        // Reset songs display
-        setDisplayAllSongs(false);
-
         let unlistenTrackStream: Promise<() => void>;
         let unlistenTrackStreamStopped: Promise<() => void>;
 
@@ -78,8 +75,12 @@ export default function Library() {
         }
 
         return () => {
+            // Stop listeners
             unlistenTrackStream?.then((off) => off());
             unlistenTrackStreamStopped?.then((off) => off());
+
+            // Reset songs display
+            setDisplayAllSongs(false);
         };
     }, []);
 
@@ -98,7 +99,7 @@ export default function Library() {
                 </Card>
             </List>
 
-            <div hidden={displayAllSongs}>
+            <div hidden={!displayAllSongs}>
                 Songs:
                 <List style={{ color: 'white' }}>
                     {allTracks.map((track) => {

@@ -14,7 +14,7 @@ export type UserId =
 /** Gets the specified user from the database. */
 export async function getUser(userId: UserId) {
     try {
-        let user = await invoke<User | null>('get_user', { user_id: userId });
+        let user = await invoke<User | null>('get_user', { userId });
         return user;
     } catch (e: any) {
         throw new Error(e);
@@ -50,7 +50,7 @@ export async function hashPassword(password: string) {
 export async function verifyPassword(userId: number, password: string) {
     try {
         return await invoke<boolean>('verify_password', {
-            user_id: userId,
+            userId,
             password,
         });
     } catch (e: any) {

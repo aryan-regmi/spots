@@ -73,10 +73,11 @@ impl Database {
     pub async fn get_user_by_username(&self, username: &str) -> Option<User> {
         let user = sqlx::query("SELECT id, username FROM users WHERE username = ?")
             .bind(username)
-            .fetch_one(&self.pool)
+            .fetch_optional(&self.pool)
             .await
             .map_err(|e| eprintln!("{e}"))
             .ok()
+            .flatten()
             .map(|record| User {
                 id: record.get("id"),
                 username: record.get("username"),
@@ -105,7 +106,7 @@ impl Database {
 
     /// Gets the password hash for the specified user.
     pub async fn get_password_hash(&self, user_id: i64) -> Option<String> {
-        let password_hash = sqlx::query("SELECT password FROM users WHERE user_id = ?")
+        let password_hash = sqlx::query("SELECT password FROM users WHERE id = ?")
             .bind(user_id)
             .fetch_one(&self.pool)
             .await
@@ -128,10 +129,11 @@ impl Database {
             WHERE auth.id = 1
             ",
         )
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
-        .map_err(|e| eprintln!("{e}"))
+        .map_err(|e| eprintln!("Database Error: {e}"))
         .ok()
+        .flatten()
         .map(|record| User {
             id: record.get("id"),
             username: record.get("username"),

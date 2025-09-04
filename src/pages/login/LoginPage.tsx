@@ -5,7 +5,7 @@ import { FormEvent } from 'react';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
-import { getUser, verifyPassword } from '@/api/users';
+import { getUser, UserId, verifyPassword } from '@/api/users';
 import { loadEndpointAtom } from '@/utils/network/atoms';
 import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import Container from '@/components/Container';

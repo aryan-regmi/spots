@@ -7,7 +7,7 @@ import { invoke } from '@tauri-apps/api/core';
  **/
 export async function loadMusicLibrary(userId: number) {
     try {
-        await invoke('load_music_library', { user_id: userId });
+        await invoke('load_music_library', { userId });
     } catch (e: any) {
         throw new Error(e);
     }
