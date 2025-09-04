@@ -4,7 +4,7 @@ use anyhow::{anyhow, Error, Result};
 use futures::{stream::MapOk, Stream, TryStreamExt};
 use serde::Serialize;
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteRow},
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteQueryResult, SqliteRow},
     Pool, Row, Sqlite, SqlitePool,
 };
 use tauri::{AppHandle, Manager};
@@ -291,10 +291,14 @@ impl Database {
 /// Methods for the `tracks` table.
 impl Database {
     /// Inserts the track in the database, associating it with the given user.
-    pub async fn insert_track(&self, metadata: TrackMetadata, username: String) -> Result<()> {
+    pub async fn insert_track(
+        &self,
+        metadata: TrackMetadata,
+        username: String,
+    ) -> Result<SqliteQueryResult> {
         let network_id = self.get_network_id(username).await?;
-        sqlx::query(
-            "INSERT INTO tracks (
+        let result = sqlx::query(
+            "INSERT OR IGNORE INTO tracks (
                 network_id,
                 title,
                 artist,
@@ -306,42 +310,48 @@ impl Database {
             ) VALUES (?,?,?,?,?,?,?,?)",
         )
         .bind(network_id)
-        .bind(metadata.title)
-        .bind(metadata.artist)
-        .bind(metadata.album)
-        .bind(metadata.genre)
-        .bind(metadata.year)
-        .bind(metadata.cover_base64)
-        .bind(metadata.path)
+        .bind(metadata.clone().title)
+        .bind(metadata.clone().artist)
+        .bind(metadata.clone().album)
+        .bind(metadata.clone().genre)
+        .bind(metadata.clone().year)
+        .bind(metadata.clone().cover_base64)
+        .bind(metadata.clone().path)
         .execute(&self.pool)
         .await?;
 
-        Ok(())
+        Ok(result)
     }
 
     /// Returns a stream containing all of the tracks in the database.
     pub async fn stream_tracks(&self) -> MapOk<TrackStream, impl TrackMap> {
-        sqlx::query("SELECT id, title, artist, album, genre, year, cover_base64, path FROM tracks")
-            .fetch(&self.pool)
-            .map_ok(|row: SqliteRow| StreamedTrackMetadata {
-                id: row.get("id"),
-                metadata: TrackMetadata {
-                    title: row.get("title"),
-                    artist: row.get("artist"),
-                    album: row.get("album"),
-                    genre: row.get("genre"),
-                    year: row.get("year"),
-                    cover_base64: row.get("cover_base64"),
-                    path: row.get("path"),
-                },
-            })
+        sqlx::query(
+            "
+            SELECT id, title, artist, album, genre, year, cover_base64, path
+            FROM tracks
+            GROUP BY path
+        ",
+        )
+        .fetch(&self.pool)
+        .map_ok(|row: SqliteRow| StreamedTrackMetadata {
+            id: row.get("id"),
+            metadata: TrackMetadata {
+                title: row.get("title"),
+                artist: row.get("artist"),
+                album: row.get("album"),
+                genre: row.get("genre"),
+                year: row.get("year"),
+                cover_base64: row.get("cover_base64"),
+                path: row.get("path"),
+            },
+        })
     }
 }
 
 /// The track metadata along with the its ID.
 #[derive(Serialize, Clone)]
 pub struct StreamedTrackMetadata {
-    pub id: u32,
+    pub id: i64,
     pub metadata: TrackMetadata,
 }
 

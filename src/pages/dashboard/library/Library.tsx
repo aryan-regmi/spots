@@ -1,14 +1,14 @@
 import { loadMusicLibrary, streamTracks } from '@/api/music';
 import { firstRunAtom } from '@/pages/signup/SignupPage';
 import { authContextAtom } from '@/utils/auth/atoms';
-import TrackMetadata from '@/utils/music/trackMetadata';
+import StreamedTrackMetadata from '@/utils/music/trackMetadata';
 import { List, ListItemButton } from '@mui/material';
 import { listen } from '@tauri-apps/api/event';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useEffect } from 'react';
 
 /* State atoms */
-const allTracksAtom = atom<TrackMetadata[]>([]);
+const allTracksAtom = atom<StreamedTrackMetadata[]>([]);
 const isStreamingTracksAtom = atom(false);
 
 // TODO: Add refresh button that will call `loadMusicLibrary`
@@ -24,27 +24,33 @@ export default function Library() {
     );
 
     useEffect(() => {
-        const stopTrackLoadedListener = listen('track-loaded', (event) => {
-            const newTrack = event.payload as TrackMetadata;
-            setAllTracks((prev) => [...prev, newTrack]);
+        const unlistenTrackLoaded = listen('track-loaded', (event) => {
+            const newTrack = event.payload as StreamedTrackMetadata;
+            setAllTracks((prev) => {
+                // Deduplicate tracks
+                let combined = [...prev, newTrack];
+                return Array.from(
+                    new Map(combined.map((track) => [track.id, track])).values()
+                );
+            });
         });
-        const stopTrackStreamStoppedListener = listen(
+        const unlistenTrackStreamStopped = listen(
             'track-stream-stopped',
             (_) => {
                 setIsStreamingTracks(false);
+                unlistenTrackLoaded.then((off) => off());
             }
         );
 
-        setIsStreamingTracks(true);
         if (firstRun && authUser) {
             loadMusicLibrary(authUser).then(() => setFirstRun(false));
-        } else {
-            streamTracks();
         }
+        setIsStreamingTracks(true);
+        streamTracks();
 
         return () => {
-            stopTrackLoadedListener.then((off) => off());
-            stopTrackStreamStoppedListener.then((off) => off());
+            unlistenTrackLoaded.then((off) => off());
+            unlistenTrackStreamStopped.then((off) => off());
         };
     }, []);
 
@@ -53,9 +59,10 @@ export default function Library() {
             {/* TODO: Display all playlists/albums here */}
             <List style={{ color: 'white' }}>
                 {allTracks.map((track) => {
+                    const metadata = track.metadata;
                     return (
                         <ListItemButton>
-                            {track.title ?? 'Unknown!'}
+                            {metadata.title ?? 'Unknown!'}
                         </ListItemButton>
                     );
                 })}

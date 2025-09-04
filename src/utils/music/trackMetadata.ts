@@ -1,5 +1,5 @@
 /** The metadata of a track. */
-type TrackMetadata = {
+export type TrackMetadata = {
     title?: string;
     artist?: string;
     album?: string;
@@ -9,4 +9,10 @@ type TrackMetadata = {
     path: string;
 };
 
-export default TrackMetadata;
+/** The metadata format streamed from the backend. */
+type StreamedTrackMetadata = {
+    id: number;
+    metadata: TrackMetadata;
+};
+
+export default StreamedTrackMetadata;
