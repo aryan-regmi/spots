@@ -1,4 +1,6 @@
 import Banner from '@/components/banner/Banner';
+import Container from '@/components/Container';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import {
     Alert,
     CircularProgress,
@@ -6,8 +8,6 @@ import {
     Stack,
     styled,
 } from '@mui/material';
-import Container from '@/components/Container';
-import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import { ArrowBack } from '@mui/icons-material';
 import { CSSProperties, FormEvent, useEffect } from 'react';
 import { Form } from 'react-router-dom';
@@ -22,8 +22,8 @@ import { insertUserAtom } from '@/utils/users/atoms';
 export const firstRunAtom = atom(false);
 
 /* Validation atoms */
-const errorMessageAtom = atom<string>();
-const isValidAtom = atom(true);
+const errorMessageAtom = atom<string[]>();
+const isValidAtom = atom({ username: true, password: true });
 const validatingAtom = atom(false);
 
 export default function SignupPage() {
@@ -47,14 +47,12 @@ export default function SignupPage() {
     /* Reset validation on unmount */
     useEffect(() => {
         return () => {
-            setIsValid(true);
+            setIsValid({ username: true, password: true });
             setErrMsg(undefined);
             setValidating(false);
         };
     }, []);
 
-    // TODO: Add password validation also!
-    //
     /** Validates the username and password, then redirects to the dashboard. */
     async function validateLoginAndRedirect(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -67,9 +65,42 @@ export default function SignupPage() {
         if (typeof username === 'string' && typeof password === 'string') {
             const user = await getUser({ type: 'username', value: username });
 
-            // Validate username
-            if (!user) {
-                setIsValid(true);
+            // Username is valid if there is no entry in the database
+            const validUsername = !user;
+            if (!validUsername) {
+                setIsValid({ username: false, password: isValid.password });
+                setValidating(false);
+                setErrMsg([...(errMsg ?? ''), 'Username already exists!']);
+            }
+
+            // Password validation function
+            const passwordIsValid = (password: string) => {
+                let validLen = password.length >= 8;
+                if (!validLen) {
+                    setValidating(false);
+                    setErrMsg([
+                        ...(errMsg ?? ''),
+                        'The password must be at least 8 characters long!',
+                    ]);
+                    return false;
+                }
+
+                let validSymbols = password.match('^(?=.*[!@#$%^*()_+=]).*$');
+                if (!validSymbols || validSymbols.length == 0) {
+                    setValidating(false);
+                    setErrMsg([
+                        ...(errMsg ?? ''),
+                        'The password must contain at least one symbol/special character!',
+                    ]);
+                    return false;
+                }
+
+                return true;
+            };
+            const validPassword = passwordIsValid(password);
+
+            if (validPassword && validPassword) {
+                setIsValid({ username: true, password: true });
                 console.info('Registered user: ', username);
 
                 // Hash password
@@ -92,10 +123,6 @@ export default function SignupPage() {
                 setValidating(false);
                 setFirstRun(true);
                 await transitionNavigate('/dashboard', { replace: true });
-            } else {
-                setIsValid(false);
-                setValidating(false);
-                setErrMsg('Username already exists!');
             }
         }
     }
@@ -122,10 +149,14 @@ export default function SignupPage() {
                         placeholder="Enter a username..."
                         fullWidth
                         required
-                        error={!isValid}
+                        error={!isValid.username}
                         onChange={(_) => {
-                            if (!isValid) {
-                                setIsValid(true);
+                            console.log(isValid.username);
+                            if (!isValid.username) {
+                                setIsValid({
+                                    username: true,
+                                    password: isValid.password,
+                                });
                                 setErrMsg(undefined);
                             }
                         }}
@@ -138,6 +169,17 @@ export default function SignupPage() {
                         placeholder="Enter a password..."
                         fullWidth
                         required
+                        error={!isValid.password}
+                        onChange={(_) => {
+                            console.log(isValid.password);
+                            if (!isValid.password) {
+                                setIsValid({
+                                    username: isValid.username,
+                                    password: true,
+                                });
+                                setErrMsg(undefined);
+                            }
+                        }}
                     />
 
                     <div style={{ textAlign: 'center' }}>
@@ -161,11 +203,11 @@ export default function SignupPage() {
             </Form>
 
             {/* Error alerts */}
-            {errMsg ? (
-                <Alert severity="error" variant="filled">
-                    {errMsg}
+            {errMsg?.map((msg) => (
+                <Alert severity="error" variant="filled" key={msg}>
+                    {msg}
                 </Alert>
-            ) : null}
+            ))}
         </StyledContainer>
     );
 }
