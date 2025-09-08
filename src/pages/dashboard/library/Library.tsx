@@ -20,7 +20,7 @@ export default function Library() {
     const { authUser } = useAtomValue(authContextAtom);
     const [allTracks, setAllTracks] = useState<StreamedTrackMetadata[]>([]);
     const [firstRun, setFirstRun] = useAtom(firstRunAtom);
-    const [isStreamingTracks, setIsStreamingTracks] = useState(false);
+    const [_isStreamingTracks, setIsStreamingTracks] = useState(false);
     const [displayAllSongs, setDisplayAllSongs] = useState(false);
 
     useEffect(() => {

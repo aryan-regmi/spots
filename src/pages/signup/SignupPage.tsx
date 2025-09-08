@@ -9,14 +9,14 @@ import {
     styled,
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
-import { CSSProperties, FormEvent, useEffect, useState } from 'react';
+import { CSSProperties, FormEvent, useEffect, useMemo, useState } from 'react';
 import { Form } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
-import { getUser, hashPassword } from '@/api/users';
-import { insertUserAtom } from '@/utils/users/atoms';
+import { hashPassword } from '@/api/users';
+import { getUserAtom, insertUserAtom } from '@/utils/users/atoms';
 
 /* Determines if this is the first time a user is logging in. */
 export const firstRunAtom = atom(false);
@@ -29,7 +29,14 @@ export default function SignupPage() {
     const createEndpoint = useAtomValue(createEndpointAtom);
     const setFirstRun = useSetAtom(firstRunAtom);
 
-    /* Validation */
+    // Form input states
+    const [usernameInput, setUsernameInput] = useState('');
+    const userAtom = useMemo(() => {
+        return getUserAtom({ type: 'username', value: usernameInput });
+    }, [usernameInput]);
+    const user = useAtomValue(userAtom).data;
+
+    // Validation
     const [errMsg, setErrMsg] = useState<string[]>([]);
     const [isValid, setIsValid] = useState({ username: true, password: true });
     const [isValidating, setIsValidating] = useState(false);
@@ -59,8 +66,6 @@ export default function SignupPage() {
         const password = formData.get('password');
 
         if (typeof username === 'string' && typeof password === 'string') {
-            const user = await getUser({ type: 'username', value: username });
-
             // Username is valid if there is no entry in the database
             const validUsername = !user;
             if (!validUsername) {
@@ -157,7 +162,9 @@ export default function SignupPage() {
                         fullWidth
                         required
                         error={!isValid.username}
-                        onChange={(_) => {
+                        onChange={(e) => {
+                            setUsernameInput(e.currentTarget.value);
+
                             if (!isValid.username) {
                                 setIsValid((prev) => ({
                                     username: true,

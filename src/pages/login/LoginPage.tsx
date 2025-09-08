@@ -3,13 +3,14 @@ import Container from '@/components/Container';
 import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import { Alert, CircularProgress, Stack, styled } from '@mui/material';
 import { Form } from 'react-router-dom';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
 import { useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
-import { getUser, verifyPassword } from '@/api/users';
+import { verifyPassword } from '@/api/users';
 import { loadEndpointAtom } from '@/utils/network/atoms';
 import { useResetFadeGlassyFallback } from '@/utils/hooks/useResetFadeGlassyFallback';
+import { getUserAtom } from '@/utils/users/atoms';
 
 export default function LoginPage() {
     const transitionNavigate = useTransitionNavigate();
@@ -17,6 +18,13 @@ export default function LoginPage() {
     const { authorize } = useAtomValue(authContextActionAtom);
     const loadEndpoint = useAtomValue(loadEndpointAtom);
     useResetFadeGlassyFallback();
+
+    // Form input states
+    const [usernameInput, setUsernameInput] = useState('');
+    const userAtom = useMemo(() => {
+        return getUserAtom({ type: 'username', value: usernameInput });
+    }, [usernameInput]);
+    const user = useAtomValue(userAtom).data;
 
     /* Validation */
     const [isValid, setIsValid] = useState({ username: true, password: true });
@@ -43,8 +51,6 @@ export default function LoginPage() {
         const password = formData.get('password');
 
         if (typeof username === 'string' && typeof password === 'string') {
-            const user = await getUser({ type: 'username', value: username });
-
             // Validate username
             if (!user) {
                 setIsValid((prev) => ({
@@ -98,7 +104,8 @@ export default function LoginPage() {
                         fullWidth
                         required
                         error={!isValid.username}
-                        onChange={(_) => {
+                        onChange={(e) => {
+                            setUsernameInput(e.currentTarget.value);
                             if (!isValid.username) {
                                 setIsValid((prev) => ({
                                     username: true,

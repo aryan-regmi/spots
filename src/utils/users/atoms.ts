@@ -4,10 +4,23 @@ import { queryClient } from '../queryClient';
 
 /** Gets the specfied user from the database. */
 export const getUserAtom = (userId: UserId) => {
+    const idValue =
+        userId?.type === 'id'
+            ? userId.value
+            : typeof userId?.value === 'string'
+              ? userId.value.trim()
+              : undefined;
+
+    // Prevents running with empty values
+    const enabled =
+        userId?.type === 'id'
+            ? typeof userId.value === 'number' && !isNaN(userId.value)
+            : typeof userId.value === 'string' && userId.value.trim() !== '';
+
     return atomWithQuery(() => ({
-        queryKey: ['getUser', userId],
-        queryFn: ({ queryKey: [, userId] }) => getUser(userId as UserId),
-        enabled: !!userId, // Prevent calling with empty username
+        queryKey: ['getUser', userId.type, idValue],
+        enabled: enabled,
+        queryFn: () => getUser(userId),
     }));
 };
 
