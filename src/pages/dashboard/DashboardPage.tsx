@@ -16,16 +16,12 @@ import {
 } from '@mui/material';
 import { Logout } from '@mui/icons-material';
 import { NavState } from '@/pages/dashboard/NavState';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
-import { useEffect } from 'react';
-import { fadeGlassyDurationAtom, fadeGlassyFallbackElementAtom } from '@/App';
+import { useEffect, useState } from 'react';
 import { useResetFadeGlassyFallback } from '@/utils/hooks/useResetFadeGlassyFallback';
-
-const navAtom = atom(NavState.Home);
-const isLoggingOutAtom = atom(false);
 
 export default function DashboardPage() {
     const transitionNavigate = useTransitionNavigate();
@@ -36,8 +32,8 @@ export default function DashboardPage() {
 
     /* State */
     const [menuIsOpen, setMenuIsOpen] = useAtom(menuIsOpenAtom);
-    const [isLoggingOut, setIsLoggingOut] = useAtom(isLoggingOutAtom);
-    const [nav, setNav] = useAtom(navAtom);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [nav, setNav] = useState(NavState.Home);
 
     /* Reset nav when unmounted */
     useEffect(() => {

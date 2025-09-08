@@ -4,13 +4,8 @@ import { authContextAtom } from '@/utils/auth/atoms';
 import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
 import { Card, List, ListItemButton, Typography } from '@mui/material';
 import { listen } from '@tauri-apps/api/event';
-import { atom, useAtom, useAtomValue } from 'jotai';
-import { useEffect } from 'react';
-
-/* State atoms */
-const allTracksAtom = atom<StreamedTrackMetadata[]>([]);
-const isStreamingTracksAtom = atom(false);
-const displayAllSongsAtom = atom(false);
+import { useAtom, useAtomValue } from 'jotai';
+import { useEffect, useState } from 'react';
 
 // TODO: Add refresh button that will call `loadMusicLibrary`
 //
@@ -23,12 +18,10 @@ const displayAllSongsAtom = atom(false);
 
 export default function Library() {
     const { authUser } = useAtomValue(authContextAtom);
-    const [allTracks, setAllTracks] = useAtom(allTracksAtom);
+    const [allTracks, setAllTracks] = useState<StreamedTrackMetadata[]>([]);
     const [firstRun, setFirstRun] = useAtom(firstRunAtom);
-    const [isStreamingTracks, setIsStreamingTracks] = useAtom(
-        isStreamingTracksAtom
-    );
-    const [displayAllSongs, setDisplayAllSongs] = useAtom(displayAllSongsAtom);
+    const [isStreamingTracks, setIsStreamingTracks] = useState(false);
+    const [displayAllSongs, setDisplayAllSongs] = useState(false);
 
     useEffect(() => {
         let unlistenTrackStream: Promise<() => void>;
