@@ -5,26 +5,22 @@ import {
     Alert,
     CircularProgress,
     IconButton,
+    List,
     Stack,
     styled,
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
-import { CSSProperties, FormEvent, useEffect } from 'react';
+import { CSSProperties, FormEvent, useEffect, useState } from 'react';
 import { Form } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
 import { getUser, hashPassword } from '@/api/users';
 import { insertUserAtom } from '@/utils/users/atoms';
 
-/* Global state atoms */
+/* Determines if this is the first time a user is logging in. */
 export const firstRunAtom = atom(false);
-
-/* Validation atoms */
-const errorMessageAtom = atom<string[]>();
-const isValidAtom = atom({ username: true, password: true });
-const validatingAtom = atom(false);
 
 export default function SignupPage() {
     const transitionNavigate = useTransitionNavigate();
@@ -35,28 +31,29 @@ export default function SignupPage() {
     const setFirstRun = useSetAtom(firstRunAtom);
 
     /* Validation */
-    const [errMsg, setErrMsg] = useAtom(errorMessageAtom);
-    const [isValid, setIsValid] = useAtom(isValidAtom);
-    const [validating, setValidating] = useAtom(validatingAtom);
+    const [errMsg, setErrMsg] = useState<string[]>([]);
+    const [isValid, setIsValid] = useState({ username: true, password: true });
+    const [isValidating, setIsValidating] = useState(false);
+
     const isBusy =
         isLoading ||
         insertUser.isPending ||
         createEndpoint.isPending ||
-        validating;
+        isValidating;
 
     /* Reset validation on unmount */
     useEffect(() => {
         return () => {
             setIsValid({ username: true, password: true });
-            setErrMsg(undefined);
-            setValidating(false);
+            setErrMsg([]);
+            setIsValidating(false);
         };
     }, []);
 
     /** Validates the username and password, then redirects to the dashboard. */
     async function validateLoginAndRedirect(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        setValidating(true);
+        setIsValidating(true);
 
         const formData = new FormData(e.currentTarget);
         const username = formData.get('username');
@@ -68,18 +65,25 @@ export default function SignupPage() {
             // Username is valid if there is no entry in the database
             const validUsername = !user;
             if (!validUsername) {
-                setIsValid({ username: false, password: isValid.password });
-                setValidating(false);
-                setErrMsg([...(errMsg ?? ''), 'Username already exists!']);
+                setIsValid((prev) => ({
+                    username: false,
+                    password: prev.password,
+                }));
+                setIsValidating(false);
+                setErrMsg((prev) => [...prev, 'Username already exists!']);
             }
 
             // Password validation function
             const passwordIsValid = (password: string) => {
                 let validLen = password.length >= 8;
                 if (!validLen) {
-                    setValidating(false);
-                    setErrMsg([
-                        ...(errMsg ?? ''),
+                    setIsValidating(false);
+                    setIsValid((prev) => ({
+                        username: prev.username,
+                        password: false,
+                    }));
+                    setErrMsg((prev) => [
+                        ...prev,
                         'The password must be at least 8 characters long!',
                     ]);
                     return false;
@@ -87,9 +91,13 @@ export default function SignupPage() {
 
                 let validSymbols = password.match('^(?=.*[!@#$%^*()_+=]).*$');
                 if (!validSymbols || validSymbols.length == 0) {
-                    setValidating(false);
-                    setErrMsg([
-                        ...(errMsg ?? ''),
+                    setIsValidating(false);
+                    setIsValid((prev) => ({
+                        username: prev.username,
+                        password: false,
+                    }));
+                    setErrMsg((prev) => [
+                        ...prev,
                         'The password must contain at least one symbol/special character!',
                     ]);
                     return false;
@@ -120,7 +128,7 @@ export default function SignupPage() {
 
                 // Go to homepage
                 await new Promise((resolve) => setTimeout(resolve, 500));
-                setValidating(false);
+                setIsValidating(false);
                 setFirstRun(true);
                 await transitionNavigate('/dashboard', { replace: true });
             }
@@ -151,13 +159,12 @@ export default function SignupPage() {
                         required
                         error={!isValid.username}
                         onChange={(_) => {
-                            console.log(isValid.username);
                             if (!isValid.username) {
-                                setIsValid({
+                                setIsValid((prev) => ({
                                     username: true,
-                                    password: isValid.password,
-                                });
-                                setErrMsg(undefined);
+                                    password: prev.password,
+                                }));
+                                setErrMsg([]);
                             }
                         }}
                     />
@@ -171,13 +178,12 @@ export default function SignupPage() {
                         required
                         error={!isValid.password}
                         onChange={(_) => {
-                            console.log(isValid.password);
                             if (!isValid.password) {
-                                setIsValid({
-                                    username: isValid.username,
+                                setIsValid((prev) => ({
+                                    username: prev.username,
                                     password: true,
-                                });
-                                setErrMsg(undefined);
+                                }));
+                                setErrMsg([]);
                             }
                         }}
                     />
@@ -189,7 +195,7 @@ export default function SignupPage() {
                             disabled={isBusy}
                             color="primary"
                         >
-                            {validating ? 'Logging in...' : 'Sign Up'}
+                            {isValidating ? 'Logging in...' : 'Sign Up'}
                         </StyledButton>
                     </div>
                     <div
@@ -197,17 +203,24 @@ export default function SignupPage() {
                             textAlign: 'center',
                         }}
                     >
-                        {validating ? <CircularProgress /> : null}
+                        {isValidating ? <CircularProgress /> : null}
                     </div>
                 </Stack>
             </Form>
 
             {/* Error alerts */}
-            {errMsg?.map((msg) => (
-                <Alert severity="error" variant="filled" key={msg}>
-                    {msg}
-                </Alert>
-            ))}
+            <Stack gap="1em">
+                {errMsg?.map((msg) => (
+                    <Alert
+                        severity="error"
+                        variant="filled"
+                        key={msg}
+                        style={{ marginBottom: '4px' }}
+                    >
+                        {msg}
+                    </Alert>
+                ))}
+            </Stack>
         </StyledContainer>
     );
 }
