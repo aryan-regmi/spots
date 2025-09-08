@@ -5,7 +5,6 @@ import {
     Alert,
     CircularProgress,
     IconButton,
-    List,
     Stack,
     styled,
 } from '@mui/material';

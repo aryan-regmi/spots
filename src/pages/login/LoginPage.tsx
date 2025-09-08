@@ -3,18 +3,13 @@ import Container from '@/components/Container';
 import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import { Alert, CircularProgress, Stack, styled } from '@mui/material';
 import { Form } from 'react-router-dom';
-import { FormEvent, useEffect } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { getUser, verifyPassword } from '@/api/users';
 import { loadEndpointAtom } from '@/utils/network/atoms';
 import { useResetFadeGlassyFallback } from '@/utils/hooks/useResetFadeGlassyFallback';
-
-/* Validation atoms */
-export const isValidAtom = atom({ username: true, password: true });
-export const errorMessageAtom = atom<string>();
-export const validatingAtom = atom(false);
 
 export default function LoginPage() {
     const transitionNavigate = useTransitionNavigate();
@@ -24,16 +19,16 @@ export default function LoginPage() {
     useResetFadeGlassyFallback();
 
     /* Validation */
-    const [isValid, setIsValid] = useAtom(isValidAtom);
-    const [errMsg, setErrMsg] = useAtom(errorMessageAtom);
-    const [validating, setValidating] = useAtom(validatingAtom);
+    const [isValid, setIsValid] = useState({ username: true, password: true });
+    const [errMsg, setErrMsg] = useState<string[]>([]);
+    const [validating, setValidating] = useState(false);
     const isBusy = isLoading || loadEndpoint.isPending || validating;
 
     /* Reset validation on unmount */
     useEffect(() => {
         return () => {
             setIsValid({ username: true, password: true });
-            setErrMsg(undefined);
+            setErrMsg([]);
             setValidating(false);
         };
     }, []);
@@ -52,8 +47,11 @@ export default function LoginPage() {
 
             // Validate username
             if (!user) {
-                setIsValid({ username: false, password: isValid.password });
-                setErrMsg('Username not found!');
+                setIsValid((prev) => ({
+                    username: false,
+                    password: prev.password,
+                }));
+                setErrMsg((prev) => [...prev, 'Username not found!']);
                 setValidating(false);
                 return;
             }
@@ -61,14 +59,17 @@ export default function LoginPage() {
             // Validate password
             const verified = await verifyPassword(user.id, password);
             if (!verified) {
-                setIsValid({ username: isValid.username, password: false });
-                setErrMsg('Incorrect password!');
+                setIsValid((prev) => ({
+                    username: prev.username,
+                    password: false,
+                }));
+                setErrMsg((prev) => [...prev, 'Incorrect password!']);
                 setValidating(false);
                 return;
             }
 
             setIsValid({ username: true, password: true });
-            setErrMsg(undefined);
+            setErrMsg([]);
 
             // Authorize username
             await authorize(username);
@@ -99,11 +100,11 @@ export default function LoginPage() {
                         error={!isValid.username}
                         onChange={(_) => {
                             if (!isValid.username) {
-                                setIsValid({
+                                setIsValid((prev) => ({
                                     username: true,
-                                    password: isValid.password,
-                                });
-                                setErrMsg(undefined);
+                                    password: prev.password,
+                                }));
+                                setErrMsg([]);
                             }
                         }}
                     />
@@ -117,11 +118,11 @@ export default function LoginPage() {
                         error={!isValid.password}
                         onChange={(_) => {
                             if (!isValid.password) {
-                                setIsValid({
-                                    username: isValid.username,
+                                setIsValid((prev) => ({
+                                    username: prev.username,
                                     password: true,
-                                });
-                                setErrMsg(undefined);
+                                }));
+                                setErrMsg([]);
                             }
                         }}
                     />
@@ -161,11 +162,13 @@ export default function LoginPage() {
             </a>
 
             {/* Error alerts */}
-            {errMsg ? (
-                <Alert severity="error" variant="filled">
-                    {errMsg}
-                </Alert>
-            ) : null}
+            <Stack gap={'1em'}>
+                {errMsg.map((msg) => (
+                    <Alert severity="error" variant="filled" key={msg}>
+                        {msg}
+                    </Alert>
+                ))}
+            </Stack>
         </StyledContainer>
     );
 }
