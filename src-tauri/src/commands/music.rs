@@ -10,10 +10,6 @@ use crate::{
 type Result<T> = anyhow::Result<T, String>;
 type DatabaseState<'a> = State<'a, Database>;
 
-// TODO: Only load on signup then Save to database
-//  - use database values otherwise
-//  - update when database value becomes stale/invalid
-
 /// Loads the music library and saves each track to the database.
 #[tauri::command]
 pub async fn load_music_library(

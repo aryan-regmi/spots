@@ -1,5 +1,5 @@
-import { CircularProgress, Typography, TypographyProps } from '@mui/material';
-import { Component, CSSProperties } from 'react';
+import { CircularProgress } from '@mui/material';
+import { CSSProperties } from 'react';
 
 const style: CSSProperties = {
     display: 'flex',
@@ -11,7 +11,6 @@ const style: CSSProperties = {
     height: '90vh',
 };
 
-// TODO: Return a skeleton instead (props to pass in sizes and layout)
 export default function Loading(props: {
     spinnerSize?: string | number;
     spinnerStyle?: CSSProperties;

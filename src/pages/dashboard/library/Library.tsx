@@ -1,5 +1,5 @@
 import { loadMusicLibrary, streamTracks } from '@/api/music';
-import { firstRunAtom } from '@/pages/signup/SignupPage';
+import { isFirstLoginAtom } from '@/pages/signup/SignupPage';
 import { authContextAtom } from '@/utils/auth/atoms';
 import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
 import { Card, List, ListItemButton, Typography } from '@mui/material';
@@ -19,7 +19,7 @@ import { useEffect, useState } from 'react';
 export default function Library() {
     const { authUser } = useAtomValue(authContextAtom);
     const [allTracks, setAllTracks] = useState<StreamedTrackMetadata[]>([]);
-    const [firstRun, setFirstRun] = useAtom(firstRunAtom);
+    const [isFirstLogin, setIsFirstLogin] = useAtom(isFirstLoginAtom);
     const [_isStreamingTracks, setIsStreamingTracks] = useState(false);
     const [displayAllSongs, setDisplayAllSongs] = useState(false);
 
@@ -56,9 +56,9 @@ export default function Library() {
             setIsStreamingTracks(true);
 
             const loadAndStream = async () => {
-                if (firstRun) {
+                if (isFirstLogin) {
                     await loadMusicLibrary(authUser.id); // loads and emits each track
-                    setFirstRun(false);
+                    setIsFirstLogin(false);
                 }
 
                 // Always call this to emit existing tracks

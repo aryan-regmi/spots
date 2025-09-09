@@ -1,4 +1,5 @@
-import { fadeGlassyDurationAtom, fadeInAtom, showOutletAtom } from '@/App';
+import { fadeGlassyDurationAtom } from '@/App';
+import { fadeInAtom, showOutletAtom } from '@/components/glassy/FadeGlassy';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { NavigateOptions, To, useNavigate } from 'react-router-dom';
 

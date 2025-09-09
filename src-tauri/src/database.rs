@@ -15,14 +15,10 @@ use crate::{
     Result,
 };
 
-// FIXME: Make all funcs take ids instead!
-
 pub struct Database {
     pub pool: Pool<Sqlite>,
 }
 
-// TODO: Make all NULL-able values Option<>
-//
 // TODO: Make all `String` taking funcs take `&str` instead
 
 impl Database {

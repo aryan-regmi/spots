@@ -21,14 +21,12 @@ import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
 import { useEffect, useState } from 'react';
-import { useResetFadeGlassyFallback } from '@/utils/hooks/useResetFadeGlassyFallback';
 
 export default function DashboardPage() {
     const transitionNavigate = useTransitionNavigate();
     const { authUser, isLoading } = useAtomValue(authContextAtom);
     const { unauthorize } = useAtomValue(authContextActionAtom);
     const closeEndpoint = useAtomValue(closeEndpointAtom);
-    useResetFadeGlassyFallback();
 
     /* State */
     const [menuIsOpen, setMenuIsOpen] = useAtom(menuIsOpenAtom);

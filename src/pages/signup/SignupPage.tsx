@@ -12,14 +12,13 @@ import { ArrowBack } from '@mui/icons-material';
 import { CSSProperties, FormEvent, useEffect, useMemo, useState } from 'react';
 import { Form } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
 import { hashPassword } from '@/api/users';
 import { getUserAtom, insertUserAtom } from '@/utils/users/atoms';
 
-/* Determines if this is the first time a user is logging in. */
-export const firstRunAtom = atom(false);
+export const isFirstLoginAtom = atom(false);
 
 export default function SignupPage() {
     const transitionNavigate = useTransitionNavigate();
@@ -27,7 +26,7 @@ export default function SignupPage() {
     const { authorize } = useAtomValue(authContextActionAtom);
     const insertUser = useAtomValue(insertUserAtom);
     const createEndpoint = useAtomValue(createEndpointAtom);
-    const setFirstRun = useSetAtom(firstRunAtom);
+    const setIsFirstLogin = useSetAtom(isFirstLoginAtom);
 
     // Form input states
     const [usernameInput, setUsernameInput] = useState('');
@@ -133,7 +132,7 @@ export default function SignupPage() {
                 // Go to homepage
                 await new Promise((resolve) => setTimeout(resolve, 500));
                 setIsValidating(false);
-                setFirstRun(true);
+                setIsFirstLogin(true);
                 await transitionNavigate('/dashboard', { replace: true });
             }
         }

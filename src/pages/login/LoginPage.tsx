@@ -9,7 +9,6 @@ import { useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { verifyPassword } from '@/api/users';
 import { loadEndpointAtom } from '@/utils/network/atoms';
-import { useResetFadeGlassyFallback } from '@/utils/hooks/useResetFadeGlassyFallback';
 import { getUserAtom } from '@/utils/users/atoms';
 
 export default function LoginPage() {
@@ -17,7 +16,6 @@ export default function LoginPage() {
     const { isLoading } = useAtomValue(authContextAtom);
     const { authorize } = useAtomValue(authContextActionAtom);
     const loadEndpoint = useAtomValue(loadEndpointAtom);
-    useResetFadeGlassyFallback();
 
     // Form input states
     const [usernameInput, setUsernameInput] = useState('');
@@ -26,7 +24,7 @@ export default function LoginPage() {
     }, [usernameInput]);
     const user = useAtomValue(userAtom).data;
 
-    /* Validation */
+    // Validation states
     const [isValid, setIsValid] = useState({ username: true, password: true });
     const [errMsg, setErrMsg] = useState<string[]>([]);
     const [validating, setValidating] = useState(false);

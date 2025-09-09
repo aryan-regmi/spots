@@ -1,28 +1,32 @@
 import Glassy from '@/components/glassy/Glassy';
 import { Fade, Stack, styled } from '@mui/material';
-import { fadeGlassyDurationAtom, fadeGlassyFallbackElementAtom } from '@/App';
-import { useAtom, useAtomValue, WritableAtom } from 'jotai';
-import { useEffect } from 'react';
+import {
+    currentFadeGlassyDurationAtom,
+    currentFadeGlassyFallbackAtom,
+    isFirstLoadAtom,
+} from '@/App';
+import { atom, useAtom, useAtomValue, WritableAtom } from 'jotai';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 export type WritableBooleanAtom = WritableAtom<boolean, [boolean], void>;
+
+export const fadeInAtom = atom(false);
+export const showOutletAtom = atom(false);
 
 /**
  * A component that displays a loading screen until the blur/glassy effect is
  * applied.
  **/
-export default function FadeGlassy(props: {
-    fadeInAtom: WritableBooleanAtom;
-    showOutletAtom: WritableBooleanAtom;
-    children: any;
-}) {
-    const { fadeInAtom, showOutletAtom, children } = props;
+export default function FadeGlassy(props: { children: any }) {
+    const { children } = props;
 
     const location = useLocation();
     const [fadeIn, setFadeIn] = useAtom(fadeInAtom);
     const [showOutlet, setShowOutlet] = useAtom(showOutletAtom);
-    const fadeDuration = useAtomValue(fadeGlassyDurationAtom);
-    const fallbackElement = useAtomValue(fadeGlassyFallbackElementAtom);
+    const fadeDuration = useAtomValue(currentFadeGlassyDurationAtom);
+    const fallbackElement = useAtomValue(currentFadeGlassyFallbackAtom);
+    const [isFirstLoad, setIsFirstLoad] = useAtom(isFirstLoadAtom);
 
     useEffect(() => {
         // Reset on location change to restart animation
@@ -35,6 +39,11 @@ export default function FadeGlassy(props: {
         const showTimer = setTimeout(() => {
             setShowOutlet(true);
         }, fadeDuration);
+
+        // Reset if firstLoad
+        if (isFirstLoad) {
+            setTimeout(() => setIsFirstLoad(false), fadeDuration);
+        }
 
         return () => {
             clearTimeout(showTimer);
