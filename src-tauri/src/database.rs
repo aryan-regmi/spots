@@ -10,7 +10,7 @@ use tauri::{AppHandle, Manager};
 use tokio::fs;
 
 use crate::{
-    music::TrackMetadata,
+    music::{PlaylistMetadata, TrackMetadata},
     network::{EncryptedValue, EncryptedValueBincode, Peers, PeersBincode},
     Result,
 };
@@ -296,7 +296,9 @@ impl Database {
     }
 
     /// Returns a stream containing all of the tracks in the database.
-    pub async fn stream_tracks(&self) -> MapOk<TrackStream, impl TrackMap> {
+    pub async fn stream_all_tracks(
+        &self,
+    ) -> SqliteStreamMapOk<impl SqliteRowMapOutput<StreamedTrackMetadata>> {
         sqlx::query(
             "
             SELECT id, title, artist, album, genre, year, cover_base64, path
@@ -338,6 +340,26 @@ impl Database {
         Ok(result.last_insert_rowid())
     }
 
+    /// Inserts a network playlist in the database.
+    pub async fn insert_network_playlist(
+        &self,
+        name: String,
+        user_id: i64,
+        network_id: i64,
+    ) -> Result<i64> {
+        let result = sqlx::query(
+            "
+            INSERT INTO playlists (user_id, network_id, name) VALUES (?,?,?)
+            ",
+        )
+        .bind(user_id)
+        .bind(network_id)
+        .bind(name)
+        .execute(&self.pool)
+        .await?;
+        Ok(result.last_insert_rowid())
+    }
+
     /// Adds the track to the specified playlist.
     pub async fn add_track_to_playlist(&self, track_id: i64, playlist_id: i64) -> Result<()> {
         sqlx::query("INSERT OR IGNORE INTO playlist_tracks (playlist_id, track_id) VALUES (?, ?)")
@@ -348,34 +370,70 @@ impl Database {
         Ok(())
     }
 
-    // FIXME: Finish impl!
-    //
     /// Returns a stream containing all of the playlists in the database.
-    pub async fn stream_playlists(&self) -> () {
-        // sqlx::query(
-        //     "
-        //     SELECT id, title, artist, album, genre, year, cover_base64, path
-        //     FROM tracks
-        //     GROUP BY path
-        // ",
-        // )
-        // .fetch(&self.pool)
-        // .map_ok(|record| StreamedTrackMetadata {
-        //     id: record.get("id"),
-        //     metadata: TrackMetadata {
-        //         title: record.get("title"),
-        //         artist: record.get("artist"),
-        //         album: record.get("album"),
-        //         genre: record.get("genre"),
-        //         year: record.get("year"),
-        //         cover_base64: record.get("cover_base64"),
-        //         path: record.get("path"),
-        //     },
-        // })
+    pub async fn stream_playlists(
+        &self,
+        user_id: i64,
+    ) -> SqliteStreamMapOk<impl SqliteRowMapOutput<StreamedPlaylistMetadata>> {
+        sqlx::query(
+            "
+            SELECT id, user_id, network_id, name 
+            FROM playlists 
+            WHERE user_id = ?
+            ",
+        )
+        .bind(user_id)
+        .fetch(&self.pool)
+        .map_ok(|record| StreamedPlaylistMetadata {
+            id: record.get("id"),
+            metadata: PlaylistMetadata {
+                user_id: record.get("user_id"),
+                network_id: record.get("network_id"),
+                name: record.get("name"),
+            },
+        })
+    }
 
-        todo!()
+    /// Returns a stream containing all of the tracks in the playlist.
+    pub async fn stream_tracks(
+        &self,
+        playlist_id: i64,
+    ) -> SqliteStreamMapOk<impl SqliteRowMapOutput<StreamedTrackMetadata>> {
+        sqlx::query(
+            "
+            SELECT t.*
+            FROM tracks t
+            JOIN playlist_tracks pt ON pt.track_id = t.id
+            WHERE pt.playlist_id = ?
+        ",
+        )
+        .bind(playlist_id)
+        .fetch(&self.pool)
+        .map_ok(|record| StreamedTrackMetadata {
+            id: record.get("id"),
+            metadata: TrackMetadata {
+                title: record.get("title"),
+                artist: record.get("artist"),
+                album: record.get("album"),
+                genre: record.get("genre"),
+                year: record.get("year"),
+                cover_base64: record.get("cover_base64"),
+                path: record.get("path"),
+            },
+        })
     }
 }
+
+/// A stream of [SqliteRow] data.
+pub type SqliteRowStream =
+    Pin<Box<dyn Stream<Item = std::result::Result<SqliteRow, sqlx::Error>> + std::marker::Send>>;
+
+/// A function that converts a [SqliteRow] to a `T`.
+pub trait SqliteRowMapOutput<T>: FnMut(sqlx::sqlite::SqliteRow) -> T {}
+impl<T, F: FnMut(sqlx::sqlite::SqliteRow) -> T> SqliteRowMapOutput<T> for F {}
+
+/// Represents a [MapOk] output.
+pub type SqliteStreamMapOk<T> = MapOk<SqliteRowStream, T>;
 
 /// The track metadata along with the its ID.
 #[derive(Serialize, Clone)]
@@ -384,13 +442,12 @@ pub struct StreamedTrackMetadata {
     pub metadata: TrackMetadata,
 }
 
-/// A stream of [StreamedTrackMetadata].
-pub type TrackStream =
-    Pin<Box<dyn Stream<Item = std::result::Result<SqliteRow, sqlx::Error>> + std::marker::Send>>;
-
-/// A function that converts a [SqliteRow] to a [StreamedTrackMetadata].
-pub trait TrackMap: FnMut(sqlx::sqlite::SqliteRow) -> StreamedTrackMetadata {}
-impl<F: FnMut(sqlx::sqlite::SqliteRow) -> StreamedTrackMetadata> TrackMap for F {}
+/// The playlist metadata along with the its ID.
+#[derive(Serialize, Clone)]
+pub struct StreamedPlaylistMetadata {
+    pub id: i64,
+    pub metadata: PlaylistMetadata,
+}
 
 /// Represents a user in the database.
 #[derive(Serialize)]

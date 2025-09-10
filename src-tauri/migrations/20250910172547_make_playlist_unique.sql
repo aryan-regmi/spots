@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS playlists (
     network_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id),
-    UNIQUE(user_id, name)
+    UNIQUE(network_id, name)
 );

@@ -84,8 +84,8 @@ pub async fn load_music_library(
 
 /// Streams all the tracks in the library from the database.
 #[tauri::command]
-pub async fn stream_tracks(window: tauri::Window, db: DatabaseState<'_>) -> Result<()> {
-    let mut tracks_stream = db.stream_tracks().await;
+pub async fn stream_all_tracks(window: tauri::Window, db: DatabaseState<'_>) -> Result<()> {
+    let mut tracks_stream = db.stream_all_tracks().await;
     while let Some(Ok(track)) = tracks_stream.next().await {
         window
             .emit("track-stream", track)
@@ -93,6 +93,46 @@ pub async fn stream_tracks(window: tauri::Window, db: DatabaseState<'_>) -> Resu
     }
     window
         .emit("track-stream-stopped", ())
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+/// Streams all the playlists in the user's library.
+#[tauri::command]
+pub async fn stream_playlists(
+    window: tauri::Window,
+    db: DatabaseState<'_>,
+    user_id: i64,
+) -> Result<()> {
+    let mut playlists_stream = db.stream_playlists(user_id).await;
+    while let Some(Ok(playlist)) = playlists_stream.next().await {
+        window
+            .emit("playlist-stream", playlist)
+            .map_err(|e| e.to_string())?;
+    }
+    window
+        .emit("playlist-stream-stopped", ())
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+/// Streams all the tracks from the specified playlist.
+#[tauri::command]
+pub async fn stream_playlist_tracks(
+    window: tauri::Window,
+    db: DatabaseState<'_>,
+    playlist_id: i64,
+) -> Result<()> {
+    let mut tracks_stream = db.stream_tracks(playlist_id).await;
+    while let Some(Ok(track)) = tracks_stream.next().await {
+        window
+            .emit("playlist-track-stream", track)
+            .map_err(|e| e.to_string())?;
+    }
+    window
+        .emit("playlist-track-stream-stopped", ())
         .map_err(|e| e.to_string())?;
 
     Ok(())

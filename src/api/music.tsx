@@ -20,7 +20,7 @@ export async function loadMusicLibrary(userId: number) {
  **/
 export async function streamTracks() {
     try {
-        await invoke('stream_tracks');
+        await invoke('stream_all_tracks');
     } catch (e: any) {
         throw new Error(e);
     }

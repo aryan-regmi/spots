@@ -1,9 +1,10 @@
 use base64::{engine::general_purpose, Engine};
 use lofty::{file::TaggedFileExt, probe::Probe, tag::Accessor};
+use serde::Serialize;
 
 type Result<T> = anyhow::Result<T>;
 
-#[derive(serde::Serialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct TrackMetadata {
     pub title: Option<String>,
     pub artist: Option<String>,
@@ -38,4 +39,11 @@ impl TrackMetadata {
             path: path.to_string(),
         })
     }
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct PlaylistMetadata {
+    pub user_id: i64,
+    pub network_id: i64,
+    pub name: String,
 }
