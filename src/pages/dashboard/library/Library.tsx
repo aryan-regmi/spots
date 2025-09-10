@@ -1,4 +1,4 @@
-import { loadMusicLibrary, streamTracks } from '@/api/music';
+import { loadMusicLibrary, streamAllTracks } from '@/api/music';
 import { isFirstLoginAtom } from '@/pages/signup/SignupPage';
 import { authContextAtom } from '@/utils/auth/atoms';
 import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
@@ -63,7 +63,7 @@ export default function Library() {
                 }
 
                 // Always call this to emit existing tracks
-                await streamTracks();
+                await streamAllTracks();
             };
             loadAndStream();
         }
