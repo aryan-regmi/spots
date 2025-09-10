@@ -6,6 +6,7 @@ import ProfilePage from '@/pages/profile/ProfilePage';
 import SignupPage from '@/pages/signup/SignupPage';
 import { createBrowserRouter, redirect } from 'react-router';
 import { getAuthUser } from '@/api/auth';
+import PlaylistPage from './pages/playlist/PlaylistPage';
 
 export const router = createBrowserRouter([
     {
@@ -57,6 +58,10 @@ export const router = createBrowserRouter([
             {
                 path: '/dashboard/profile',
                 element: <ProfilePage />,
+            },
+            {
+                path: '/playlist/:playlistId',
+                element: <PlaylistPage />,
             },
         ],
     },

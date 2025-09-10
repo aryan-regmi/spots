@@ -1,16 +1,13 @@
-import {
-    loadMusicLibrary,
-    streamAllTracks,
-    streamPlaylists,
-} from '@/api/music';
+import { loadMusicLibrary, streamPlaylists } from '@/api/music';
 import { isFirstLoginAtom } from '@/pages/signup/SignupPage';
 import { authContextAtom } from '@/utils/auth/atoms';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import StreamedPlaylistMetadata from '@/utils/music/types/playlistMetadata';
-import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
 import { Card, List, ListItemButton, Typography } from '@mui/material';
 import { listen } from '@tauri-apps/api/event';
 import { useAtom, useAtomValue } from 'jotai';
 import { useEffect, useState } from 'react';
+import { Outlet } from 'react-router';
 
 // TODO: Add refresh button that will call `loadMusicLibrary`
 //
@@ -22,6 +19,7 @@ import { useEffect, useState } from 'react';
 //  - Playlist code will stream songs
 
 export default function Library() {
+    const transitionNavigate = useTransitionNavigate();
     const { authUser } = useAtomValue(authContextAtom);
     const [playlists, setPlaylists] = useState<StreamedPlaylistMetadata[]>([]);
     const [isFirstLogin, setIsFirstLogin] = useAtom(isFirstLoginAtom);
@@ -88,8 +86,14 @@ export default function Library() {
                 {playlists.map((playlist) => {
                     const metadata = playlist.metadata;
                     return (
-                        <Card>
-                            <ListItemButton key={playlist.id}>
+                        <Card key={playlist.id}>
+                            <ListItemButton
+                                onClick={() =>
+                                    transitionNavigate(
+                                        `/playlist/${playlist.id}`
+                                    )
+                                }
+                            >
                                 <Typography>
                                     {metadata.name ??
                                         `Playlist #${playlist.id}`}
@@ -99,6 +103,7 @@ export default function Library() {
                     );
                 })}
             </List>
+            <Outlet></Outlet>
         </>
     );
 }

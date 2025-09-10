@@ -329,7 +329,7 @@ impl Database {
         let network_id = self.get_network_id(user_id).await?;
         let result = sqlx::query(
             "
-            INSERT INTO playlists (user_id, network_id, name) VALUES (?,?,?)
+            INSERT OR IGNORE INTO playlists (user_id, network_id, name) VALUES (?,?,?)
             ",
         )
         .bind(user_id)
@@ -349,7 +349,7 @@ impl Database {
     ) -> Result<i64> {
         let result = sqlx::query(
             "
-            INSERT INTO playlists (user_id, network_id, name) VALUES (?,?,?)
+            INSERT OR IGNORE INTO playlists (user_id, network_id, name) VALUES (?,?,?)
             ",
         )
         .bind(user_id)

@@ -18,6 +18,7 @@ import { createEndpointAtom } from '@/utils/network/atoms';
 import { hashPassword } from '@/api/users';
 import { getUserAtom, insertUserAtom } from '@/utils/users/atoms';
 
+/** Determines if this is the user's first time logging in. */
 export const isFirstLoginAtom = atom(false);
 
 export default function SignupPage() {
