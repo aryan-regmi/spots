@@ -1,5 +1,9 @@
 import NavState from '@/pages/dashboard/NavState';
-import { BottomNavigation, BottomNavigationAction } from '@mui/material';
+import {
+    BottomNavigation,
+    BottomNavigationAction,
+    styled,
+} from '@mui/material';
 import { Home, Search, List as ListIcon } from '@mui/icons-material';
 
 export default function BottomNav(props: { nav: NavState; setNav: any }) {
@@ -16,21 +20,17 @@ export default function BottomNav(props: { nav: NavState; setNav: any }) {
                 opacity: 0.9,
             }}
         >
-            <BottomNavigationAction
-                label="Home"
-                icon={<Home />}
-                style={{ color: 'white' }}
-            />
-            <BottomNavigationAction
-                label="Search"
-                icon={<Search />}
-                style={{ color: 'white' }}
-            />
-            <BottomNavigationAction
-                label="Playlists"
-                icon={<ListIcon />}
-                style={{ color: 'white' }}
-            />
+            <StyledNavAction label="Home" icon={<Home />} />
+            <StyledNavAction label="Search" icon={<Search />} />
+            <StyledNavAction label="Library" icon={<ListIcon />} />
         </BottomNavigation>
     );
 }
+
+const StyledNavAction = styled(BottomNavigationAction)({
+    color: 'darkgray',
+    '&.Mui-selected': {
+        opacity: 1,
+        color: 'white',
+    },
+});

@@ -1,13 +1,20 @@
 import { loadMusicLibrary, streamPlaylists } from '@/api/music';
+import Glassy from '@/components/glassy/Glassy';
 import { isFirstLoginAtom } from '@/pages/signup/SignupPage';
 import { authContextAtom } from '@/utils/auth/atoms';
 import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import StreamedPlaylistMetadata from '@/utils/music/types/playlistMetadata';
-import { Card, List, ListItemButton, Typography } from '@mui/material';
+import {
+    Card,
+    List,
+    ListItemButton,
+    Stack,
+    styled,
+    Typography,
+} from '@mui/material';
 import { listen } from '@tauri-apps/api/event';
 import { useAtom, useAtomValue } from 'jotai';
 import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router';
 
 // TODO: Add refresh button that will call `loadMusicLibrary`
 //
@@ -81,28 +88,56 @@ export default function Library() {
     }, []);
 
     return (
-        <>
-            <List>
-                {playlists.map((playlist) => {
-                    const metadata = playlist.metadata;
-                    return (
-                        <Card key={playlist.id}>
-                            <ListItemButton
-                                onClick={() =>
-                                    transitionNavigate(
-                                        `/playlist/${playlist.id}`
-                                    )
-                                }
-                            >
-                                <Typography>
-                                    {metadata.name ??
-                                        `Playlist #${playlist.id}`}
-                                </Typography>
-                            </ListItemButton>
-                        </Card>
-                    );
-                })}
-            </List>
-        </>
+        <List style={{ padding: 0 }}>
+            {playlists.map((playlist) => {
+                const metadata = playlist.metadata;
+                return (
+                    <PlaylistCard key={playlist.id}>
+                        <GlassyListButton
+                            onClick={() =>
+                                transitionNavigate(`/playlist/${playlist.id}`)
+                            }
+                        >
+                            <PlaylistContent
+                                id={playlist.id}
+                                name={metadata.name}
+                            />
+                        </GlassyListButton>
+                    </PlaylistCard>
+                );
+            })}
+        </List>
+    );
+}
+
+const PlaylistCard = styled(Card)({
+    borderRadius: '0.5em',
+    backgroundColor: '#1f1f1f',
+});
+
+const GlassyListButton = Glassy(
+    styled(ListItemButton)({
+        color: 'white',
+        padding: 0,
+    })
+);
+
+const CardInner = styled(Stack)({
+    width: '100%',
+    alignItems: 'center',
+    gap: '1em',
+});
+
+function PlaylistContent(props: { id: number; name?: string }) {
+    const { id, name } = props;
+    return (
+        <CardInner direction={'row'}>
+            <img
+                src={`/default_track.png`}
+                alt={`${name} cover image`}
+                style={{ width: '25%' }}
+            />
+            <Typography>{name ?? `Playlist #${id}`}</Typography>
+        </CardInner>
     );
 }

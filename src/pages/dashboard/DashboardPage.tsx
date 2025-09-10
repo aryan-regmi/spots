@@ -16,11 +16,14 @@ import {
 } from '@mui/material';
 import { Logout } from '@mui/icons-material';
 import { NavState } from '@/pages/dashboard/NavState';
-import { useAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
 import { useEffect, useState } from 'react';
+
+/** Manages the dashboard navigation. */
+export const dashboardNavAtom = atom(NavState.Home);
 
 export default function DashboardPage() {
     const transitionNavigate = useTransitionNavigate();
@@ -35,7 +38,7 @@ export default function DashboardPage() {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     /// The selected navigation page.
-    const [nav, setNav] = useState(NavState.Home);
+    const [nav, setNav] = useAtom(dashboardNavAtom);
 
     /// The displayed navigation page.
     //
@@ -45,14 +48,6 @@ export default function DashboardPage() {
     // Manages the navigation fade in.
     const [fadeIn, setFadeIn] = useState(true);
     const fadeTimeout = 200;
-
-    // Reset nav when unmounted
-    useEffect(() => {
-        return () => {
-            setNav(NavState.Home);
-            setIsLoggingOut(false);
-        };
-    }, []);
 
     // Animate when nav changes
     useEffect(() => {
@@ -65,6 +60,8 @@ export default function DashboardPage() {
 
             return () => clearTimeout(timeoutId);
         }
+
+        return () => setDisplayNav(nav);
     }, [nav, displayNav]);
 
     /* Handle loading state */
@@ -79,6 +76,7 @@ export default function DashboardPage() {
         await unauthorize();
         await closeEndpoint.mutateAsync();
         transitionNavigate('/login', { replace: true });
+        setNav(NavState.Home);
     }
 
     /* Toggles the menu drawer. */
