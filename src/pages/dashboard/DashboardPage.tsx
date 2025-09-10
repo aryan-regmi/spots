@@ -28,18 +28,44 @@ export default function DashboardPage() {
     const { unauthorize } = useAtomValue(authContextActionAtom);
     const closeEndpoint = useAtomValue(closeEndpointAtom);
 
-    /* State */
+    /// Determines if the menu drawer is open.
     const [menuIsOpen, setMenuIsOpen] = useAtom(menuIsOpenAtom);
+
+    /// Determines if user is logging out (used to show logout page)
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    /// The selected navigation page.
     const [nav, setNav] = useState(NavState.Home);
 
-    /* Reset nav when unmounted */
+    /// The displayed navigation page.
+    //
+    /// Different from [nav] to manage transitions.
+    const [displayNav, setDisplayNav] = useState(nav);
+
+    // Manages the navigation fade in.
+    const [fadeIn, setFadeIn] = useState(true);
+    const fadeTimeout = 200;
+
+    // Reset nav when unmounted
     useEffect(() => {
         return () => {
             setNav(NavState.Home);
             setIsLoggingOut(false);
         };
     }, []);
+
+    // Animate when nav changes
+    useEffect(() => {
+        if (displayNav !== nav) {
+            setFadeIn(false);
+            const timeoutId = setTimeout(() => {
+                setDisplayNav(nav);
+                setFadeIn(true);
+            }, fadeTimeout);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [nav, displayNav]);
 
     /* Handle loading state */
     if (isLoading || !authUser) {
@@ -112,7 +138,9 @@ export default function DashboardPage() {
                 direction="column"
                 sx={{ flexGrow: 1, paddingLeft: '1em', paddingRight: '1em' }}
             >
-                {displayNavigatedPage(nav)}
+                <Fade in={fadeIn} timeout={fadeTimeout}>
+                    <div>{displayNavigatedPage(displayNav)}</div>
+                </Fade>
             </Stack>
 
             {/* Bottom Navigation */}

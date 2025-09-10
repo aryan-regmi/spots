@@ -103,7 +103,6 @@ export default function Library() {
                     );
                 })}
             </List>
-            <Outlet></Outlet>
         </>
     );
 }

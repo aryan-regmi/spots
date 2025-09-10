@@ -7,6 +7,7 @@ import SignupPage from '@/pages/signup/SignupPage';
 import { createBrowserRouter, redirect } from 'react-router';
 import { getAuthUser } from '@/api/auth';
 import PlaylistPage from './pages/playlist/PlaylistPage';
+import NavState from './pages/dashboard/NavState';
 
 export const router = createBrowserRouter([
     {
@@ -56,7 +57,7 @@ export const router = createBrowserRouter([
                 },
             },
             {
-                path: '/dashboard/profile',
+                path: '/profile',
                 element: <ProfilePage />,
             },
             {
