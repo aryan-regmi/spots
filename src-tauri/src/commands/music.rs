@@ -32,6 +32,12 @@ pub async fn load_music_library(
         .await
         .map_err(|e| e.to_string())?;
 
+    // Create default `All Songs` playlist
+    let all_songs_playlist_id = db
+        .insert_playlist("All Songs".into(), user_id)
+        .await
+        .map_err(|e| e.to_string())?;
+
     // Parse metadata from each audio file
     while let Ok(Some(entry)) = entries.next_entry().await {
         let path = entry.path();
@@ -46,13 +52,17 @@ pub async fn load_music_library(
             )
             .map_err(|e| e.to_string())?;
 
-            // Add to database
+            // Add to track database
             let inserted = db
                 .insert_track(metadata.clone(), user_id)
                 .await
                 .map_err(|e| e.to_string())?;
+            let track_id = inserted.last_insert_rowid();
 
-            // FIXME: Add all unique tracks to the default `All Songs` playlist
+            // Add all tracks to the default `All Songs` playlist
+            db.add_track_to_playlist(track_id, all_songs_playlist_id)
+                .await
+                .map_err(|e| e.to_string())?;
 
             // Emit loaded event
             if inserted.rows_affected() >= 1 {

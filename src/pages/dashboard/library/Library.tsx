@@ -56,8 +56,9 @@ export default function Library() {
             setIsStreamingTracks(true);
 
             const loadAndStream = async () => {
+                // Load music library on first login
                 if (isFirstLogin) {
-                    await loadMusicLibrary(authUser.id); // loads and emits each track
+                    await loadMusicLibrary(authUser.id);
                     setIsFirstLogin(false);
                 }
 
@@ -92,6 +93,7 @@ export default function Library() {
                 </Card>
             </List>
 
+            {/* FIXME: Remove and replace with a separate component!  */}
             <div hidden={!displayAllSongs}>
                 Songs:
                 <List style={{ color: 'white' }}>
