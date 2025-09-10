@@ -6,7 +6,7 @@ import {
     isFirstLoadAtom,
 } from '@/App';
 import { atom, useAtom, useAtomValue, WritableAtom } from 'jotai';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 export type WritableBooleanAtom = WritableAtom<boolean, [boolean], void>;

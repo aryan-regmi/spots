@@ -12,7 +12,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { CSSProperties, FormEvent, useEffect, useMemo, useState } from 'react';
 import { Form } from 'react-router-dom';
 import { StyledButton, StyledTextField } from '@/components/form/styled';
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { createEndpointAtom } from '@/utils/network/atoms';
 import { hashPassword } from '@/api/users';
