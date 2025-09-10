@@ -34,7 +34,9 @@ export default function FadeGlassy(props: { children: any }) {
         setShowOutlet(false);
 
         // Start fade-in animation
-        setFadeIn(true);
+        const fadeTimer = setTimeout(() => {
+            setFadeIn(true);
+        }, fadeDuration);
 
         const showTimer = setTimeout(() => {
             setShowOutlet(true);
@@ -47,25 +49,28 @@ export default function FadeGlassy(props: { children: any }) {
 
         return () => {
             clearTimeout(showTimer);
+            clearTimeout(fadeTimer);
         };
     }, [location.pathname, fadeDuration]);
 
     if (!showOutlet) {
         return (
-            <GlassyStack
-                style={{
-                    width: '100vw',
-                    height: '100vh',
-                    opacity: 0.6,
-                }}
-            >
-                {fallbackElement}
-            </GlassyStack>
+            <Fade in={fadeIn} timeout={fadeDuration}>
+                <GlassyStack
+                    style={{
+                        width: '100vw',
+                        height: '100vh',
+                        opacity: 0.6,
+                    }}
+                >
+                    {fallbackElement}
+                </GlassyStack>
+            </Fade>
         );
     }
 
     return (
-        <Fade in={fadeIn} timeout={fadeDuration} appear={true}>
+        <Fade in={fadeIn} timeout={fadeDuration}>
             <GlassyStack
                 style={{
                     background: "url('/bg.jpeg') no-repeat center center",

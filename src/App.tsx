@@ -19,7 +19,7 @@ import { JSX } from 'react';
 export const isFirstLoadAtom = atom(true);
 
 /** The atom that allows customizing the duration for [FadeGlassy] component. */
-export const fadeGlassyDurationAtom = atom(50);
+export const fadeGlassyDurationAtom = atom(150);
 
 /** The atom that allows customizing the fallback element for [FadeGlassy] component. */
 export const fadeGlassyFallbackAtom = atom<JSX.Element>();
