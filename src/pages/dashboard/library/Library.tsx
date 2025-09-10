@@ -1,6 +1,11 @@
-import { loadMusicLibrary, streamAllTracks } from '@/api/music';
+import {
+    loadMusicLibrary,
+    streamAllTracks,
+    streamPlaylists,
+} from '@/api/music';
 import { isFirstLoginAtom } from '@/pages/signup/SignupPage';
 import { authContextAtom } from '@/utils/auth/atoms';
+import StreamedPlaylistMetadata from '@/utils/music/types/playlistMetadata';
 import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
 import { Card, List, ListItemButton, Typography } from '@mui/material';
 import { listen } from '@tauri-apps/api/event';
@@ -18,27 +23,26 @@ import { useEffect, useState } from 'react';
 
 export default function Library() {
     const { authUser } = useAtomValue(authContextAtom);
-    const [allTracks, setAllTracks] = useState<StreamedTrackMetadata[]>([]);
+    const [playlists, setPlaylists] = useState<StreamedPlaylistMetadata[]>([]);
     const [isFirstLogin, setIsFirstLogin] = useAtom(isFirstLoginAtom);
-    const [_isStreamingTracks, setIsStreamingTracks] = useState(false);
-    const [displayAllSongs, setDisplayAllSongs] = useState(false);
+    const [_isStreamingPlaylists, setIsStreamingPlaylists] = useState(false);
 
     useEffect(() => {
-        let unlistenTrackStream: Promise<() => void>;
-        let unlistenTrackStreamStopped: Promise<() => void>;
+        let unlistenPlaylistStream: Promise<() => void>;
+        let unlistenPlaylistStreamStopped: Promise<() => void>;
 
         /** Sets up listeners.  */
         function setupListeners() {
-            unlistenTrackStream = listen<StreamedTrackMetadata>(
-                'track-stream',
+            unlistenPlaylistStream = listen<StreamedPlaylistMetadata>(
+                'playlist-stream',
                 (event) => {
-                    // Deduplicate tracks
-                    setAllTracks((prev) => {
+                    // Deduplicate playlists
+                    setPlaylists((prev) => {
                         return Array.from(
                             new Map(
-                                [...prev, event.payload].map((track) => [
-                                    track.metadata.path,
-                                    track,
+                                [...prev, event.payload].map((playlist) => [
+                                    playlist.id,
+                                    playlist,
                                 ])
                             ).values()
                         );
@@ -46,14 +50,17 @@ export default function Library() {
                 }
             );
 
-            unlistenTrackStreamStopped = listen('track-stream-stopped', (_) => {
-                setIsStreamingTracks(false);
-            });
+            unlistenPlaylistStreamStopped = listen(
+                'playlist-stream-stopped',
+                (_) => {
+                    setIsStreamingPlaylists(false);
+                }
+            );
         }
 
         if (authUser) {
             setupListeners();
-            setIsStreamingTracks(true);
+            setIsStreamingPlaylists(true);
 
             const loadAndStream = async () => {
                 // Load music library on first login
@@ -62,52 +69,36 @@ export default function Library() {
                     setIsFirstLogin(false);
                 }
 
-                // Always call this to emit existing tracks
-                await streamAllTracks();
+                // Always call this to stream existing playlists
+                await streamPlaylists(authUser.id);
             };
             loadAndStream();
         }
 
         return () => {
             // Stop listeners
-            unlistenTrackStream?.then((off) => off());
-            unlistenTrackStreamStopped?.then((off) => off());
-
-            // Reset songs display
-            setDisplayAllSongs(false);
+            unlistenPlaylistStream?.then((off) => off());
+            unlistenPlaylistStreamStopped?.then((off) => off());
         };
     }, []);
 
-    async function toggleAllSongsDisplay() {
-        setDisplayAllSongs(!displayAllSongs);
-    }
-
     return (
         <>
-            {/* TODO: Display all playlists/albums here */}
             <List>
-                <Card>
-                    <ListItemButton onClick={toggleAllSongsDisplay}>
-                        <Typography>All Songs</Typography>
-                    </ListItemButton>
-                </Card>
-            </List>
-
-            {/* FIXME: Remove and replace with a separate component!  */}
-            <div hidden={!displayAllSongs}>
-                Songs:
-                <List style={{ color: 'white' }}>
-                    {allTracks.map((track) => {
-                        const metadata = track.metadata;
-                        return (
-                            <ListItemButton key={metadata.path}>
-                                {metadata.title ?? 'Unknown!'}
+                {playlists.map((playlist) => {
+                    const metadata = playlist.metadata;
+                    return (
+                        <Card>
+                            <ListItemButton key={playlist.id}>
+                                <Typography>
+                                    {metadata.name ??
+                                        `Playlist #${playlist.id}`}
+                                </Typography>
                             </ListItemButton>
-                        );
-                    })}
-                    {/* <ListItemButton title="All Songs"></ListItemButton> */}
-                </List>
-            </div>
+                        </Card>
+                    );
+                })}
+            </List>
         </>
     );
 }

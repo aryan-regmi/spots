@@ -59,7 +59,7 @@ pub async fn load_music_library(
                 .map_err(|e| e.to_string())?;
             let track_id = inserted.last_insert_rowid();
 
-            // Add all tracks to the default `All Songs` playlist
+            // Add track to the default `All Songs` playlist
             db.add_track_to_playlist(track_id, all_songs_playlist_id)
                 .await
                 .map_err(|e| e.to_string())?;
