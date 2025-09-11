@@ -144,8 +144,10 @@ export default function PlaylistPage() {
                                         style={{
                                             padding: 0,
                                             width: '100%',
-                                            borderRadius: '1em',
-                                            backgroundColor: '#1f1f1f',
+                                            borderRadius: '0.25em',
+                                            backgroundColor:
+                                                'rgba(50,50,50,0.1)',
+                                            marginBottom: '0.25em',
                                         }}
                                     >
                                         <GlassyListButton>
@@ -179,8 +181,24 @@ const GlassyListButton = Glassy(
         color: 'white',
         padding: 0,
         width: '100%',
+        backgroundColor: 'white',
     })
 );
+
+function Img(props: { src?: string; alt?: string; className?: string }) {
+    const { src, alt, className } = props;
+    return <img src={src} alt={alt} className={className} />;
+}
+
+const CardImg = styled(Img)({
+    width: '20%',
+    height: 'auto',
+    aspectRatio: 1,
+    '&:hover': {
+        opacity: 0.8,
+    },
+    '&.card-img': {},
+});
 
 function TrackContent(props: { id: number; title?: string; imgSrc: string }) {
     const { id, title, imgSrc } = props;
@@ -188,19 +206,14 @@ function TrackContent(props: { id: number; title?: string; imgSrc: string }) {
         width: '100%',
         alignItems: 'center',
         gap: '1em',
+        '&:hover .card-img': {
+            opacity: 0.8,
+        },
     });
+
     return (
         <CardInner direction={'row'}>
-            <img
-                src={imgSrc}
-                alt={`${title} cover image`}
-                style={{
-                    width: '20%',
-                    height: 'auto',
-                    aspectRatio: 1,
-                    boxShadow: 'none',
-                }}
-            />
+            <CardImg src={imgSrc} className="card-img" />
             <Typography>{title ?? `Track #${id}`}</Typography>
         </CardInner>
     );
