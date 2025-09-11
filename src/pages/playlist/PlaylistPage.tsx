@@ -4,7 +4,9 @@ import Glassy from '@/components/glassy/Glassy';
 import Loading from '@/components/loading/Loading';
 import { authContextAtom } from '@/utils/auth/atoms';
 import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
-import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
+import StreamedTrackMetadata, {
+    TrackMetadata,
+} from '@/utils/music/types/trackMetadata';
 import { ArrowBack } from '@mui/icons-material';
 import {
     Card,
@@ -118,25 +120,19 @@ export default function PlaylistPage() {
                             style={{ width: '75%', borderRadius: '1em' }}
                         />
                         <Typography variant="h5">{playlistName}</Typography>
-                        {authUser ? (
-                            <Typography>By {createdBy ?? 'Unknown'}</Typography>
-                        ) : null}
+                        <Typography
+                            style={{
+                                marginTop: -1,
+                                marginBottom: '1em',
+                                color: 'darkgray',
+                            }}
+                        >
+                            By {createdBy ?? 'Unknown'}
+                        </Typography>
 
                         <List style={{ padding: 0 }}>
                             {tracks.map((track) => {
                                 const metadata = track.metadata;
-                                const title =
-                                    metadata.title ?? `Track #${track.id}`;
-
-                                // Extract image src
-                                const splits = metadata.coverBase64?.split('.');
-                                const imgExt = splits
-                                    ? splits[splits.length - 1]
-                                    : 'png';
-                                const mimeType = `image/${imgExt}`;
-                                const imgSrc = metadata.coverBase64
-                                    ? `data:${mimeType};base64,${metadata.coverBase64}`
-                                    : '/default_track.png';
 
                                 return (
                                     <Card
@@ -153,8 +149,7 @@ export default function PlaylistPage() {
                                         <GlassyListButton>
                                             <TrackContent
                                                 id={track.id}
-                                                title={title}
-                                                imgSrc={imgSrc}
+                                                metadata={metadata}
                                             />
                                         </GlassyListButton>
                                     </Card>
@@ -187,34 +182,55 @@ const GlassyListButton = Glassy(
 
 function Img(props: { src?: string; alt?: string; className?: string }) {
     const { src, alt, className } = props;
-    return <img src={src} alt={alt} className={className} />;
+    return <img src={src} alt={alt} className={`card-img ${className}`} />;
 }
 
 const CardImg = styled(Img)({
     width: '20%',
     height: 'auto',
     aspectRatio: 1,
-    '&:hover': {
-        opacity: 0.8,
-    },
-    '&.card-img': {},
 });
 
-function TrackContent(props: { id: number; title?: string; imgSrc: string }) {
-    const { id, title, imgSrc } = props;
-    const CardInner = styled(Stack)({
-        width: '100%',
-        alignItems: 'center',
-        gap: '1em',
-        '&:hover .card-img': {
-            opacity: 0.8,
-        },
-    });
+const CardInner = styled(Stack)({
+    width: '100%',
+    alignItems: 'center',
+    gap: '1em',
+    '&:hover .card-img': {
+        opacity: 0.8,
+    },
+});
+
+function TrackContent(props: { id: number; metadata: TrackMetadata }) {
+    const { id, metadata } = props;
+
+    // Extract image src
+    const splits = metadata.coverBase64?.split('.');
+    const imgExt = splits ? splits[splits.length - 1] : 'png';
+    const mimeType = `image/${imgExt}`;
+    const imgSrc = metadata.coverBase64
+        ? `data:${mimeType};base64,${metadata.coverBase64}`
+        : '/default_track.png';
 
     return (
         <CardInner direction={'row'}>
-            <CardImg src={imgSrc} className="card-img" />
-            <Typography>{title ?? `Track #${id}`}</Typography>
+            <CardImg src={imgSrc} />
+            <Stack direction="column">
+                <Typography style={{ marginBottom: '0.2em' }}>
+                    {metadata.title ?? `Track #${id}`}
+                </Typography>
+                <Stack
+                    direction="row"
+                    spacing="0.5em"
+                    style={{
+                        color: 'darkgray',
+                        paddingTop: '0.2em',
+                    }}
+                >
+                    <Typography>{metadata.artist ?? `Unknown`}</Typography>
+                    <Typography>-</Typography>
+                    <Typography>{metadata.album ?? `Unknown`}</Typography>
+                </Stack>
+            </Stack>
         </CardInner>
     );
 }
