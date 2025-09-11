@@ -5,6 +5,7 @@ use serde::Serialize;
 type Result<T> = anyhow::Result<T>;
 
 #[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct TrackMetadata {
     pub title: Option<String>,
     pub artist: Option<String>,
@@ -42,6 +43,7 @@ impl TrackMetadata {
 }
 
 #[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct PlaylistMetadata {
     pub user_id: i64,
     pub network_id: i64,

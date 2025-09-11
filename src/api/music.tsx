@@ -13,22 +13,6 @@ export async function loadMusicLibrary(userId: number) {
     }
 }
 
-// FIXME: Remove and replace calls with stream_playlist_tracks
-//
-/** Streams all the tracks in the library from the database by emitting an event with the metadata.
- *
- * # Note
- * * Emits `track-stream` event for each track.
- * * Emits `track-stream-stopped` event once stream is finished.
- **/
-export async function streamAllTracks() {
-    try {
-        await invoke('stream_all_tracks');
-    } catch (e: any) {
-        throw new Error(e);
-    }
-}
-
 /** Streams all the playlists in the user's library.
  *
  * # Note

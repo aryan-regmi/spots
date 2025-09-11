@@ -5,7 +5,8 @@ import { Outlet } from 'react-router-dom';
 import { Stack } from '@mui/material';
 import { atom } from 'jotai';
 import Loading from './components/loading/Loading';
-import { JSX } from 'react';
+import { JSX, useEffect } from 'react';
+import useTransitionNavigate from './utils/hooks/useTransitionNavigate';
 
 // TODO: Add theme context
 //
@@ -39,6 +40,15 @@ export const currentFadeGlassyFallbackAtom = atom((get) =>
 );
 
 export default function App() {
+    const transitionNavigate = useTransitionNavigate();
+
+    // Reset to dashboard before exiting
+    useEffect(() => {
+        return () => {
+            transitionNavigate('/dashboard', { replace: true });
+        };
+    }, []);
+
     return (
         <FadeGlassy>
             <GlassyStack>

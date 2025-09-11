@@ -1,6 +1,7 @@
 import { streamPlaylistTracks } from '@/api/music';
 import Container from '@/components/Container';
 import Glassy from '@/components/glassy/Glassy';
+import Loading from '@/components/loading/Loading';
 import { authContextAtom } from '@/utils/auth/atoms';
 import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
@@ -21,8 +22,15 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 export default function PlaylistPage() {
-    const { authUser } = useAtomValue(authContextAtom);
-    const { playlistId, playlistName } = useParams();
+    const { isLoading, authUser } = useAtomValue(authContextAtom);
+    const {
+        createdBy,
+        playlistId,
+        playlistName: encodedPlaylistName,
+    } = useParams();
+    const playlistName = decodeURIComponent(
+        encodedPlaylistName ?? `Playlist #${playlistId}`
+    );
     const transitionNav = useTransitionNavigate();
     const [_isStreamingTracks, setIsStreamingTracks] = useState(false);
 
@@ -38,7 +46,7 @@ export default function PlaylistPage() {
         // Setup listeners
         function setupListeners() {
             unlistenTrackStream = listen<StreamedTrackMetadata>(
-                'track-stream',
+                'playlist-track-stream',
                 (event) => {
                     // Deduplicate tracks
                     setTracks((prev) => {
@@ -59,12 +67,17 @@ export default function PlaylistPage() {
             });
         }
 
+        // Gets the tracks.
+        async function getTracks(id: number) {
+            await streamPlaylistTracks(id);
+        }
+
         if (authUser) {
             setupListeners();
             setIsStreamingTracks(true);
 
             if (id && id > 0) {
-                streamPlaylistTracks(id);
+                getTracks(id);
             }
 
             return () => {
@@ -73,7 +86,11 @@ export default function PlaylistPage() {
                 unlistenTrackStreamStopped?.then((off) => off());
             };
         }
-    }, []);
+    }, [authUser]);
+
+    if (isLoading) {
+        return <Loading />;
+    }
 
     if (id && id > 0) {
         return (
@@ -101,14 +118,17 @@ export default function PlaylistPage() {
                             style={{ width: '75%', borderRadius: '1em' }}
                         />
                         <Typography variant="h5">{playlistName}</Typography>
-                        {authUser ? <Typography>By {}</Typography> : null}
+                        {authUser ? (
+                            <Typography>By {createdBy ?? 'Unknown'}</Typography>
+                        ) : null}
 
                         <List style={{ padding: 0 }}>
                             {tracks.map((track) => {
                                 const metadata = track.metadata;
-                                const name =
+                                const title =
                                     metadata.title ?? `Track #${track.id}`;
 
+                                // Extract image src
                                 const splits = metadata.coverBase64?.split('.');
                                 const imgExt = splits
                                     ? splits[splits.length - 1]
@@ -117,10 +137,23 @@ export default function PlaylistPage() {
                                 const imgSrc = metadata.coverBase64
                                     ? `data:${mimeType};base64,${metadata.coverBase64}`
                                     : '/default_track.png';
+
                                 return (
-                                    <Card key={track.id}>
+                                    <Card
+                                        key={track.id}
+                                        style={{
+                                            padding: 0,
+                                            width: '100%',
+                                            borderRadius: '1em',
+                                            backgroundColor: '#1f1f1f',
+                                        }}
+                                    >
                                         <GlassyListButton>
-                                            {<img src={imgSrc} />}
+                                            <TrackContent
+                                                id={track.id}
+                                                title={title}
+                                                imgSrc={imgSrc}
+                                            />
                                         </GlassyListButton>
                                     </Card>
                                 );
@@ -145,5 +178,30 @@ const GlassyListButton = Glassy(
     styled(ListItemButton)({
         color: 'white',
         padding: 0,
+        width: '100%',
     })
 );
+
+function TrackContent(props: { id: number; title?: string; imgSrc: string }) {
+    const { id, title, imgSrc } = props;
+    const CardInner = styled(Stack)({
+        width: '100%',
+        alignItems: 'center',
+        gap: '1em',
+    });
+    return (
+        <CardInner direction={'row'}>
+            <img
+                src={imgSrc}
+                alt={`${title} cover image`}
+                style={{
+                    width: '20%',
+                    height: 'auto',
+                    aspectRatio: 1,
+                    boxShadow: 'none',
+                }}
+            />
+            <Typography>{title ?? `Track #${id}`}</Typography>
+        </CardInner>
+    );
+}

@@ -60,8 +60,14 @@ export const router = createBrowserRouter([
                 element: <ProfilePage />,
             },
             {
-                path: '/playlist/:playlistId/:playlistName',
+                path: '/playlist/:createdBy/:playlistId/:playlistName',
                 element: <PlaylistPage />,
+                loader: async () => {
+                    const authUser = await getAuthUser();
+                    if (!authUser) {
+                        return redirect('/');
+                    }
+                },
             },
         ],
     },

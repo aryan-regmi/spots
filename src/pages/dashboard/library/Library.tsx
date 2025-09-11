@@ -92,12 +92,13 @@ export default function Library() {
             {playlists.map((playlist) => {
                 const metadata = playlist.metadata;
                 const name = metadata.name ?? `Playlist #${playlist.id}`;
+                const networkId = metadata.networkId ?? 'Unknown'; // FIXME: API func to get endpoint addr for a networkId
                 return (
                     <PlaylistCard key={playlist.id}>
                         <GlassyListButton
                             onClick={() =>
                                 transitionNavigate(
-                                    `/playlist/${playlist.id}/${encodeURIComponent(name)}`
+                                    `/playlist/${networkId}/${playlist.id}/${encodeURIComponent(name)}`
                                 )
                             }
                         >
