@@ -180,6 +180,6 @@ const GlassyStack = Glassy(
 );
 
 const StyledButton = styled(Button)({
-    color: 'rgba(255,255,255,0.6)',
+    color: 'rgba(255,255,255,0.8)',
     padding: '1em',
 });

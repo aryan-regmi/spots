@@ -105,7 +105,7 @@ export default function PlaylistPage() {
                         createdBy={createdBy}
                     />
 
-                    <List style={{ padding: 0 }}>
+                    <List style={{ padding: 0, marginBottom: '6em' }}>
                         {tracks.map((track) => {
                             return (
                                 <TrackCard key={track.id}>
