@@ -1,16 +1,12 @@
-import { streamPlaylistTracks } from '@/api/music';
 import Container from '@/components/Container';
 import Glassy from '@/components/glassy/Glassy';
 import Loading from '@/components/loading/Loading';
-import { authContextAtom } from '@/utils/auth/atoms';
-import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import StreamedTrackMetadata, {
     TrackMetadata,
 } from '@/utils/music/types/trackMetadata';
-import { ArrowBack } from '@mui/icons-material';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import {
     Card,
-    CSSProperties,
     IconButton,
     List,
     ListItemButton,
@@ -18,10 +14,14 @@ import {
     styled,
     Typography,
 } from '@mui/material';
+import { ArrowBack } from '@mui/icons-material';
+import { JSX, useEffect, useState } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { authContextAtom } from '@/utils/auth/atoms';
 import { listen } from '@tauri-apps/api/event';
-import { useAtomValue } from 'jotai';
-import { useEffect, useState } from 'react';
+import { streamPlaylistTracks } from '@/api/music';
 import { useParams } from 'react-router-dom';
+import MusicPlayer, { currentTrackAtom } from '@/components/player/MusicPlayer';
 
 export default function PlaylistPage() {
     const { isLoading, authUser } = useAtomValue(authContextAtom);
@@ -33,8 +33,8 @@ export default function PlaylistPage() {
     const playlistName = decodeURIComponent(
         encodedPlaylistName ?? `Playlist #${playlistId}`
     );
-    const transitionNav = useTransitionNavigate();
     const [_isStreamingTracks, setIsStreamingTracks] = useState(false);
+    const setCurrentTrack = useSetAtom(currentTrackAtom);
 
     /// All of the tracks belonging to the playlist.
     const [tracks, setTracks] = useState<StreamedTrackMetadata[]>([]);
@@ -97,79 +97,64 @@ export default function PlaylistPage() {
     if (id && id > 0) {
         return (
             <Container direction="column" style={{ color: 'white' }}>
-                <IconButton
-                    sx={backBtnStyle}
-                    onClick={() => transitionNav(-1)}
-                    size="large"
-                >
-                    <ArrowBack />
-                </IconButton>
+                <BackButton />
 
-                <Stack direction={'row'} justifyContent={'center'}>
-                    <Stack
-                        direction="column"
-                        style={{
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                        }}
-                        spacing={'1em'}
-                    >
-                        <img
-                            src={`/default_track.png`}
-                            alt={`${playlistName} cover image`}
-                            style={{ width: '75%', borderRadius: '1em' }}
-                        />
-                        <Typography variant="h5">{playlistName}</Typography>
-                        <Typography
-                            style={{
-                                marginTop: -1,
-                                marginBottom: '1em',
-                                color: 'darkgray',
-                            }}
-                        >
-                            By {createdBy ?? 'Unknown'}
-                        </Typography>
+                <CenteredContainer spacing="1em">
+                    <PlaylistHeaderContent
+                        playlistName={playlistName}
+                        createdBy={createdBy}
+                    />
 
-                        <List style={{ padding: 0 }}>
-                            {tracks.map((track) => {
-                                const metadata = track.metadata;
-
-                                return (
-                                    <Card
-                                        key={track.id}
-                                        style={{
-                                            padding: 0,
-                                            width: '100%',
-                                            borderRadius: '0.25em',
-                                            backgroundColor:
-                                                'rgba(50,50,50,0.1)',
-                                            marginBottom: '0.25em',
-                                        }}
+                    <List style={{ padding: 0 }}>
+                        {tracks.map((track) => {
+                            return (
+                                <TrackCard key={track.id}>
+                                    <GlassyListButton
+                                        onClick={() => setCurrentTrack(track)}
                                     >
-                                        <GlassyListButton>
-                                            <TrackContent
-                                                id={track.id}
-                                                metadata={metadata}
-                                            />
-                                        </GlassyListButton>
-                                    </Card>
-                                );
-                            })}
-                        </List>
-                    </Stack>
-                </Stack>
+                                        <TrackCardContent
+                                            id={track.id}
+                                            metadata={track.metadata}
+                                        />
+                                    </GlassyListButton>
+                                </TrackCard>
+                            );
+                        })}
+                    </List>
+
+                    <MusicPlayer />
+                </CenteredContainer>
             </Container>
         );
     }
 }
 
-const backBtnStyle: CSSProperties = {
-    width: 'fit-content',
-    marginBottom: '-3.5em',
-    fontSize: 'large',
-    color: 'white',
-    marginLeft: '-0.5em',
-};
+function BackButton() {
+    const transitionNav = useTransitionNavigate();
+    return (
+        <IconButton
+            sx={{
+                width: 'fit-content',
+                marginBottom: '-3.5em',
+                fontSize: 'large',
+                color: 'white',
+                marginLeft: '-0.5em',
+            }}
+            onClick={() => transitionNav(-1)}
+            size="large"
+        >
+            <ArrowBack />
+        </IconButton>
+    );
+}
+
+const TrackCard = styled(Card)({
+    padding: 0,
+    width: '100%',
+    borderRadius: '0.25em',
+    backgroundColor: 'rgba(50,50,50,0.1)',
+    marginBottom: '0.25em',
+});
 
 const GlassyListButton = Glassy(
     styled(ListItemButton)({
@@ -180,28 +165,28 @@ const GlassyListButton = Glassy(
     })
 );
 
-function Img(props: { src?: string; alt?: string; className?: string }) {
-    const { src, alt, className } = props;
-    return <img src={src} alt={alt} className={`card-img ${className}`} />;
-}
-
-const CardImg = styled(Img)({
-    width: '20%',
-    height: 'auto',
-    aspectRatio: 1,
-});
-
-const CardInner = styled(Stack)({
-    width: '100%',
-    alignItems: 'center',
-    gap: '1em',
-    '&:hover .card-img': {
-        opacity: 0.8,
-    },
-});
-
-function TrackContent(props: { id: number; metadata: TrackMetadata }) {
+function TrackCardContent(props: { id: number; metadata: TrackMetadata }) {
     const { id, metadata } = props;
+
+    const CardInner = styled(Stack)({
+        width: '100%',
+        alignItems: 'center',
+        gap: '1em',
+        '&:hover .card-img': {
+            opacity: 0.8,
+        },
+    });
+
+    function Img(props: { src?: string; alt?: string; className?: string }) {
+        const { src, alt, className } = props;
+        return <img src={src} alt={alt} className={`card-img ${className}`} />;
+    }
+
+    const CardImg = styled(Img)({
+        width: '20%',
+        height: 'auto',
+        aspectRatio: 1,
+    });
 
     // Extract image src
     const splits = metadata.coverBase64?.split('.');
@@ -232,5 +217,51 @@ function TrackContent(props: { id: number; metadata: TrackMetadata }) {
                 </Stack>
             </Stack>
         </CardInner>
+    );
+}
+
+function PlaylistHeaderContent(props: {
+    playlistName: string;
+    createdBy?: string;
+}) {
+    const { playlistName, createdBy } = props;
+    return (
+        <>
+            <img
+                src={`/default_track.png`}
+                alt={`${playlistName} cover image`}
+                style={{ width: '75%', borderRadius: '1em' }}
+            />
+            <Typography variant="h5">{playlistName}</Typography>
+            <Typography
+                style={{
+                    marginTop: -1,
+                    marginBottom: '1em',
+                    color: 'darkgray',
+                }}
+            >
+                By {createdBy ?? 'Unknown'}
+            </Typography>
+        </>
+    );
+}
+
+function CenteredContainer(props: {
+    children: JSX.Element[];
+    spacing?: string | number;
+}) {
+    return (
+        <Stack direction={'row'} justifyContent={'center'}>
+            <Stack
+                direction="column"
+                style={{
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
+                spacing={props.spacing}
+            >
+                {props.children}
+            </Stack>
+        </Stack>
     );
 }
