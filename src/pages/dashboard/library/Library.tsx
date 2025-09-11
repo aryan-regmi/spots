@@ -36,7 +36,7 @@ export default function Library() {
         let unlistenPlaylistStream: Promise<() => void>;
         let unlistenPlaylistStreamStopped: Promise<() => void>;
 
-        /** Sets up listeners.  */
+        // Setsup listeners
         function setupListeners() {
             unlistenPlaylistStream = listen<StreamedPlaylistMetadata>(
                 'playlist-stream',
@@ -91,11 +91,14 @@ export default function Library() {
         <List style={{ padding: 0 }}>
             {playlists.map((playlist) => {
                 const metadata = playlist.metadata;
+                const name = metadata.name ?? `Playlist #${playlist.id}`;
                 return (
                     <PlaylistCard key={playlist.id}>
                         <GlassyListButton
                             onClick={() =>
-                                transitionNavigate(`/playlist/${playlist.id}`)
+                                transitionNavigate(
+                                    `/playlist/${playlist.id}/${encodeURIComponent(name)}`
+                                )
                             }
                         >
                             <PlaylistContent

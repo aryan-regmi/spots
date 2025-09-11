@@ -1,6 +1,9 @@
+import { StyledComponent } from '@emotion/styled';
 import { styled } from '@mui/material';
 
-export default function Glassy(component: any) {
+export default function Glassy(
+    component: React.ComponentClass<any> | StyledComponent<any>
+) {
     return styled(component)({
         boxSizing: 'border-box',
         background: 'rgba(255, 255, 255, 0.01)',
