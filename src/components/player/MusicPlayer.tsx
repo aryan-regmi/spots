@@ -19,6 +19,7 @@ import { readFile } from '@tauri-apps/plugin-fs';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useEffect, useRef } from 'react';
 import Glassy from '../glassy/Glassy';
+import Img from '@/components/Img';
 
 /** The currently playing track. */
 export const currentTrackAtom = atom<StreamedTrackMetadata>();
@@ -110,17 +111,8 @@ export default function MusicPlayer() {
                     style={{ justifyContent: 'left' }}
                     spacing={'0.1em'}
                 >
-                    <img
+                    <TrackImg
                         src={getImgSrc(currentTrack?.metadata.coverBase64)}
-                        style={{
-                            width: '35%',
-                            height: 'auto',
-                            aspectRatio: 1,
-                            padding: '1em',
-                            margin: 0,
-                            borderRadius: '1.5em',
-                            opacity: 0.85,
-                        }}
                     />
 
                     <Stack
@@ -183,3 +175,17 @@ const StyledButton = styled(Button)({
     color: 'rgba(255,255,255,0.8)',
     padding: '1em',
 });
+
+const TrackImg = styled(Img)({
+    width: '35%',
+    height: 'auto',
+    aspectRatio: 1,
+    padding: '1em',
+    margin: 0,
+    borderRadius: '1.5em',
+    opacity: 0.85,
+});
+
+function TrackDetails() {
+    return <GlassyStack direction="column"></GlassyStack>;
+}

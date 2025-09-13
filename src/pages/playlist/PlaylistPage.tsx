@@ -22,6 +22,7 @@ import { listen } from '@tauri-apps/api/event';
 import { streamPlaylistTracks } from '@/api/music';
 import { useParams } from 'react-router-dom';
 import MusicPlayer, { currentTrackAtom } from '@/components/player/MusicPlayer';
+import Img from '@/components/Img';
 
 export default function PlaylistPage() {
     const { isLoading, authUser } = useAtomValue(authContextAtom);
@@ -176,11 +177,6 @@ function TrackCardContent(props: { id: number; metadata: TrackMetadata }) {
             opacity: 0.8,
         },
     });
-
-    function Img(props: { src?: string; alt?: string; className?: string }) {
-        const { src, alt, className } = props;
-        return <img src={src} alt={alt} className={`card-img ${className}`} />;
-    }
 
     const CardImg = styled(Img)({
         width: '20%',

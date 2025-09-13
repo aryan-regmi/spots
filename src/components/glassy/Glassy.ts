@@ -1,13 +1,7 @@
-import { StyledComponent } from '@emotion/styled';
 import { styled } from '@mui/material';
-import { OverridableComponent } from '@mui/material/OverridableComponent';
+import { ComponentType } from 'react';
 
-export default function Glassy(
-    component:
-        | React.ComponentClass<any>
-        | StyledComponent<any>
-        | OverridableComponent<any>
-) {
+export default function Glassy<T extends ComponentType<any>>(component: T) {
     return styled(component)({
         boxSizing: 'border-box',
         background: 'rgba(255, 255, 255, 0.01)',
