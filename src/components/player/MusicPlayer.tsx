@@ -44,53 +44,81 @@ const currentTrackUrlAtom = atom(async (get) => {
     }
 });
 
+/** Determines if a track is currently playing. */
+export const isPlayingAtom = atom(false);
+
 export default function MusicPlayer() {
     const [currentTrack, _setCurrentTrack] = useAtom(currentTrackAtom);
+    const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
     const currentTrackUrl = useAtomValue(currentTrackUrlAtom);
     const audioRef = useRef<HTMLAudioElement>(null);
 
+    // Watches for the track's state (playing or paused/ended).
+    useEffect(() => {
+        if (audioRef.current && currentTrack) {
+            // Track is paused, but it has been clicked so it must start playing
+            if (audioRef.current.paused && isPlaying) {
+                setIsPlaying(true);
+                audioRef.current.play();
+                return;
+            }
+
+            // If track isn't paused or ended, then its playing
+            setIsPlaying(!audioRef.current.paused && !audioRef.current.ended);
+        }
+    });
+
+    // Handles autoplay when track is clicked
     useEffect(() => {
         let isCancelled = false;
 
         // Wait for state to update before trying to play
         setTimeout(() => {
-            audioRef.current?.load();
-            audioRef.current
-                ?.play()
-                .catch((e) => console.warn('Autoplay failed:', e));
+            if (audioRef.current && currentTrack) {
+                audioRef.current.load();
+                audioRef.current
+                    .play()
+                    .catch((e) => console.warn('Autoplay failed:', e));
+                setIsPlaying(true);
+            }
         }, 0);
 
         // Clean up object url when track changes
         return () => {
             isCancelled = true;
+            setIsPlaying(false);
             if (currentTrackUrl) {
                 URL.revokeObjectURL(currentTrackUrl);
             }
         };
     }, [currentTrack]);
 
-    function handlePlay() {
-        if (currentTrack) {
+    // Toggles the play/pause button.
+    function togglePlay() {
+        if (!isPlaying) {
             audioRef.current?.play();
-        }
-    }
-
-    function handlePause() {
-        if (currentTrack) {
+            setIsPlaying(true);
+        } else {
             audioRef.current?.pause();
+            setIsPlaying(false);
         }
     }
 
-    /** Gets the image source for the `base64` encoded image.*/
-    function getImgSrc(imgBase64?: string) {
-        const imgParts = imgBase64?.split('.');
-        const extension = imgParts ? imgParts[imgParts.length - 1] : 'png';
-        const mimeType = `image/${extension}`;
-        const imgSrc = imgBase64
-            ? `data:${mimeType};base64,${imgBase64}`
-            : '/default_track.png';
-        return imgSrc;
-    }
+    return (
+        <StyledCard>
+            <audio ref={audioRef} preload="auto">
+                <source src={currentTrackUrl} type="audio/mpeg" />
+            </audio>
+
+            <PlayerControls togglePlay={togglePlay} />
+        </StyledCard>
+    );
+}
+
+function PlayerControls(props: { togglePlay: () => void }) {
+    const { togglePlay } = props;
+    const isPlaying = useAtomValue(isPlayingAtom);
+    const currentTrack = useAtomValue(currentTrackAtom);
 
     let trackTitle: string;
     if (currentTrack) {
@@ -100,59 +128,71 @@ export default function MusicPlayer() {
     }
 
     return (
-        <StyledCard>
-            <audio ref={audioRef} preload="auto">
-                <source src={currentTrackUrl} type="audio/mpeg" />
-            </audio>
+        <GlassyStack direction="column" width={'100%'} height={'8em'}>
+            <Stack
+                direction="row"
+                style={{
+                    justifyContent: 'left',
+                    flexShrink: 0,
+                    alignSelf: 'flex-start',
+                }}
+            >
+                <TrackImg src={getImgSrc(currentTrack?.metadata.coverBase64)} />
 
-            <GlassyStack direction="column">
                 <Stack
-                    direction="row"
-                    style={{ justifyContent: 'left' }}
-                    spacing={'0.1em'}
+                    direction="column"
+                    style={{
+                        opacity: 0.85,
+                        alignItems: 'center',
+                        flexShrink: 0,
+                    }}
                 >
-                    <TrackImg
-                        src={getImgSrc(currentTrack?.metadata.coverBase64)}
-                    />
-
-                    <Stack
-                        direction="column"
+                    {/* Track details */}
+                    <Typography
                         style={{
-                            opacity: 0.85,
-                            alignItems: 'center',
+                            color: 'white',
+                            marginTop: '1.5em',
                         }}
                     >
-                        <Typography
-                            style={{
-                                color: 'white',
-                                paddingTop: '2em',
-                                fontSize: '1.2em',
-                            }}
-                        >
-                            {trackTitle}
-                        </Typography>
-                        <Typography
-                            style={{
-                                color: 'darkgray',
-                                fontSize: '0.8em',
-                                paddingLeft: '1em',
-                            }}
-                        >
-                            {currentTrack?.metadata.artist ?? 'Unknown'}
-                        </Typography>
-                        <Stack direction="row">
-                            <StyledButton onClick={handlePlay}>
-                                <PlayCircleRounded fontSize="large" />
-                            </StyledButton>
-                            <StyledButton onClick={handlePause}>
-                                <PauseCircleRounded fontSize="large" />
-                            </StyledButton>
-                        </Stack>
+                        {trackTitle}
+                    </Typography>
+                    <Typography
+                        style={{
+                            color: 'darkgray',
+                            fontSize: '0.9em',
+                        }}
+                    >
+                        {`${currentTrack?.metadata.artist ?? 'Unknown'} - ${currentTrack?.metadata.album ?? 'Unknown'}`}
+                    </Typography>
+
+                    {/* Controls  */}
+                    <Stack
+                        direction="row"
+                        style={{ flexShrink: 0, alignSelf: 'flex-start' }}
+                    >
+                        <StyledButton onClick={togglePlay}>
+                            {isPlaying ? (
+                                <PauseCircleRounded />
+                            ) : (
+                                <PlayCircleRounded />
+                            )}
+                        </StyledButton>
                     </Stack>
                 </Stack>
-            </GlassyStack>
-        </StyledCard>
+            </Stack>
+        </GlassyStack>
     );
+}
+
+/** Gets the image source for the `base64` encoded image.*/
+function getImgSrc(imgBase64?: string) {
+    const imgParts = imgBase64?.split('.');
+    const extension = imgParts ? imgParts[imgParts.length - 1] : 'png';
+    const mimeType = `image/${extension}`;
+    const imgSrc = imgBase64
+        ? `data:${mimeType};base64,${imgBase64}`
+        : '/default_track.png';
+    return imgSrc;
 }
 
 const StyledCard = styled(Card)({
@@ -177,15 +217,13 @@ const StyledButton = styled(Button)({
 });
 
 const TrackImg = styled(Img)({
-    width: '35%',
-    height: 'auto',
-    aspectRatio: 1,
+    width: '7em',
+    height: '7em',
+    objectFit: 'cover',
     padding: '1em',
     margin: 0,
     borderRadius: '1.5em',
     opacity: 0.85,
+    flexShrink: 0,
+    alignSelf: 'flex-start',
 });
-
-function TrackDetails() {
-    return <GlassyStack direction="column"></GlassyStack>;
-}

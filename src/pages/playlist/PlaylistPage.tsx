@@ -16,12 +16,15 @@ import {
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { JSX, useEffect, useState } from 'react';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { authContextAtom } from '@/utils/auth/atoms';
 import { listen } from '@tauri-apps/api/event';
 import { streamPlaylistTracks } from '@/api/music';
 import { useParams } from 'react-router-dom';
-import MusicPlayer, { currentTrackAtom } from '@/components/player/MusicPlayer';
+import MusicPlayer, {
+    currentTrackAtom,
+    isPlayingAtom,
+} from '@/components/player/MusicPlayer';
 import Img from '@/components/Img';
 
 export default function PlaylistPage() {
@@ -36,6 +39,7 @@ export default function PlaylistPage() {
     );
     const [_isStreamingTracks, setIsStreamingTracks] = useState(false);
     const setCurrentTrack = useSetAtom(currentTrackAtom);
+    const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
 
     /// All of the tracks belonging to the playlist.
     const [tracks, setTracks] = useState<StreamedTrackMetadata[]>([]);
@@ -111,7 +115,10 @@ export default function PlaylistPage() {
                             return (
                                 <TrackCard key={track.id}>
                                     <GlassyListButton
-                                        onClick={() => setCurrentTrack(track)}
+                                        onClick={() => {
+                                            setCurrentTrack(track);
+                                            setIsPlaying(true);
+                                        }}
                                     >
                                         <TrackCardContent
                                             id={track.id}
