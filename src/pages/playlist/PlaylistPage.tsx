@@ -42,6 +42,12 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { User } from '@/api/users';
+
+// FIXME: Save tracks to localStorage (reset on refresh)
+//  - If none in there, then get from the database.
+//      - Reorder based on the localStorage one before updating localStorage
+//          - Add extra ones to the end
 
 export default function PlaylistPage() {
     const { isLoading, authUser } = useAtomValue(authContextAtom);
@@ -62,54 +68,89 @@ export default function PlaylistPage() {
 
     const id = playlistId ? parseInt(playlistId) : null;
 
+    // Get tracks from localStorage if availabe, otherwise get them from the database
     useEffect(() => {
-        let unlistenTrackStream: Promise<() => void>;
-        let unlistenTrackStreamStopped: Promise<() => void>;
-
-        // Setup listeners
-        function setupListeners() {
-            unlistenTrackStream = listen<StreamedTrackMetadata>(
-                'playlist-track-stream',
-                (event) => {
-                    // Deduplicate tracks
-                    setTracks((prev) => {
-                        return Array.from(
-                            new Map(
-                                [...prev, event.payload].map((track) => [
-                                    track.id,
-                                    track,
-                                ])
-                            ).values()
-                        );
-                    });
-                }
-            );
-
-            unlistenTrackStreamStopped = listen('track-stream-stopped', (_) => {
-                setIsStreamingTracks(false);
-            });
+        if (!authUser || !id) {
+            return;
         }
 
-        // Gets the tracks.
-        async function getTracks(id: number) {
-            await streamPlaylistTracks(id);
-        }
+        const storedTracksString = localStorage.getItem(
+            getLocalStorageKey(authUser, id)
+        );
+        if (storedTracksString) {
+            const storedTracks: StreamedTrackMetadata[] =
+                JSON.parse(storedTracksString);
+            setTracks(storedTracks);
+            console.info('Tracks retreived from local storage.');
+        } else {
+            // Get tracks from the database
+            let unlistenTrackStream: Promise<() => void>;
+            let unlistenTrackStreamStopped: Promise<() => void>;
 
-        if (authUser) {
-            setupListeners();
-            setIsStreamingTracks(true);
+            // Setup listeners
+            function setupListeners() {
+                unlistenTrackStream = listen<StreamedTrackMetadata>(
+                    'playlist-track-stream',
+                    (event) => {
+                        // Deduplicate tracks
+                        setTracks((prev) => {
+                            const deduplicatedTracks = Array.from(
+                                new Map(
+                                    [...prev, event.payload].map((track) => [
+                                        track.id,
+                                        track,
+                                    ])
+                                ).values()
+                            );
 
-            if (id && id > 0) {
-                getTracks(id);
+                            // Save to local storage
+                            if (authUser && id) {
+                                localStorage.setItem(
+                                    getLocalStorageKey(authUser, id),
+                                    JSON.stringify(deduplicatedTracks)
+                                );
+                            }
+
+                            return deduplicatedTracks;
+                        });
+                    }
+                );
+
+                unlistenTrackStreamStopped = listen(
+                    'track-stream-stopped',
+                    (_) => {
+                        setIsStreamingTracks(false);
+                    }
+                );
             }
 
-            return () => {
-                // Stop listeners
-                unlistenTrackStream?.then((off) => off());
-                unlistenTrackStreamStopped?.then((off) => off());
-            };
+            // Gets the tracks.
+            async function getTracks(id: number) {
+                await streamPlaylistTracks(id);
+            }
+
+            if (authUser) {
+                setupListeners();
+                setIsStreamingTracks(true);
+                console.info('Tracks retreived from database.');
+
+                // Get tracks and save them to local storage
+                if (id && id > 0) {
+                    getTracks(id);
+                }
+
+                return () => {
+                    // Stop listeners
+                    unlistenTrackStream?.then((off) => off());
+                    unlistenTrackStreamStopped?.then((off) => off());
+                };
+            }
         }
     }, [authUser]);
+
+    function getLocalStorageKey(authUser: User, playlistId: number) {
+        return `user-${authUser.id}-playlist-${playlistId}-tracks`;
+    }
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
@@ -118,7 +159,20 @@ export default function PlaylistPage() {
             setTracks((tracks) => {
                 const oldIndex = tracks.findIndex((t) => t.id === active.id);
                 const newIndex = tracks.findIndex((t) => t.id === over?.id);
-                return arrayMove(tracks, oldIndex, newIndex);
+                const updated = arrayMove(tracks, oldIndex, newIndex);
+
+                if (authUser && id) {
+                    localStorage.setItem(
+                        getLocalStorageKey(authUser, id),
+                        JSON.stringify(updated)
+                    );
+                    console.info(
+                        'Saved tracks to local storage: ',
+                        getLocalStorageKey(authUser, id)
+                    );
+                }
+
+                return updated;
             });
         }
     }
@@ -130,6 +184,7 @@ export default function PlaylistPage() {
     if (id && id > 0) {
         return (
             <Container direction="column" style={{ color: 'white' }}>
+                {/* <Stack></Stack> */}
                 <BackButton />
 
                 <CenteredContainer spacing="1em">
