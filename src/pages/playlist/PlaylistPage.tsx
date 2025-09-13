@@ -8,13 +8,13 @@ import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
 import {
     Card,
     IconButton,
-    List,
     ListItemButton,
     Stack,
     styled,
+    Tooltip,
     Typography,
 } from '@mui/material';
-import { ArrowBack, DragIndicator } from '@mui/icons-material';
+import { ArrowBack, DragIndicator, Refresh } from '@mui/icons-material';
 import { JSX, useEffect, useRef, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { authContextAtom } from '@/utils/auth/atoms';
@@ -33,6 +33,7 @@ import {
     useSensor,
     useSensors,
     DragEndEvent,
+    useDraggable,
 } from '@dnd-kit/core';
 import {
     arrayMove,
@@ -43,6 +44,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { User } from '@/api/users';
+import { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 
 // FIXME: Save tracks to localStorage (reset on refresh)
 //  - If none in there, then get from the database.
@@ -83,68 +85,7 @@ export default function PlaylistPage() {
             setTracks(storedTracks);
             console.info('Tracks retreived from local storage.');
         } else {
-            // Get tracks from the database
-            let unlistenTrackStream: Promise<() => void>;
-            let unlistenTrackStreamStopped: Promise<() => void>;
-
-            // Setup listeners
-            function setupListeners() {
-                unlistenTrackStream = listen<StreamedTrackMetadata>(
-                    'playlist-track-stream',
-                    (event) => {
-                        // Deduplicate tracks
-                        setTracks((prev) => {
-                            const deduplicatedTracks = Array.from(
-                                new Map(
-                                    [...prev, event.payload].map((track) => [
-                                        track.id,
-                                        track,
-                                    ])
-                                ).values()
-                            );
-
-                            // Save to local storage
-                            if (authUser && id) {
-                                localStorage.setItem(
-                                    getLocalStorageKey(authUser, id),
-                                    JSON.stringify(deduplicatedTracks)
-                                );
-                            }
-
-                            return deduplicatedTracks;
-                        });
-                    }
-                );
-
-                unlistenTrackStreamStopped = listen(
-                    'track-stream-stopped',
-                    (_) => {
-                        setIsStreamingTracks(false);
-                    }
-                );
-            }
-
-            // Gets the tracks.
-            async function getTracks(id: number) {
-                await streamPlaylistTracks(id);
-            }
-
-            if (authUser) {
-                setupListeners();
-                setIsStreamingTracks(true);
-                console.info('Tracks retreived from database.');
-
-                // Get tracks and save them to local storage
-                if (id && id > 0) {
-                    getTracks(id);
-                }
-
-                return () => {
-                    // Stop listeners
-                    unlistenTrackStream?.then((off) => off());
-                    unlistenTrackStreamStopped?.then((off) => off());
-                };
-            }
+            reloadTracks();
         }
     }, [authUser]);
 
@@ -177,6 +118,68 @@ export default function PlaylistPage() {
         }
     }
 
+    function reloadTracks() {
+        // Get tracks from the database
+        let unlistenTrackStream: Promise<() => void>;
+        let unlistenTrackStreamStopped: Promise<() => void>;
+
+        // Setup listeners
+        function setupListeners() {
+            unlistenTrackStream = listen<StreamedTrackMetadata>(
+                'playlist-track-stream',
+                (event) => {
+                    // Deduplicate tracks
+                    setTracks((prev) => {
+                        const deduplicatedTracks = Array.from(
+                            new Map(
+                                [...prev, event.payload].map((track) => [
+                                    track.id,
+                                    track,
+                                ])
+                            ).values()
+                        );
+
+                        // Save to local storage
+                        if (authUser && id) {
+                            localStorage.setItem(
+                                getLocalStorageKey(authUser, id),
+                                JSON.stringify(deduplicatedTracks)
+                            );
+                        }
+
+                        return deduplicatedTracks;
+                    });
+                }
+            );
+
+            unlistenTrackStreamStopped = listen('track-stream-stopped', (_) => {
+                setIsStreamingTracks(false);
+            });
+        }
+
+        // Gets the tracks.
+        async function getTracks(id: number) {
+            await streamPlaylistTracks(id);
+        }
+
+        if (authUser) {
+            setupListeners();
+            setIsStreamingTracks(true);
+            console.info('Tracks retreived from database.');
+
+            // Get tracks and save them to local storage
+            if (id && id > 0) {
+                getTracks(id);
+            }
+
+            return () => {
+                // Stop listeners
+                unlistenTrackStream?.then((off) => off());
+                unlistenTrackStreamStopped?.then((off) => off());
+            };
+        }
+    }
+
     if (isLoading) {
         return <Loading />;
     }
@@ -184,7 +187,6 @@ export default function PlaylistPage() {
     if (id && id > 0) {
         return (
             <Container direction="column" style={{ color: 'white' }}>
-                {/* <Stack></Stack> */}
                 <BackButton />
 
                 <CenteredContainer spacing="1em">
@@ -201,6 +203,15 @@ export default function PlaylistPage() {
                             borderRadius: '1em',
                         }}
                     >
+                        <Tooltip title="Reload tracks from database">
+                            <IconButton
+                                style={{ color: 'white' }}
+                                onClick={reloadTracks}
+                            >
+                                <Refresh />
+                            </IconButton>
+                        </Tooltip>
+
                         <DndContext
                             sensors={useSensors(useSensor(PointerSensor))}
                             collisionDetection={closestCenter}
@@ -237,16 +248,16 @@ function SortableTrackCard(props: {
 }) {
     const { track, setCurrentTrack, setIsPlaying } = props;
 
-    const { attributes, listeners, setNodeRef, transform, transition } =
-        useSortable({ id: track.id });
+    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+        id: track.id,
+    });
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition,
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <div ref={setNodeRef} style={style} {...attributes}>
             <TrackCard key={track.id}>
                 <GlassyListButton
                     onClick={() => {
@@ -254,15 +265,23 @@ function SortableTrackCard(props: {
                         setIsPlaying(true);
                     }}
                 >
-                    <TrackCardContent id={track.id} metadata={track.metadata} />
+                    <TrackCardContent
+                        id={track.id}
+                        metadata={track.metadata}
+                        listeners={listeners}
+                    />
                 </GlassyListButton>
             </TrackCard>
         </div>
     );
 }
 
-function TrackCardContent(props: { id: number; metadata: TrackMetadata }) {
-    const { id, metadata } = props;
+function TrackCardContent(props: {
+    id: number;
+    metadata: TrackMetadata;
+    listeners?: SyntheticListenerMap;
+}) {
+    const { id, metadata, listeners } = props;
 
     const CardInner = styled(Stack)({
         width: '100%',
@@ -294,6 +313,7 @@ function TrackCardContent(props: { id: number; metadata: TrackMetadata }) {
             <IconButton
                 id={`playlist-track-drag-${id}`}
                 style={{ cursor: 'grab' }}
+                {...listeners}
             >
                 <DragIndicator
                     style={{
