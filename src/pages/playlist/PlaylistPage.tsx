@@ -14,8 +14,8 @@ import {
     styled,
     Typography,
 } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
-import { JSX, useEffect, useState } from 'react';
+import { ArrowBack, DragIndicator } from '@mui/icons-material';
+import { JSX, useEffect, useRef, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { authContextAtom } from '@/utils/auth/atoms';
 import { listen } from '@tauri-apps/api/event';
@@ -26,6 +26,22 @@ import MusicPlayer, {
     isPlayingAtom,
 } from '@/components/player/MusicPlayer';
 import Img from '@/components/Img';
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 export default function PlaylistPage() {
     const { isLoading, authUser } = useAtomValue(authContextAtom);
@@ -95,6 +111,18 @@ export default function PlaylistPage() {
         }
     }, [authUser]);
 
+    function handleDragEnd(event: DragEndEvent) {
+        const { active, over } = event;
+
+        if (active.id !== over?.id) {
+            setTracks((tracks) => {
+                const oldIndex = tracks.findIndex((t) => t.id === active.id);
+                const newIndex = tracks.findIndex((t) => t.id === over?.id);
+                return arrayMove(tracks, oldIndex, newIndex);
+            });
+        }
+    }
+
     if (isLoading) {
         return <Loading />;
     }
@@ -110,31 +138,35 @@ export default function PlaylistPage() {
                         createdBy={createdBy}
                     />
 
-                    <List
+                    <div
                         style={{
-                            padding: 0,
-                            overflow: 'auto',
-                            height: '30vh',
+                            height: '30vh', // or '300px', '40vh', etc.
+                            overflowY: 'auto',
+                            width: '100%',
+                            borderRadius: '1em',
                         }}
                     >
-                        {tracks.map((track) => {
-                            return (
-                                <TrackCard key={track.id}>
-                                    <GlassyListButton
-                                        onClick={() => {
-                                            setCurrentTrack(track);
-                                            setIsPlaying(true);
-                                        }}
-                                    >
-                                        <TrackCardContent
-                                            id={track.id}
-                                            metadata={track.metadata}
-                                        />
-                                    </GlassyListButton>
-                                </TrackCard>
-                            );
-                        })}
-                    </List>
+                        <DndContext
+                            sensors={useSensors(useSensor(PointerSensor))}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                            modifiers={[restrictToVerticalAxis]}
+                        >
+                            <SortableContext
+                                items={tracks.map((track) => track.id)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {tracks.map((track) => (
+                                    <SortableTrackCard
+                                        setCurrentTrack={setCurrentTrack}
+                                        setIsPlaying={setIsPlaying}
+                                        key={track.id}
+                                        track={track}
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
+                    </div>
 
                     <MusicPlayer />
                 </CenteredContainer>
@@ -143,22 +175,34 @@ export default function PlaylistPage() {
     }
 }
 
-function BackButton() {
-    const transitionNav = useTransitionNavigate();
+function SortableTrackCard(props: {
+    track: StreamedTrackMetadata;
+    setCurrentTrack: any;
+    setIsPlaying: any;
+}) {
+    const { track, setCurrentTrack, setIsPlaying } = props;
+
+    const { attributes, listeners, setNodeRef, transform, transition } =
+        useSortable({ id: track.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
     return (
-        <IconButton
-            sx={{
-                width: 'fit-content',
-                marginBottom: '-3.5em',
-                fontSize: 'large',
-                color: 'white',
-                marginLeft: '-0.5em',
-            }}
-            onClick={() => transitionNav(-1)}
-            size="large"
-        >
-            <ArrowBack />
-        </IconButton>
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            <TrackCard key={track.id}>
+                <GlassyListButton
+                    onClick={() => {
+                        setCurrentTrack(track);
+                        setIsPlaying(true);
+                    }}
+                >
+                    <TrackCardContent id={track.id} metadata={track.metadata} />
+                </GlassyListButton>
+            </TrackCard>
+        </div>
     );
 }
 
@@ -188,8 +232,24 @@ function TrackCardContent(props: { id: number; metadata: TrackMetadata }) {
         ? `data:${mimeType};base64,${metadata.coverBase64}`
         : '/default_track.png';
 
+    const draggableNode = useRef(null);
+
     return (
-        <CardInner direction={'row'}>
+        <CardInner direction={'row'} ref={draggableNode}>
+            <IconButton
+                id={`playlist-track-drag-${id}`}
+                style={{ cursor: 'grab' }}
+            >
+                <DragIndicator
+                    style={{
+                        color: 'white',
+                        padding: 0,
+                        margin: 0,
+                        marginRight: '-1em',
+                        marginLeft: '-0.5em',
+                    }}
+                />
+            </IconButton>
             <CardImg src={imgSrc} />
             <Stack direction="column">
                 <Typography style={{ marginBottom: '0.2em' }}>
@@ -255,6 +315,25 @@ function CenteredContainer(props: {
                 {props.children}
             </Stack>
         </Stack>
+    );
+}
+
+function BackButton() {
+    const transitionNav = useTransitionNavigate();
+    return (
+        <IconButton
+            sx={{
+                width: 'fit-content',
+                marginBottom: '-3.5em',
+                fontSize: 'large',
+                color: 'white',
+                marginLeft: '-0.5em',
+            }}
+            onClick={() => transitionNav(-1)}
+            size="large"
+        >
+            <ArrowBack />
+        </IconButton>
     );
 }
 
