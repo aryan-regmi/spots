@@ -74,14 +74,14 @@ export default function MusicPlayer() {
 
         // Wait for state to update before trying to play
         setTimeout(() => {
-            if (audioRef.current && currentTrack) {
-                audioRef.current.load();
+            if (currentTrack) {
+                audioRef.current?.load();
                 audioRef.current
-                    .play()
+                    ?.play()
                     .catch((e) => console.warn('Autoplay failed:', e));
                 setIsPlaying(true);
             }
-        }, 0);
+        }, 200);
 
         // Clean up object url when track changes
         return () => {
@@ -95,12 +95,14 @@ export default function MusicPlayer() {
 
     // Toggles the play/pause button.
     function togglePlay() {
-        if (!isPlaying) {
-            audioRef.current?.play();
-            setIsPlaying(true);
-        } else {
-            audioRef.current?.pause();
-            setIsPlaying(false);
+        if (currentTrack) {
+            if (!isPlaying) {
+                audioRef.current?.play();
+                setIsPlaying(true);
+            } else {
+                audioRef.current?.pause();
+                setIsPlaying(false);
+            }
         }
     }
 
@@ -198,8 +200,8 @@ function getImgSrc(imgBase64?: string) {
 const StyledCard = styled(Card)({
     padding: 0,
     width: '100%',
-    borderRadius: '0.25em',
-    backgroundColor: 'rgba(200,50,150,0.25)',
+    borderRadius: '0.8em',
+    backgroundColor: 'rgba(150,100,150,0.35)',
     marginBottom: '0.25em',
 });
 
