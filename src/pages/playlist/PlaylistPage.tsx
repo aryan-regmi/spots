@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { JSX, useEffect, useState } from 'react';
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { authContextAtom } from '@/utils/auth/atoms';
 import { listen } from '@tauri-apps/api/event';
 import { streamPlaylistTracks } from '@/api/music';
@@ -39,7 +39,7 @@ export default function PlaylistPage() {
     );
     const [_isStreamingTracks, setIsStreamingTracks] = useState(false);
     const setCurrentTrack = useSetAtom(currentTrackAtom);
-    const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
+    const setIsPlaying = useSetAtom(isPlayingAtom);
 
     /// All of the tracks belonging to the playlist.
     const [tracks, setTracks] = useState<StreamedTrackMetadata[]>([]);
@@ -110,7 +110,13 @@ export default function PlaylistPage() {
                         createdBy={createdBy}
                     />
 
-                    <List style={{ padding: 0, marginBottom: '6em' }}>
+                    <List
+                        style={{
+                            padding: 0,
+                            marginBottom: '6em',
+                            overflow: 'auto',
+                        }}
+                    >
                         {tracks.map((track) => {
                             return (
                                 <TrackCard key={track.id}>

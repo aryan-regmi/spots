@@ -21,6 +21,7 @@ import { authContextActionAtom, authContextAtom } from '@/utils/auth/atoms';
 import { closeEndpointAtom } from '@/utils/network/atoms';
 import { stringAvatar } from '@/utils/stringAvatar';
 import { useEffect, useState } from 'react';
+import MusicPlayer from '@/components/player/MusicPlayer';
 
 /** Manages the dashboard navigation. */
 export const dashboardNavAtom = atom(NavState.Home);
@@ -140,6 +141,8 @@ export default function DashboardPage() {
                     <div>{displayNavigatedPage(displayNav)}</div>
                 </Fade>
             </Stack>
+
+            <MusicPlayer />
 
             {/* Bottom Navigation */}
             <div style={{ paddingBottom: '1em' }}>

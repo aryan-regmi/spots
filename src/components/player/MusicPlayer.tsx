@@ -17,6 +17,7 @@ const currentTrackUrlAtom = atom(async (get) => {
         return;
     }
 
+    // TODO: Store urls in a map and only create new blobs if necessary
     try {
         const binary = await readFile(currentTrack.metadata.path);
 
@@ -72,13 +73,10 @@ export default function MusicPlayer() {
             }
         }, 200);
 
-        // Clean up object url when track changes
+        // Cleanup
         return () => {
             isCancelled = true;
             setIsPlaying(false);
-            if (currentTrackUrl) {
-                URL.revokeObjectURL(currentTrackUrl);
-            }
         };
     }, [currentTrack]);
 

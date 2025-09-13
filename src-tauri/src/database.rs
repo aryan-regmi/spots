@@ -267,7 +267,8 @@ impl Database {
         &self,
         metadata: TrackMetadata,
         user_id: i64,
-    ) -> Result<SqliteQueryResult> {
+    ) -> Result<(i64, SqliteQueryResult)> {
+        println!("Inserting track: {:?}", metadata.title);
         let network_id = self.get_network_id(user_id).await?;
         let result = sqlx::query(
             "INSERT OR IGNORE INTO tracks (
@@ -292,7 +293,16 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
-        Ok(result)
+        // Get the track ID, even if it was already in the DB
+        let track_id: i64 = sqlx::query("SELECT id FROM tracks WHERE path = ?")
+            .bind(&metadata.path)
+            .fetch_one(&self.pool)
+            .await?
+            .get("id");
+
+        println!("Track inserted: {:?}", metadata.title);
+
+        Ok((track_id, result))
     }
 
     /// Returns a stream containing all of the tracks in the database.
@@ -325,7 +335,12 @@ impl Database {
 /// Methods for the `playlists` tables.
 impl Database {
     /// Inserts the playlist in the database, associating it with the given user.
-    pub async fn insert_playlist(&self, name: String, user_id: i64) -> Result<i64> {
+    pub async fn insert_playlist(
+        &self,
+        name: String,
+        user_id: i64,
+    ) -> Result<(i64, SqliteQueryResult)> {
+        println!("Inserting playlist: {:?}", name);
         let network_id = self.get_network_id(user_id).await?;
         let result = sqlx::query(
             "
@@ -334,10 +349,21 @@ impl Database {
         )
         .bind(user_id)
         .bind(network_id)
-        .bind(name)
+        .bind(&name)
         .execute(&self.pool)
         .await?;
-        Ok(result.last_insert_rowid())
+
+        // Get the track ID, even if it was already in the DB
+        let track_id: i64 =
+            sqlx::query("SELECT id FROM playlists WHERE (user_id, network_id, name) = (?,?,?)")
+                .bind(user_id)
+                .bind(network_id)
+                .bind(&name)
+                .fetch_one(&self.pool)
+                .await?
+                .get("id");
+        println!("Playlist inserted: {:?}", name);
+        Ok((track_id, result))
     }
 
     /// Inserts a network playlist in the database.
@@ -346,7 +372,7 @@ impl Database {
         name: String,
         user_id: i64,
         network_id: i64,
-    ) -> Result<i64> {
+    ) -> Result<(i64, SqliteQueryResult)> {
         let result = sqlx::query(
             "
             INSERT OR IGNORE INTO playlists (user_id, network_id, name) VALUES (?,?,?)
@@ -354,10 +380,21 @@ impl Database {
         )
         .bind(user_id)
         .bind(network_id)
-        .bind(name)
+        .bind(&name)
         .execute(&self.pool)
         .await?;
-        Ok(result.last_insert_rowid())
+
+        // Get the track ID, even if it was already in the DB
+        let track_id: i64 =
+            sqlx::query("SELECT id FROM playlists WHERE (user_id, network_id, name) = (?,?,?)")
+                .bind(user_id)
+                .bind(network_id)
+                .bind(&name)
+                .fetch_one(&self.pool)
+                .await?
+                .get("id");
+
+        Ok((track_id, result))
     }
 
     /// Adds the track to the specified playlist.
