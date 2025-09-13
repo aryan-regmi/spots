@@ -1,23 +1,9 @@
 import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
-import {
-    PauseCircle,
-    PauseCircleRounded,
-    PlayCircle,
-    PlayCircleRounded,
-} from '@mui/icons-material';
-import {
-    Button,
-    Card,
-    CardActions,
-    CardContent,
-    IconButton,
-    Stack,
-    styled,
-    Typography,
-} from '@mui/material';
+import { PauseCircleRounded, PlayCircleRounded } from '@mui/icons-material';
+import { Button, Card, Slider, Stack, styled, Typography } from '@mui/material';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Glassy from '../glassy/Glassy';
 import Img from '@/components/Img';
 
@@ -52,6 +38,9 @@ export default function MusicPlayer() {
     const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom);
     const currentTrackUrl = useAtomValue(currentTrackUrlAtom);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const [position, setPosition] = useState(0);
+    const [duration, setDuration] = useState(audioRef.current?.duration ?? 0);
+    const [isSeeking, setIsSeeking] = useState(false);
 
     // Watches for the track's state (playing or paused/ended).
     useEffect(() => {
@@ -93,6 +82,68 @@ export default function MusicPlayer() {
         };
     }, [currentTrack]);
 
+    // Set duration when track or audio changes
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const onLoadedMetadata = () => {
+            setDuration(audio.duration || 0);
+        };
+
+        audio.addEventListener('loadedmetadata', onLoadedMetadata);
+
+        return () => {
+            audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+        };
+    }, [currentTrack]);
+
+    // Update slider position as audio plays
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const interval = setInterval(() => {
+            if (audio.ended) {
+                setIsPlaying(false);
+                setPosition(0);
+                return;
+            }
+
+            if (!isSeeking && !audio.paused) {
+                setPosition(audio.currentTime);
+            }
+        }, 500); // update every 500ms
+
+        return () => clearInterval(interval);
+    }, [isSeeking, audioRef]);
+
+    // Handle user scrubbing the slider
+    const handleSliderChange = (_: any, value: number | number[]) => {
+        setPosition(value as number);
+    };
+
+    // Seek in the audio when user stops dragging
+    const handleSliderChangeCommitted = (_: any, value: number | number[]) => {
+        const newTime = value as number;
+        setPosition(newTime);
+        if (audioRef.current) {
+            audioRef.current.currentTime = newTime;
+        }
+        setIsSeeking(false);
+    };
+
+    const handleSeekStart = () => {
+        setIsSeeking(true);
+    };
+
+    let trackTitle: string;
+    if (currentTrack) {
+        trackTitle = currentTrack.metadata.title ?? `Track #${currentTrack.id}`;
+    } else {
+        trackTitle = 'Unknown';
+    }
+
     // Toggles the play/pause button.
     function togglePlay() {
         if (currentTrack) {
@@ -112,77 +163,80 @@ export default function MusicPlayer() {
                 <source src={currentTrackUrl} type="audio/mpeg" />
             </audio>
 
-            <PlayerControls togglePlay={togglePlay} />
-        </StyledCard>
-    );
-}
-
-function PlayerControls(props: { togglePlay: () => void }) {
-    const { togglePlay } = props;
-    const isPlaying = useAtomValue(isPlayingAtom);
-    const currentTrack = useAtomValue(currentTrackAtom);
-
-    let trackTitle: string;
-    if (currentTrack) {
-        trackTitle = currentTrack.metadata.title ?? `Track #${currentTrack.id}`;
-    } else {
-        trackTitle = 'Unknown';
-    }
-
-    return (
-        <GlassyStack direction="column" width={'100%'} height={'8em'}>
-            <Stack
-                direction="row"
-                style={{
-                    justifyContent: 'left',
-                    flexShrink: 0,
-                    alignSelf: 'flex-start',
-                }}
-            >
-                <TrackImg src={getImgSrc(currentTrack?.metadata.coverBase64)} />
-
+            <GlassyStack direction="column" width={'100%'} height={'8em'}>
                 <Stack
-                    direction="column"
+                    direction="row"
                     style={{
-                        opacity: 0.85,
-                        alignItems: 'center',
+                        justifyContent: 'left',
                         flexShrink: 0,
+                        alignSelf: 'flex-start',
                     }}
                 >
-                    {/* Track details */}
-                    <Typography
-                        style={{
-                            color: 'white',
-                            marginTop: '1.5em',
-                        }}
-                    >
-                        {trackTitle}
-                    </Typography>
-                    <Typography
-                        style={{
-                            color: 'darkgray',
-                            fontSize: '0.9em',
-                        }}
-                    >
-                        {`${currentTrack?.metadata.artist ?? 'Unknown'} - ${currentTrack?.metadata.album ?? 'Unknown'}`}
-                    </Typography>
+                    <TrackImg
+                        src={getImgSrc(currentTrack?.metadata.coverBase64)}
+                    />
 
-                    {/* Controls  */}
                     <Stack
-                        direction="row"
-                        style={{ flexShrink: 0, alignSelf: 'flex-start' }}
+                        direction="column"
+                        style={{
+                            opacity: 0.85,
+                            alignItems: 'center',
+                            flexShrink: 0,
+                        }}
                     >
-                        <StyledButton onClick={togglePlay}>
-                            {isPlaying ? (
-                                <PauseCircleRounded />
-                            ) : (
-                                <PlayCircleRounded />
-                            )}
-                        </StyledButton>
+                        {/* Track details */}
+                        <Typography
+                            style={{
+                                color: 'white',
+                                marginTop: '1.5em',
+                            }}
+                        >
+                            {trackTitle}
+                        </Typography>
+                        <Typography
+                            style={{
+                                color: 'darkgray',
+                                fontSize: '0.9em',
+                            }}
+                        >
+                            {`${currentTrack?.metadata.artist ?? 'Unknown'} - ${currentTrack?.metadata.album ?? 'Unknown'}`}
+                        </Typography>
+
+                        {/* Controls  */}
+                        <Stack
+                            direction="row"
+                            style={{
+                                flexShrink: 0,
+                                alignSelf: 'flex-start',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <StyledButton onClick={togglePlay}>
+                                {isPlaying ? (
+                                    <PauseCircleRounded />
+                                ) : (
+                                    <PlayCircleRounded />
+                                )}
+                            </StyledButton>
+                            <Slider
+                                size="small"
+                                sx={{
+                                    width: 100,
+                                    color: 'white',
+                                }}
+                                value={position}
+                                min={0}
+                                step={1}
+                                max={duration}
+                                onChange={handleSliderChange}
+                                onChangeCommitted={handleSliderChangeCommitted}
+                                onMouseDown={handleSeekStart}
+                            />
+                        </Stack>
                     </Stack>
                 </Stack>
-            </Stack>
-        </GlassyStack>
+            </GlassyStack>
+        </StyledCard>
     );
 }
 
