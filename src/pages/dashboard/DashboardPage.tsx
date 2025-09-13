@@ -145,7 +145,13 @@ export default function DashboardPage() {
             <MusicPlayer />
 
             {/* Bottom Navigation */}
-            <div style={{ paddingBottom: '1em' }}>
+            <div
+                style={{
+                    paddingBottom: '1em',
+                    paddingTop: 0,
+                    marginTop: '-4em',
+                }}
+            >
                 <BottomNav nav={nav} setNav={setNav} />
             </div>
         </StyledContainer>

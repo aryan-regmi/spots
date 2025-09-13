@@ -7,6 +7,8 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { useEffect, useRef, useState } from 'react';
 
+// TODO: Add duration and next and prev track buttons!
+
 /** The currently playing track. */
 export const currentTrackAtom = atom<StreamedTrackMetadata>();
 
@@ -251,10 +253,10 @@ function getImgSrc(imgBase64?: string) {
 
 const StyledCard = styled(Card)({
     padding: 0,
+    margin: 0,
     width: '100%',
     borderRadius: '0.8em',
     backgroundColor: 'rgba(150,100,150,0.35)',
-    marginBottom: '0.25em',
 });
 
 const GlassyStack = Glassy(

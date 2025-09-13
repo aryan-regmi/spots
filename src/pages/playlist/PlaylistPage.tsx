@@ -113,8 +113,8 @@ export default function PlaylistPage() {
                     <List
                         style={{
                             padding: 0,
-                            marginBottom: '6em',
                             overflow: 'auto',
+                            height: '30vh',
                         }}
                     >
                         {tracks.map((track) => {
@@ -161,23 +161,6 @@ function BackButton() {
         </IconButton>
     );
 }
-
-const TrackCard = styled(Card)({
-    padding: 0,
-    width: '100%',
-    borderRadius: '0.25em',
-    backgroundColor: 'rgba(50,50,50,0.1)',
-    marginBottom: '0.25em',
-});
-
-const GlassyListButton = Glassy(
-    styled(ListItemButton)({
-        color: 'white',
-        padding: 0,
-        width: '100%',
-        backgroundColor: 'white',
-    })
-);
 
 function TrackCardContent(props: { id: number; metadata: TrackMetadata }) {
     const { id, metadata } = props;
@@ -274,3 +257,20 @@ function CenteredContainer(props: {
         </Stack>
     );
 }
+
+const TrackCard = styled(Card)({
+    padding: 0,
+    width: '100%',
+    borderRadius: '0.25em',
+    backgroundColor: 'rgba(50,50,50,0.1)',
+    marginBottom: '0.25em',
+});
+
+const GlassyListButton = Glassy(
+    styled(ListItemButton)({
+        color: 'white',
+        padding: 0,
+        width: '100%',
+        backgroundColor: 'white',
+    })
+);
