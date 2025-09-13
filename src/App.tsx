@@ -1,12 +1,12 @@
 import '@/App.css';
-import FadeGlassy from './components/glassy/FadeGlassy';
-import Glassy from './components/glassy/Glassy';
+import FadeGlassy from '@/components/glassy/FadeGlassy';
+import Glassy from '@/components/glassy/Glassy';
+import Loading from '@/components/loading/Loading';
+import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';
+import { JSX, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Stack } from '@mui/material';
 import { atom } from 'jotai';
-import Loading from './components/loading/Loading';
-import { JSX, useEffect } from 'react';
-import useTransitionNavigate from './utils/hooks/useTransitionNavigate';
 
 // TODO: Add theme context
 //

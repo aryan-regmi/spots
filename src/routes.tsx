@@ -2,11 +2,11 @@ import App from '@/App';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
 import Loading from '@/components/loading/Loading';
 import LoginPage from '@/pages/login/LoginPage';
+import PlaylistPage from '@/pages/playlist/PlaylistPage';
 import ProfilePage from '@/pages/profile/ProfilePage';
 import SignupPage from '@/pages/signup/SignupPage';
 import { createBrowserRouter, redirect } from 'react-router';
 import { getAuthUser } from '@/api/auth';
-import PlaylistPage from './pages/playlist/PlaylistPage';
 
 export const router = createBrowserRouter([
     {

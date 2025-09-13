@@ -1,6 +1,6 @@
-import { getUser, insertUser, UserId } from '@/api/users';
 import { atomWithMutation, atomWithQuery } from 'jotai-tanstack-query';
-import { queryClient } from '../queryClient';
+import { getUser, insertUser, UserId } from '@/api/users';
+import { queryClient } from '@/utils/queryClient';
 
 /** Gets the specfied user from the database. */
 export const getUserAtom = (userId: UserId) => {

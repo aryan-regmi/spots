@@ -1,6 +1,6 @@
-import BottomNav from './BottomNav';
+import BottomNav from '@/pages/dashboard/BottomNav';
 import Container from '@/components/Container';
-import Library from './library/Library';
+import Library from '@/pages/dashboard/library/Library';
 import Loading from '@/components/loading/Loading';
 import MenuDrawer, { menuIsOpenAtom } from '@/pages/dashboard/MenuDrawer';
 import useTransitionNavigate from '@/utils/hooks/useTransitionNavigate';

@@ -5,7 +5,7 @@ import {
     loadEndpoint,
 } from '@/api/network';
 import { atomWithMutation, atomWithQuery } from 'jotai-tanstack-query';
-import { queryClient } from '../queryClient';
+import { queryClient } from '@/utils/queryClient';
 
 /** Gets the endpoint address for the user. */
 export const getEndpointAddressAtom = (userId: number) => {

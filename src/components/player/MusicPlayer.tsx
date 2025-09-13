@@ -1,11 +1,11 @@
-import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
-import { PauseCircleRounded, PlayCircleRounded } from '@mui/icons-material';
-import { Button, Card, Slider, Stack, styled, Typography } from '@mui/material';
-import { readFile } from '@tauri-apps/plugin-fs';
-import { atom, useAtom, useAtomValue } from 'jotai';
-import { useEffect, useRef, useState } from 'react';
-import Glassy from '../glassy/Glassy';
+import Glassy from '@/components/glassy/Glassy';
 import Img from '@/components/Img';
+import StreamedTrackMetadata from '@/utils/music/types/trackMetadata';
+import { Button, Card, Slider, Stack, styled, Typography } from '@mui/material';
+import { PauseCircleRounded, PlayCircleRounded } from '@mui/icons-material';
+import { atom, useAtom, useAtomValue } from 'jotai';
+import { readFile } from '@tauri-apps/plugin-fs';
+import { useEffect, useRef, useState } from 'react';
 
 /** The currently playing track. */
 export const currentTrackAtom = atom<StreamedTrackMetadata>();
