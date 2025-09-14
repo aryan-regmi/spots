@@ -248,12 +248,14 @@ function SortableTrackCard(props: {
 }) {
     const { track, setCurrentTrack, setIsPlaying } = props;
 
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
-        id: track.id,
-    });
+    const { attributes, listeners, setNodeRef, transform, transition } =
+        useSortable({
+            id: track.id,
+        });
 
     const style = {
         transform: CSS.Transform.toString(transform),
+        transition,
     };
 
     return (
