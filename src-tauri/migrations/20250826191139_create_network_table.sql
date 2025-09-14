@@ -1,9 +1,0 @@
-CREATE TABLE IF NOT EXISTS network (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  secret_key BLOB NOT NULL,
-  endpoint TEXT,
-  topic_id TEXT,
-  peers BLOB,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
