@@ -1,11 +1,12 @@
-<script>
-  import Counter from "@/lib/Counter.svelte";
+<script lang="ts">
+    import AuthProvider from '@/auth/AuthProvider.svelte';
+    import LandingPage from '@/pages/LandingPage.svelte';
 </script>
 
 <main>
-  <div class="card">
-    <Counter />
-  </div>
+    <AuthProvider>
+        <LandingPage />
+    </AuthProvider>
 </main>
 
 <style>
