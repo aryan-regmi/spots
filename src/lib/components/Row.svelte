@@ -13,7 +13,7 @@
 </div>
 
 <style>
-    .col {
+    .row {
         display: flex;
         flex-direction: row;
         width: 100%;

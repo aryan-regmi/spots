@@ -18,7 +18,8 @@
     const labelText = `${label}${required ? '*' : null}`;
 </script>
 
-<!-- placeholder={isFocused ? null : labelText} -->
+<!-- FIXME: Change style when required! -->
+
 <Column class="container" spacing="0">
     <input
         class="text-input {className}"

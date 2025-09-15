@@ -7,6 +7,8 @@
     import { getContext } from 'svelte';
     import TextField from '@/components/inputs/TextField.svelte';
     import { Button } from 'bits-ui';
+    import Card from '@/components/Card.svelte';
+    import Alert from '@/components/Alert.svelte';
 
     const { authorize } = getContext<AuthContext>('authContext');
 
@@ -106,16 +108,17 @@
 
     <!-- Error messages -->
     <Column spacing="1em" style="margin-bottom: 5em">
+        <Alert style="transform: translateX(-8.0em); width: 15em">hi</Alert>
         {#each validationErrors as error, i}
             <!-- <Alert class="validation-error-card"> -->
-            <!--     <Row> -->
-            <!--         <Icon -->
-            <!--             class="material-icons" -->
-            <!--             style="vertical-align: middle; text-align: center; justify-content: center; align-items: center" -->
-            <!--             >error</Icon -->
-            <!--         > -->
-            <!--         {error} -->
-            <!--     </Row> -->
+            <!-- <Row> -->
+            <!--     <Icon -->
+            <!--         class="material-icons" -->
+            <!--         style="vertical-align: middle; text-align: center; justify-content: center; align-items: center" -->
+            <!--         >error</Icon -->
+            <!--     > -->
+            <!--     {error} -->
+            <!-- </Row> -->
             <!-- </Alert> -->
         {/each}
     </Column>
