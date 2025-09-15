@@ -2,15 +2,11 @@
     import { getUserByUsernameQuery } from '@/api/users';
     import type { AuthContext } from '@/auth/types';
     import Column from '@/components/Column.svelte';
-    import type { User } from '@/user/types';
-    import Button, { Label } from '@smui/button';
-    import { Icon } from '@smui/icon-button';
-    import Card from '@smui/card';
-    import Textfield from '@smui/textfield';
-    import HelperText from '@smui/textfield/helper-text';
-    import { getContext } from 'svelte';
     import Row from '@/components/Row.svelte';
-    import Snackbar from '@smui/snackbar';
+    import type { User } from '@/user/types';
+    import { getContext } from 'svelte';
+    import TextField from '@/components/inputs/TextField.svelte';
+    import { Button } from 'bits-ui';
 
     const { authorize } = getContext<AuthContext>('authContext');
 
@@ -32,9 +28,6 @@
     /** List of validation errors. */
     let validationErrors = $state<string[]>([]);
 
-    /** The error snackbars. */
-    let errorSanckbars = $state<Snackbar[]>([]);
-
     /** The user with the [usernameInput] username. */
     let user: User | undefined;
 
@@ -48,11 +41,6 @@
         return () => {
             unsub();
         };
-    });
-
-    // Opens the snackbar with the
-    $effect(() => {
-        errorSanckbars.forEach((bar) => (bar ? bar.open() : null));
     });
 
     /** Validates the login (username and password). */
@@ -71,29 +59,30 @@
     }
 </script>
 
-<Column spacing="0.5em" class="login-form">
+<Column spacing="1.5em" class="login-form">
     <h1 class="app-title">Spots</h1>
 
     <!-- Form -->
-    <Textfield
+    <TextField
         class="login-page-input"
-        variant="filled"
+        label="Username"
         bind:value={usernameInput}
         invalid={!usernameIsValid}
-        label="Username"
-        required
         onchange={() => {
             if (!usernameIsValid) {
                 usernameIsValid = true;
                 validationErrors = [];
             }
         }}
+        variant="filled"
+        required
     >
-        {#snippet helper()}
-            <HelperText>Enter username</HelperText>
+        {#snippet helperText()}
+            Enter username
+            <!-- <Typography>Enter username</Typography> -->
         {/snippet}
-    </Textfield>
-    <Textfield
+    </TextField>
+    <TextField
         class="login-page-input"
         variant="filled"
         bind:value={passwordInput}
@@ -102,37 +91,33 @@
         type="password"
         required
     >
-        {#snippet helper()}
-            <HelperText>Enter password</HelperText>
+        {#snippet helperText()}
+            <!-- <Typography>Enter password</Typography> -->
+            Enter password
         {/snippet}
-    </Textfield>
+    </TextField>
 
-    <Button onclick={validateAndLogin}>
+    <Button.Root onclick={validateAndLogin}>
         {#if isValidating}
             Logging in...
         {:else}
             Login
         {/if}
-    </Button>
+    </Button.Root>
 
     <!-- Error messages -->
     <Column spacing="1em" style="margin-bottom: 5em">
         {#each validationErrors as error, i}
-            <Snackbar
-                bind:this={errorSanckbars[i]}
-                class="validation-error-card"
-            >
-                <Label>
-                    <!-- <Row> -->
-                    <Icon
-                        class="material-icons"
-                        style="vertical-align: middle; text-align: center; justify-content: center; align-items: center"
-                        >error</Icon
-                    >
-                    {error}
-                    <!-- </Row> -->
-                </Label>
-            </Snackbar>
+            <!-- <Alert class="validation-error-card"> -->
+            <!--     <Row> -->
+            <!--         <Icon -->
+            <!--             class="material-icons" -->
+            <!--             style="vertical-align: middle; text-align: center; justify-content: center; align-items: center" -->
+            <!--             >error</Icon -->
+            <!--         > -->
+            <!--         {error} -->
+            <!--     </Row> -->
+            <!-- </Alert> -->
         {/each}
     </Column>
 </Column>
@@ -144,26 +129,8 @@
         padding-top: 0;
     }
 
-    :global(.login-page-input.mdc-text-field--focused) {
-        background-color: rgba(50, 50, 50, 1);
-    }
-
-    :global(.login-page-input .mdc-text-field__ripple) {
-        display: none;
-    }
-
-    :global(.login-page-input) {
-        border-radius: '0.1em';
-    }
-
     :global(.login-form) {
         justify-content: center;
         align-items: center;
-    }
-
-    :global(.mdc-snackbar__label .mdc-snackbar) {
-        color: white;
-        background-color: rgba(200, 50, 50, 1);
-        /* padding: 1em; */
     }
 </style>

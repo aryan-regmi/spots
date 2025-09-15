@@ -14,12 +14,8 @@
         "vite": "^7.1.2"
     },
     "dependencies": {
-        "@smui/button": "^8.0.3",
-        "@smui/card": "^8.0.3",
-        "@smui/icon-button": "^8.0.3",
-        "@smui/snackbar": "^8.0.3",
-        "@smui/textfield": "^8.0.3",
         "@tanstack/svelte-query": "^5.87.4",
-        "@tauri-apps/api": "^2.8.0"
+        "@tauri-apps/api": "^2.8.0",
+        "bits-ui": "^2.9.8"
     }
 }
