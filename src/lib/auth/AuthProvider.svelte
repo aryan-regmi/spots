@@ -2,6 +2,7 @@
     import type { User } from '@/user/types';
     import { setContext } from 'svelte';
     import type { AuthContext } from './types';
+    import { removeAuthUserMutation, setAuthUserMutation } from '@/api/auth';
 
     let { children } = $props();
 
@@ -14,6 +15,9 @@
     /** Authenticates the specified user. */
     async function authorize(user: User) {
         authUser = user;
+        setAuthUserMutation().subscribe(async ({ mutateAsync }) =>
+            mutateAsync(user)
+        );
         console.info('User authorized: ', user);
     }
 
@@ -21,6 +25,9 @@
     async function unauthorize() {
         if (authUser) {
             authUser = undefined;
+            removeAuthUserMutation().subscribe(async ({ mutateAsync }) =>
+                mutateAsync()
+            );
             console.info('User unauthorized');
         }
     }

@@ -1,12 +1,19 @@
 <script lang="ts">
     import AuthProvider from '@/auth/AuthProvider.svelte';
     import LandingPage from '@/pages/LandingPage.svelte';
+    import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
+    import { setContext } from 'svelte';
+
+    const queryClient = new QueryClient();
+    setContext('queryClient', queryClient);
 </script>
 
 <main>
-    <AuthProvider>
-        <LandingPage />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+            <LandingPage />
+        </AuthProvider>
+    </QueryClientProvider>
 </main>
 
 <style>
