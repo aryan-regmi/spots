@@ -6,7 +6,7 @@
         helperText = () => null,
         class: className = '',
         style = '',
-        onchange = undefined,
+        oninput = undefined,
         required = false,
         label = '',
         ...restProps
@@ -29,7 +29,7 @@
         onfocus={() => (isFocused = true)}
         onblur={() => (isFocused = false)}
         onfocusout={() => (isFocused = false)}
-        {onchange}
+        {oninput}
         {style}
         {...restProps}
     />

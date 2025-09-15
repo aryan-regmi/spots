@@ -9,6 +9,7 @@
     import { Button } from 'bits-ui';
     import Card from '@/components/Card.svelte';
     import Alert from '@/components/Alert.svelte';
+    import { derived } from 'svelte/store';
 
     const { authorize } = getContext<AuthContext>('authContext');
 
@@ -29,6 +30,9 @@
 
     /** List of validation errors. */
     let validationErrors = $state<string[]>([]);
+
+    /** Deduplicated version of [validationErrors]. */
+    let uniqueErrors = $derived([...new Set(validationErrors)]);
 
     /** The user with the [usernameInput] username. */
     let user: User | undefined;
@@ -70,7 +74,7 @@
         label="Username"
         bind:value={usernameInput}
         invalid={!usernameIsValid}
-        onchange={() => {
+        oninput={() => {
             if (!usernameIsValid) {
                 usernameIsValid = true;
                 validationErrors = [];
@@ -78,12 +82,7 @@
         }}
         variant="filled"
         required
-    >
-        {#snippet helperText()}
-            Enter username
-            <!-- <Typography>Enter username</Typography> -->
-        {/snippet}
-    </TextField>
+    />
     <TextField
         class="login-page-input"
         variant="filled"
@@ -92,11 +91,7 @@
         label="Password"
         type="password"
         required
-    >
-        {#snippet helperText()}
-            Enter password
-        {/snippet}
-    </TextField>
+    />
 
     <Button.Root onclick={validateAndLogin}>
         {#if isValidating}
@@ -108,7 +103,7 @@
 
     <!-- Error messages -->
     <Column spacing="1em" style="margin-bottom: 5em">
-        {#each validationErrors as error, i}
+        {#each uniqueErrors as error, i}
             <Alert class="login-error-alert" level="error">{error}</Alert>
         {/each}
     </Column>
