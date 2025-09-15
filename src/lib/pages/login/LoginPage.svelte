@@ -104,7 +104,12 @@
     <!-- Error messages -->
     <Column spacing="1em" style="margin-bottom: 5em">
         {#each uniqueErrors as error, i}
-            <Alert class="login-error-alert" level="error">{error}</Alert>
+            <Alert
+                class="login-error-alert"
+                level="error"
+                style="transform: translateX(-9em) translateY({i * 3.5}em);"
+                >{error}</Alert
+            >
         {/each}
     </Column>
 </Column>
@@ -122,6 +127,7 @@
     }
 
     :global(.login-error-alert) {
+        position: absolute;
         width: 15em;
     }
 </style>
