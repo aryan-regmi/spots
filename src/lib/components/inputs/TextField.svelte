@@ -1,7 +1,5 @@
 <script lang="ts">
     import Column from '@/components/Column.svelte';
-    import { Label } from 'bits-ui';
-    import { slide } from 'svelte/transition';
 
     let {
         value = $bindable(''),
@@ -35,6 +33,11 @@
         {...restProps}
     />
     <div id="label" class:float={showFloatingLabel}>{labelText}</div>
+    {#if showFloatingLabel}
+        <div id="helper-text">
+            {@render helperText()}
+        </div>
+    {/if}
 </Column>
 
 <style>
@@ -62,7 +65,7 @@
     #label {
         position: absolute;
         transform: translateY(0.75em) translateX(1em);
-        color: #888;
+        color: #999;
         font-size: 1.25em;
         pointer-events: none;
         transition:
@@ -75,5 +78,13 @@
         font-size: 0.9em;
         transform: translateY(-1.2em);
         color: #0077ff;
+    }
+
+    #helper-text {
+        position: absolute;
+        font-size: 0.9em;
+        font-weight: bold;
+        transform: translateY(4em) translateX(1em);
+        color: #777fff;
     }
 </style>

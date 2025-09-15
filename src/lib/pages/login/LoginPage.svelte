@@ -59,7 +59,7 @@
     }
 </script>
 
-<Column spacing="1.5em" class="login-form">
+<Column spacing="2em" class="login-form">
     <h1 class="app-title">Spots</h1>
 
     <!-- Form -->
@@ -92,7 +92,6 @@
         required
     >
         {#snippet helperText()}
-            <!-- <Typography>Enter password</Typography> -->
             Enter password
         {/snippet}
     </TextField>
