@@ -5,7 +5,6 @@ import {
   QueryClient,
 } from '@tanstack/svelte-query';
 import { invoke } from '@tauri-apps/api/core';
-import { getContext } from 'svelte';
 
 /** Sets the authenticated user. */
 async function setAuthUser(user: User) {
@@ -18,9 +17,7 @@ async function setAuthUser(user: User) {
 }
 
 /** Mutation to set the authenticated user. */
-export function setAuthUserMutation() {
-  const queryClient = getContext<QueryClient>('queryClient');
-
+export function setAuthUserMutation(queryClient: QueryClient) {
   return createMutation({
     mutationKey: ['setAuthUser'],
     mutationFn: setAuthUser,
@@ -40,9 +37,7 @@ async function removeAuthUser() {
 }
 
 /** Mutation to remove the authenticated user. */
-export function removeAuthUserMutation() {
-  const queryClient = getContext<QueryClient>('queryClient');
-
+export function removeAuthUserMutation(queryClient: QueryClient) {
   return createMutation({
     mutationKey: ['removeAuthUser'],
     mutationFn: removeAuthUser,

@@ -1,8 +1,4 @@
-use tauri::State;
-
-use crate::{database::Database, user::User, StringResult};
-
-type DatabaseState<'a> = State<'a, Database>;
+use crate::{commands::DatabaseState, user::User, StringResult};
 
 /// Sets the authenticated user.
 #[tauri::command]

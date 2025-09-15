@@ -10,7 +10,7 @@
 
 <main>
     <QueryClientProvider client={queryClient}>
-        <AuthProvider>
+        <AuthProvider {queryClient}>
             <LandingPage />
         </AuthProvider>
     </QueryClientProvider>

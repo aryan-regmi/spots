@@ -4,7 +4,7 @@
     import type { AuthContext } from './types';
     import { removeAuthUserMutation, setAuthUserMutation } from '@/api/auth';
 
-    let { children } = $props();
+    let { children, queryClient } = $props();
 
     /** Currently authenticated user. */
     let authUser = $state<User>();
@@ -12,23 +12,45 @@
     /** Determines if the current session is authenticated. */
     const isAuthenticated = $derived(authUser !== undefined);
 
+    /** The action to take on [userToAuthorize]. */
+    let authAction = $state<'authorize' | 'unauthorize'>(undefined);
+
+    $effect(() => {
+        let unsubscribers = [];
+        if (authAction === 'authorize' && authUser) {
+            unsubscribers.push(
+                setAuthUserMutation(queryClient).subscribe(
+                    async ({ mutateAsync }) => mutateAsync(authUser)
+                )
+            );
+            authAction = undefined;
+            console.info('User authorized: ', authUser);
+        } else if (authAction === 'unauthorize') {
+            unsubscribers.push(
+                removeAuthUserMutation(queryClient).subscribe(
+                    async ({ mutateAsync }) => mutateAsync()
+                )
+            );
+            authAction = undefined;
+            console.info('User unauthorized');
+        }
+
+        return () => {
+            unsubscribers.forEach((f) => f());
+        };
+    });
+
     /** Authenticates the specified user. */
     async function authorize(user: User) {
         authUser = user;
-        setAuthUserMutation().subscribe(async ({ mutateAsync }) =>
-            mutateAsync(user)
-        );
-        console.info('User authorized: ', user);
+        authAction = 'authorize';
     }
 
     /** Unauthenticates the specified user. */
     async function unauthorize() {
         if (authUser) {
             authUser = undefined;
-            removeAuthUserMutation().subscribe(async ({ mutateAsync }) =>
-                mutateAsync()
-            );
-            console.info('User unauthorized');
+            authAction = 'unauthorize';
         }
     }
 

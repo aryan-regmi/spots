@@ -1,4 +1,5 @@
 mod auth;
+mod users;
 
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode},
