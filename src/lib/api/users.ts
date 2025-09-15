@@ -1,5 +1,5 @@
 import type { User } from '@/user/types';
-import { createQuery } from '@tanstack/svelte-query';
+import { createMutation, createQuery } from '@tanstack/svelte-query';
 import { invoke } from '@tauri-apps/api/core';
 
 /** Gets the user with the specified username from the database. */
@@ -18,4 +18,25 @@ export function getUserByUsernameQuery(username: string) {
     queryFn: async () => await getUserByUsername(username),
     enabled: username.trim() !== '',
   });
+}
+
+/** Hashes the given password. */
+export async function hashPassword(password: string) {
+  try {
+    return await invoke<string>('hash_password', { password });
+  } catch (e: any) {
+    throw new Error(e);
+  }
+}
+
+/** Verifies the given password against the one stored in the database for the user. */
+export async function verifyPassword(userId: number, password: string) {
+  try {
+    return await invoke<boolean>('verify_password', {
+      user_id: userId,
+      password,
+    });
+  } catch (e: any) {
+    throw new Error(e);
+  }
 }

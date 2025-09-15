@@ -17,4 +17,16 @@ impl Database {
             });
         user
     }
+
+    /// Gets the password hash for the specified user.
+    pub async fn get_password_hash(&self, user_id: i64) -> Option<String> {
+        let password_hash = sqlx::query("SELECT password FROM users WHERE id = ?")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| eprintln!("{e}"))
+            .ok()
+            .map(|record| record.get("password"));
+        password_hash
+    }
 }

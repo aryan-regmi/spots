@@ -1,15 +1,12 @@
 <script lang="ts">
-    import { getUserByUsernameQuery } from '@/api/users';
+    import { getUserByUsernameQuery, verifyPassword } from '@/api/users';
     import type { AuthContext } from '@/auth/types';
     import Column from '@/components/Column.svelte';
-    import Row from '@/components/Row.svelte';
     import type { User } from '@/user/types';
     import { getContext } from 'svelte';
     import TextField from '@/components/inputs/TextField.svelte';
     import { Button } from 'bits-ui';
-    import Card from '@/components/Card.svelte';
     import Alert from '@/components/Alert.svelte';
-    import { derived } from 'svelte/store';
 
     const { authorize } = getContext<AuthContext>('authContext');
 
@@ -20,10 +17,10 @@
     let passwordInput = $state('');
 
     /** Username input state. */
-    let usernameIsValid = $derived(true);
+    let usernameIsValid = $state(true);
 
     /** Password input state. */
-    let passwordIsValid = $derived(true);
+    let passwordIsValid = $state(true);
 
     /** Determines if the input is being validated. */
     let isValidating = $state(false);
@@ -61,6 +58,15 @@
             return;
         }
 
+        // Validate password
+        const passwordVerified = await verifyPassword(user.id, passwordInput);
+        if (!passwordVerified) {
+            passwordIsValid = false;
+            isValidating = false;
+            validationErrors = [...validationErrors, 'Incorrect password!'];
+            return;
+        }
+
         authorize(user);
     }
 </script>
@@ -80,19 +86,16 @@
                 validationErrors = [];
             }
         }}
-        variant="filled"
         required
     />
     <TextField
         class="login-page-input"
-        variant="filled"
         bind:value={passwordInput}
         invalid={!passwordIsValid}
         label="Password"
         type="password"
         required
     />
-
     <Button.Root onclick={validateAndLogin}>
         {#if isValidating}
             Logging in...
