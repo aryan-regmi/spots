@@ -15,6 +15,7 @@
     /** The action to take on [userToAuthorize]. */
     let authAction = $state<'authorize' | 'unauthorize'>(undefined);
 
+    // Authorizes/unauthorizes a user based on the [authAction].
     $effect(() => {
         let unsubscribers = [];
         if (authAction === 'authorize' && authUser) {

@@ -3,11 +3,14 @@
     import type { AuthContext } from '@/auth/types';
     import Column from '@/components/Column.svelte';
     import type { User } from '@/user/types';
-    import Button from '@smui/button';
+    import Button, { Label } from '@smui/button';
+    import { Icon } from '@smui/icon-button';
     import Card from '@smui/card';
     import Textfield from '@smui/textfield';
     import HelperText from '@smui/textfield/helper-text';
     import { getContext } from 'svelte';
+    import Row from '@/components/Row.svelte';
+    import Snackbar from '@smui/snackbar';
 
     const { authorize } = getContext<AuthContext>('authContext');
 
@@ -29,8 +32,13 @@
     /** List of validation errors. */
     let validationErrors = $state<string[]>([]);
 
-    /** Gets the user from the database for the current username input. */
+    /** The error snackbars. */
+    let errorSanckbars = $state<Snackbar[]>([]);
+
+    /** The user with the [usernameInput] username. */
     let user: User | undefined;
+
+    // Gets the user from the database for the current username input.
     $effect(() => {
         let unsub = getUserByUsernameQuery(usernameInput).subscribe((query) => {
             if (query.isSuccess) {
@@ -42,6 +50,12 @@
         };
     });
 
+    // Opens the snackbar with the
+    $effect(() => {
+        errorSanckbars.forEach((bar) => (bar ? bar.open() : null));
+    });
+
+    /** Validates the login (username and password). */
     async function validateAndLogin() {
         isValidating = true;
 
@@ -68,6 +82,12 @@
         invalid={!usernameIsValid}
         label="Username"
         required
+        onchange={() => {
+            if (!usernameIsValid) {
+                usernameIsValid = true;
+                validationErrors = [];
+            }
+        }}
     >
         {#snippet helper()}
             <HelperText>Enter username</HelperText>
@@ -96,9 +116,23 @@
     </Button>
 
     <!-- Error messages -->
-    <Column>
-        {#each validationErrors as error}
-            <Card variant="raised" class="validation-error-card">{error}</Card>
+    <Column spacing="1em" style="margin-bottom: 5em">
+        {#each validationErrors as error, i}
+            <Snackbar
+                bind:this={errorSanckbars[i]}
+                class="validation-error-card"
+            >
+                <Label>
+                    <!-- <Row> -->
+                    <Icon
+                        class="material-icons"
+                        style="vertical-align: middle; text-align: center; justify-content: center; align-items: center"
+                        >error</Icon
+                    >
+                    {error}
+                    <!-- </Row> -->
+                </Label>
+            </Snackbar>
         {/each}
     </Column>
 </Column>
@@ -127,7 +161,9 @@
         align-items: center;
     }
 
-    :global(.validation-error-card) {
-        color: red;
+    :global(.mdc-snackbar__label .mdc-snackbar) {
+        color: white;
+        background-color: rgba(200, 50, 50, 1);
+        /* padding: 1em; */
     }
 </style>
