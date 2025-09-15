@@ -8,6 +8,7 @@
         style = '',
         oninput = undefined,
         required = false,
+        invalid = false,
         label = '',
         ...restProps
     } = $props();
@@ -18,7 +19,8 @@
     const labelText = `${label}${required ? '*' : null}`;
 </script>
 
-<!-- FIXME: Change style when required! -->
+<!-- FIXME: Change style when `required` is set! -->
+<!--    - Change style when `invalid` is set! -->
 
 <Column class="container" spacing="0">
     <input
