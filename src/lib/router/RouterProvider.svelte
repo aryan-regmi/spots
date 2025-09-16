@@ -23,10 +23,10 @@
     let currentLocation = $state<string>();
 
     /** Navigates to the specified path. */
-    async function navigateTo(dest: string, replace?: boolean) {
+    async function navigateTo(dest: string, options?: { replace?: boolean }) {
         if (dest === currentLocation) return;
 
-        if (replace || window.location.pathname === dest) {
+        if (options?.replace || window.location.pathname === dest) {
             console.log('replacing');
             window.history.replaceState({ dest }, '', dest);
         } else {

@@ -79,7 +79,7 @@
 
             // Navigate to dashboard
             isValidating = false;
-            navigateTo('/dashboard', true);
+            navigateTo('/dashboard', { replace: true });
         }
     }
 

@@ -16,10 +16,10 @@
         if (!location) {
             if (isAuthenticated()) {
                 path = '/dashboard';
-                navigateTo(path, true);
+                navigateTo(path, { replace: true });
             } else {
                 path = '/login';
-                navigateTo(path, true);
+                navigateTo(path, { replace: true });
             }
         }
 
