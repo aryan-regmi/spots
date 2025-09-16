@@ -1,11 +1,11 @@
 import type { User } from '@/user/types';
-import { createMutation, createQuery } from '@tanstack/svelte-query';
+import { createQuery } from '@tanstack/svelte-query';
 import { invoke } from '@tauri-apps/api/core';
 
 /** Gets the user with the specified username from the database. */
 async function getUserByUsername(username: string): Promise<User | undefined> {
   try {
-    return await invoke<User | null>('get_user_by_username', { username });
+    return await invoke<User | undefined>('get_user_by_username', { username });
   } catch (e: any) {
     throw new Error(e);
   }
