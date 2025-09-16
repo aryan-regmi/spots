@@ -1,49 +1,40 @@
 <script lang="ts">
     import type { NavContext } from '@/router/types';
-    import { setContext } from 'svelte';
+    import { onMount, setContext } from 'svelte';
 
     const { children } = $props();
+
+    onMount(() => {
+        // Store current path on initial load
+        window.history.replaceState(
+            { path: currentLocation },
+            '',
+            currentLocation
+        );
+
+        // Handle back/forward buttons
+        window.addEventListener('popstate', (event) => {
+            const path = event.state?.path || window.location.pathname;
+            currentLocation = path;
+        });
+    });
 
     /** The current page being displayed. */
     let currentLocation = $state<string>();
 
-    /** The previous page being displayed. */
-    let previousLocation = $state<string>();
-
     /** Navigates to the specified path. */
-    async function navigateTo(dst: string, replace?: boolean) {
-        currentLocation = dst;
-        previousLocation = window.location.pathname;
+    async function navigateTo(dest: string, replace?: boolean) {
+        if (dest === currentLocation) return;
 
-        if (window.location.pathname !== dst) {
-            if (replace) {
-                console.log('Replacing');
-                window.history.replaceState(
-                    { previousLocation, currentLocation },
-                    '',
-                    currentLocation
-                );
-            } else {
-                console.log('Adding');
-                window.history.pushState(
-                    { previousLocation, currentLocation },
-                    '',
-                    currentLocation
-                );
-            }
-        }
-    }
-
-    /// Handle `back` navigation
-    window.addEventListener('popstate', (e) => {
-        if (e.state) {
-            navigateTo(e.state.previousLocation, true);
+        if (replace || window.location.pathname === dest) {
+            console.log('replacing');
+            window.history.replaceState({ dest }, '', dest);
         } else {
-            e.state.currentLocation
-                ? navigateTo(e.state.currentLocation)
-                : null;
+            console.log('pushing');
+            window.history.pushState({ dest }, '', dest);
         }
-    });
+        currentLocation = dest;
+    }
 
     // Set the navigation context.
     setContext<NavContext>('navContext', {

@@ -12,12 +12,20 @@
 
     // Route to landing page based on authentication state
     onMount(() => {
+        let path;
         if (!location) {
             if (isAuthenticated()) {
-                navigateTo('/dashboard');
+                path = '/dashboard';
+                navigateTo(path, true);
             } else {
-                navigateTo('/login');
+                path = '/login';
+                navigateTo(path, true);
             }
+        }
+
+        // Only once, set initial history state
+        if (!window.history.state || !window.history.state.path) {
+            window.history.replaceState({ path }, '', path);
         }
     });
 

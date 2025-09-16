@@ -8,6 +8,7 @@
     import { Button } from 'bits-ui';
     import { getContext } from 'svelte';
     import { getUserByUsernameQuery, verifyPassword } from '@/api/users';
+    import { preventDefault } from 'svelte/legacy';
 
     const { authorize } = getContext<AuthContext>('authContext');
     const { navigateTo } = getContext<NavContext>('navContext');
@@ -107,8 +108,12 @@
     </Button.Root>
 
     <!-- Navigate to `Sign up` -->
-    <Button.Root href="#" onclick={async () => await navigateTo('/signup')}
-        >Sign up</Button.Root
+    <Button.Root
+        href="#"
+        onclick={async (e) => {
+            e.preventDefault();
+            await navigateTo('/signup');
+        }}>Sign up</Button.Root
     >
 
     <!-- Error messages -->
