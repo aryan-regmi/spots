@@ -2,8 +2,8 @@ import type { Component } from 'svelte';
 
 /** The navigation context. */
 export type NavContext = {
-  navigateTo: (path: string) => Promise<void>;
-  getLocation: () => string;
+  navigateTo: (path: string, replace?: boolean) => Promise<void>;
+  getLocation: () => string | undefined;
   setLocation: (path: string) => Promise<void>;
 };
 

@@ -8,18 +8,26 @@
     let { routes }: { routes: Route[] } = $props();
 
     // Get the navigation context.
-    let { getLocation, setLocation } = getContext<NavContext>('navContext');
+    let { getLocation, navigateTo } = getContext<NavContext>('navContext');
 
     // Route to landing page based on authentication state
-    onMount(async () => {
+    onMount(() => {
         if (!location) {
-            console.log(isAuthenticated());
             if (isAuthenticated()) {
-                setLocation('/dashboard');
+                navigateTo('/dashboard', true);
             } else {
-                setLocation('/login');
+                navigateTo('/login', true);
             }
         }
+
+        // if (!window.history.state) {
+        window.history.replaceState(
+            { path: window.location.pathname },
+            '',
+            window.location.pathname
+        );
+        console.log('Initial history state set:', window.history.state);
+        // }
     });
 
     /** The current path. */
