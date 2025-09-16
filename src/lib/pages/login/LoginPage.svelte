@@ -1,14 +1,16 @@
 <script lang="ts">
-    import { getUserByUsernameQuery, verifyPassword } from '@/api/users';
-    import type { AuthContext } from '@/auth/types';
-    import Column from '@/components/Column.svelte';
-    import type { User } from '@/user/types';
-    import { getContext } from 'svelte';
-    import TextField from '@/components/inputs/TextField.svelte';
-    import { Button } from 'bits-ui';
     import Alert from '@/components/Alert.svelte';
+    import Column from '@/components/Column.svelte';
+    import TextField from '@/components/inputs/TextField.svelte';
+    import type { AuthContext } from '@/auth/types';
+    import type { NavContext } from '../types';
+    import type { User } from '@/user/types';
+    import { Button } from 'bits-ui';
+    import { getContext } from 'svelte';
+    import { getUserByUsernameQuery, verifyPassword } from '@/api/users';
 
     const { authorize } = getContext<AuthContext>('authContext');
+    const { navigateTo } = getContext<NavContext>('navContext');
 
     /** Username input. */
     let usernameInput = $state('');
@@ -103,6 +105,11 @@
             Login
         {/if}
     </Button.Root>
+
+    <!-- Navigate to `Sign up` -->
+    <Button.Root href="#" onclick={async () => await navigateTo('SignupPage')}
+        >Sign up</Button.Root
+    >
 
     <!-- Error messages -->
     <Column spacing="1em" style="margin-bottom: 5em">
