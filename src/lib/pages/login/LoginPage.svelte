@@ -3,7 +3,7 @@
     import Column from '@/components/Column.svelte';
     import TextField from '@/components/inputs/TextField.svelte';
     import type { AuthContext } from '@/auth/types';
-    import type { NavContext } from '../types';
+    import type { NavContext } from '@/router/types';
     import type { User } from '@/user/types';
     import { Button } from 'bits-ui';
     import { getContext } from 'svelte';
@@ -107,7 +107,7 @@
     </Button.Root>
 
     <!-- Navigate to `Sign up` -->
-    <Button.Root href="#" onclick={async () => await navigateTo('SignupPage')}
+    <Button.Root href="#" onclick={async () => await navigateTo('/signup')}
         >Sign up</Button.Root
     >
 
