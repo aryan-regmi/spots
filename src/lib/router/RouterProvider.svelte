@@ -15,29 +15,34 @@
         currentLocation = dst;
         previousLocation = window.location.pathname;
 
-        if (replace || window.location.pathname === dst) {
-            console.log('Replacing history');
-            window.history.replaceState(
-                { previous: previousLocation },
-                '',
-                currentLocation
-            );
-        } else {
-            console.log('Adding to history');
-            window.history.pushState(
-                { previous: previousLocation },
-                '',
-                currentLocation
-            );
+        if (window.location.pathname !== dst) {
+            if (replace) {
+                console.log('Replacing');
+                window.history.replaceState(
+                    { previousLocation, currentLocation },
+                    '',
+                    currentLocation
+                );
+            } else {
+                console.log('Adding');
+                window.history.pushState(
+                    { previousLocation, currentLocation },
+                    '',
+                    currentLocation
+                );
+            }
         }
     }
 
     /// Handle `back` navigation
     window.addEventListener('popstate', (e) => {
         if (e.state) {
-            navigateTo(e.state.previous);
+            navigateTo(e.state.previousLocation, true);
+        } else {
+            e.state.currentLocation
+                ? navigateTo(e.state.currentLocation)
+                : null;
         }
-        // currentLocation = e.state ? e.state.path : currentLocation;
     });
 
     // Set the navigation context.

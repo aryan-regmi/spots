@@ -14,20 +14,11 @@
     onMount(() => {
         if (!location) {
             if (isAuthenticated()) {
-                navigateTo('/dashboard', true);
+                navigateTo('/dashboard');
             } else {
-                navigateTo('/login', true);
+                navigateTo('/login');
             }
         }
-
-        // if (!window.history.state) {
-        window.history.replaceState(
-            { path: window.location.pathname },
-            '',
-            window.location.pathname
-        );
-        console.log('Initial history state set:', window.history.state);
-        // }
     });
 
     /** The current path. */
