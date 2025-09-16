@@ -4,6 +4,7 @@ use crate::database::Database;
 
 mod commands;
 mod database;
+mod network;
 mod user;
 
 pub type Result<T> = anyhow::Result<T>;
@@ -48,6 +49,8 @@ pub fn run() {
             commands::users::get_user_by_username,
             commands::users::hash_password,
             commands::users::verify_password,
+            commands::users::insert_user,
+            commands::network::create_new_endpoint,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

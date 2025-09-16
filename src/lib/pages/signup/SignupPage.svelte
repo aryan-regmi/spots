@@ -7,10 +7,16 @@
     import type { User } from '@/user/types';
     import { Button } from 'bits-ui';
     import { getContext } from 'svelte';
-    import { getUserByUsernameQuery, hashPassword } from '@/api/users';
+    import {
+        getUserByUsernameQuery,
+        hashPassword,
+        insertUserMutation,
+    } from '@/api/users';
+    import type { QueryClient } from '@tanstack/svelte-query';
 
     const { authorize } = getContext<AuthContext>('authContext');
     const { navigateTo } = getContext<NavContext>('navContext');
+    const queryClient = getContext<QueryClient>('queryClient');
 
     /** Username input. */
     let usernameInput = $state('');
@@ -36,15 +42,40 @@
     /** The user with the [usernameInput] username. */
     let user: User | undefined;
 
-    // Gets the user from the database for the current username input.
+    /** Determines if the user should be inserted. */
+    let insertUser = $state(true);
+
+    /** The ID for the inserted user. */
+    let insertedUserId = $state<number>();
+
     $effect(() => {
-        let unsub = getUserByUsernameQuery(usernameInput).subscribe((query) => {
-            if (query.isSuccess) {
-                user = query.data;
-            }
-        });
+        let unsubs = [];
+
+        // Gets the user from the database for the current username input.
+        unsubs.push(
+            getUserByUsernameQuery(usernameInput).subscribe((query) => {
+                if (query.isSuccess) {
+                    user = query.data;
+                }
+            })
+        );
+
+        // Inserts a user into the database
+        if (insertUser) {
+            unsubs.push(
+                insertUserMutation(queryClient).subscribe(
+                    async ({ mutateAsync }) => {
+                        insertedUserId = await mutateAsync({
+                            username: usernameInput,
+                            password: passwordInput,
+                        });
+                    }
+                )
+            );
+        }
+
         return () => {
-            unsub();
+            unsubs.forEach((unsub) => unsub());
         };
     });
 
@@ -70,7 +101,8 @@
             // Hash password
             const hashedPassword = await hashPassword(passwordInput);
 
-            // TODO: Save user to database
+            // Save user to database
+            insertUser = true;
 
             // Authenticate session
             await authorize(user!);

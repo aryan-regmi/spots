@@ -1,4 +1,5 @@
 mod auth;
+mod network;
 mod users;
 
 use sqlx::{

@@ -1,5 +1,9 @@
 import type { User } from '@/user/types';
-import { createQuery } from '@tanstack/svelte-query';
+import {
+  createMutation,
+  createQuery,
+  QueryClient,
+} from '@tanstack/svelte-query';
 import { invoke } from '@tauri-apps/api/core';
 
 /** Gets the user with the specified username from the database. */
@@ -39,4 +43,24 @@ export async function verifyPassword(userId: number, password: string) {
   } catch (e: any) {
     throw new Error(e);
   }
+}
+
+/** Inserts a new user into the database. */
+async function insertUser(username: string, password: string) {
+  try {
+    return await invoke<number>('insert_user', { username, password });
+  } catch (e: any) {
+    throw new Error(e);
+  }
+}
+
+/** Mutation to insert a new user into the database. */
+export function insertUserMutation(queryClient: QueryClient) {
+  return createMutation({
+    mutationKey: ['insertUser'],
+    mutationFn: (user: { username: string; password: string }) =>
+      insertUser(user.username, user.password),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['getUserByUsername'] }),
+  });
 }

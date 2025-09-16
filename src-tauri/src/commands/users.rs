@@ -39,3 +39,16 @@ pub async fn verify_password(
         Ok(false)
     }
 }
+
+/// Inserts a new user into the database.
+#[tauri::command]
+pub async fn insert_user(
+    database: DatabaseState<'_>,
+    username: String,
+    password: String,
+) -> StringResult<i64> {
+    database
+        .insert_user(username, password)
+        .await
+        .map_err(|e| e.to_string())
+}

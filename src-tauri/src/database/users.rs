@@ -1,4 +1,4 @@
-use crate::{database::Database, user::User};
+use crate::{database::Database, user::User, Result};
 use sqlx::Row;
 
 impl Database {
@@ -28,5 +28,15 @@ impl Database {
             .ok()
             .map(|record| record.get("password"));
         password_hash
+    }
+
+    /// Inserts the given user into the database, and returns the id of the inserted record.
+    pub async fn insert_user(&self, username: String, password: String) -> Result<i64> {
+        let result = sqlx::query("INSERT INTO users (username, password) VALUES (?, ?)")
+            .bind(username)
+            .bind(password)
+            .execute(&self.pool)
+            .await?;
+        Ok(result.last_insert_rowid())
     }
 }
