@@ -6,22 +6,20 @@
 
   let { routes }: { routes: Route[] } = $props();
 
-  const {
-    authState: { isAuthenticated },
-  } = getContext<AuthContext>('authContext');
+  let { authUser, isAuthenticated, isLoading } =
+    getContext<AuthContext>('authContext');
   const { getLocation, navigateTo } = getContext<NavContext>('navContext');
 
   // Route to landing page based on authentication state
-  onMount(() => {
+  $effect(() => {
     let path;
-    if (!location) {
-      if (isAuthenticated) {
+    if (!location && !isLoading()) {
+      if (isAuthenticated()) {
         path = '/dashboard';
-        navigateTo(path, { replace: true });
       } else {
         path = '/login';
-        navigateTo(path, { replace: true });
       }
+      navigateTo(path, { replace: true });
     }
 
     // Only once, set initial history state
@@ -40,7 +38,11 @@
   });
 </script>
 
-<svelte:boundary>
-  {@const Component = currentComponent}
-  <Component />
-</svelte:boundary>
+{#if isLoading()}
+  <LoadingPage />
+{:else}
+  <svelte:boundary>
+    {@const Component = currentComponent}
+    <Component />
+  </svelte:boundary>
+{/if}

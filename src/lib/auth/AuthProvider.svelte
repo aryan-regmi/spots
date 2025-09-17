@@ -1,43 +1,57 @@
 <script lang="ts">
   import type { User } from '@/user/types';
   import { setContext } from 'svelte';
-  import type { AuthContext, AuthState } from './types';
+  import type { AuthContext } from './types';
   import { getAuthUser, removeAuthUser, setAuthUser } from '@/api/auth';
 
   let { children } = $props();
 
   /** Currently authenticated user. */
-  let authState = $state<AuthState>({
-    user: undefined,
-    isAuthenticated: false,
-  });
+  let authUser = $state<User>();
+
+  /** Determines if the current session is authenticated. */
+  // let isAuthenticated = $derived(authUser !== undefined);
+  let isAuthenticated = $state<boolean>();
 
   // Gets the authenticated user from the database.
-  $effect(() => {
+  $effect.pre(() => {
     getAuthUser().then((user) => {
-      user ? (authState.user = user) : null;
+      if (user) {
+        authUser = user;
+        isAuthenticated = true;
+      } else {
+        isAuthenticated = false;
+      }
     });
   });
 
   /** Authenticates the specified user. */
   async function authorize(user: User) {
-    authState.user = user;
-    authState.isAuthenticated = true;
+    authUser = user;
+    isAuthenticated = true;
     await setAuthUser(user);
   }
 
   /** Unauthenticates the specified user. */
   async function unauthorize() {
-    if (authState.user) {
-      authState.user = undefined;
-      authState.isAuthenticated = false;
+    if (authUser) {
+      authUser = undefined;
+      isAuthenticated = false;
       await removeAuthUser();
     }
   }
 
   // Sets the auth context to be used by other components
   setContext<AuthContext>('authContext', {
-    authState,
+    authUser: () => {
+      return authUser;
+    },
+    isAuthenticated: () => {
+      return isAuthenticated;
+    },
+    isLoading: () => {
+      return isAuthenticated === undefined;
+    },
     authorize,
     unauthorize,
   });
