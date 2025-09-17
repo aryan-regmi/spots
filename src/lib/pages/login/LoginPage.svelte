@@ -8,6 +8,7 @@
   import { getContext } from 'svelte';
   import { getUserByUsername, verifyPassword } from '@/api/users';
   import { toCssString } from '@/utils/cssHelpers';
+  import AlertBox from '@/components/AlertBox.svelte';
 
   const { authorize } = getContext<AuthContext>('authContext');
   const { navigateTo } = getContext<NavContext>('navContext');
@@ -115,22 +116,16 @@
     }}>Sign up</Button.Root
   >
 
-  <!-- FIXME: Make ErrorMessages component! -->
-  <!--  => The entire <div> is `position: absolute` -->
-  <!--  => The errors themselves are `position: relative` -->
-
   <!-- Error messages -->
-  <Column spacing="1em" style="margin-bottom: 5em">
-    {#each uniqueErrors as error, i}
-      <Alert
-        level="error"
-        style="transform: translateX(-9em) translateY({i *
-          3.5}em); {alertStyle}"
-      >
-        {error}</Alert
-      >
-    {/each}
-  </Column>
+  <AlertBox
+    style="transform: translateY(23em);"
+    alerts={uniqueErrors.map((text) => {
+      return {
+        level: 'error',
+        text,
+      };
+    })}
+  />
 </Column>
 
 <style>
