@@ -4,8 +4,8 @@ import LoginPage from '@/pages/login/LoginPage.svelte';
 import SignupPage from '@/pages/signup/SignupPage.svelte';
 
 export const routes: Route[] = [
-  { path: '/dashboard', component: DashboardPage },
-  { path: '/login', component: LoginPage },
   { path: '/', component: LoginPage },
+  { path: '/login', component: LoginPage },
   { path: '/signup', component: SignupPage },
+  { path: '/dashboard', component: DashboardPage },
 ];

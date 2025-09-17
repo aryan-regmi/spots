@@ -1,5 +1,5 @@
 <div>
   Dashboard!
 
-  <button onclick={() => {}}>Back</button>
+  <button onclick={() => {}}>Log out</button>
 </div>
