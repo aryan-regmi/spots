@@ -36,7 +36,6 @@
 
   /** Style for the validation alerts. */
   const alertStyle = toCssString({
-    position: 'absolute',
     width: '15em',
   });
 
@@ -83,13 +82,13 @@
     label="Username"
     bind:value={usernameState.input}
     invalid={!usernameState.isValid}
+    required
     oninput={() => {
       if (!usernameState.isValid) {
         usernameState.isValid = true;
         validationErrors = [];
       }
     }}
-    required
   />
   <TextField
     class="login-page-input"
@@ -98,6 +97,12 @@
     label="Password"
     type="password"
     required
+    oninput={() => {
+      if (!passwordState.isValid) {
+        passwordState.isValid = true;
+        validationErrors = [];
+      }
+    }}
   />
   <Button.Root onclick={validateAndLogin}>
     {#if isValidating}
@@ -118,13 +123,12 @@
 
   <!-- Error messages -->
   <AlertBox
-    style="transform: translateY(23em);"
-    alerts={uniqueErrors.map((text) => {
-      return {
-        level: 'error',
-        text,
-      };
-    })}
+    style="transform: translateY(22em);"
+    {alertStyle}
+    alerts={uniqueErrors.map((text) => ({
+      level: 'error',
+      text,
+    }))}
   />
 </Column>
 

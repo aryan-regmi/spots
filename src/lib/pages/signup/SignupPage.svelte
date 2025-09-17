@@ -9,6 +9,7 @@
   import { getContext } from 'svelte';
   import { getUserByUsername, hashPassword, insertUser } from '@/api/users';
   import { toCssString } from '@/utils/cssHelpers';
+  import AlertBox from '@/components/AlertBox.svelte';
 
   const { authorize } = getContext<AuthContext>('authContext');
   const { navigateTo } = getContext<NavContext>('navContext');
@@ -36,7 +37,6 @@
 
   /** Style for the validation alerts. */
   const alertStyle = toCssString({
-    position: 'absolute',
     width: '15em',
   });
 
@@ -148,15 +148,14 @@
   </Button.Root>
 
   <!-- Error messages -->
-  <Column spacing="1em" style="margin-bottom: 5em">
-    {#each uniqueErrors as error, i}
-      <Alert
-        level="error"
-        style="transform: translateX(-9em) translateY({i *
-          3.5}em); {alertStyle}">{error}</Alert
-      >
-    {/each}
-  </Column>
+  <AlertBox
+    style="transform: translateY(21em);"
+    {alertStyle}
+    alerts={uniqueErrors.map((text) => ({
+      level: 'error',
+      text,
+    }))}
+  />
 </Column>
 
 <style>
