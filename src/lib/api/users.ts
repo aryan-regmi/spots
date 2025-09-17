@@ -1,30 +1,5 @@
 import type { User } from '@/user/types';
-import {
-  createMutation,
-  createQuery,
-  QueryClient,
-} from '@tanstack/svelte-query';
 import { invoke } from '@tauri-apps/api/core';
-
-/** Gets the user with the specified username from the database. */
-async function getUserByUsername(username: string): Promise<User | undefined> {
-  try {
-    return await invoke<User | undefined>('get_user_by_username', {
-      username,
-    });
-  } catch (e: any) {
-    throw new Error(e);
-  }
-}
-
-/** Query to get the user associated with the specified username. */
-export function getUserByUsernameQuery(username: string) {
-  return createQuery({
-    queryKey: ['getUserByUsername', username],
-    queryFn: async () => await getUserByUsername(username),
-    enabled: username.trim() !== '',
-  });
-}
 
 /** Hashes the given password. */
 export async function hashPassword(password: string) {
@@ -48,21 +23,30 @@ export async function verifyPassword(userId: number, password: string) {
 }
 
 /** Inserts a new user into the database. */
-async function insertUser(username: string, password: string) {
+export async function insertUser(username: string, password: string) {
   try {
-    return await invoke<number>('insert_user', { username, password });
+    return await invoke<User>('insert_user', { username, password });
   } catch (e: any) {
     throw new Error(e);
   }
 }
 
-/** Mutation to insert a new user into the database. */
-export function insertUserMutation(queryClient: QueryClient) {
-  return createMutation({
-    mutationKey: ['insertUser'],
-    mutationFn: (user: { username: string; password: string }) =>
-      insertUser(user.username, user.password),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['getUserByUsername'] }),
-  });
+/** Gets the user with the specified username from the database. */
+export async function getUserByUsername(username: string) {
+  try {
+    return await invoke<User | undefined>('get_user_by_username', {
+      username,
+    });
+  } catch (e: any) {
+    throw new Error(e);
+  }
+}
+
+/** Gets the user with the specified ID from the database. */
+export async function getUserById(id: number) {
+  try {
+    return await invoke<User | undefined>('get_user_by_id', { id });
+  } catch (e: any) {
+    throw new Error(e);
+  }
 }

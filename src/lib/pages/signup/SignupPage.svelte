@@ -4,21 +4,13 @@
   import TextField from '@/components/inputs/TextField.svelte';
   import type { AuthContext } from '@/auth/types';
   import type { NavContext } from '@/router/types';
-  import type { User } from '@/user/types';
   import { Button } from 'bits-ui';
+  import { createEndpoint } from '@/api/network';
   import { getContext } from 'svelte';
-  import {
-    getUserByUsernameQuery,
-    hashPassword,
-    insertUserMutation,
-  } from '@/api/users';
-  import type { MutationStatus, QueryClient } from '@tanstack/svelte-query';
-  import { createEndpointMutation } from '@/api/network';
-  import { type Unsubscriber } from 'svelte/store';
+  import { getUserByUsername, hashPassword, insertUser } from '@/api/users';
 
   const { authorize } = getContext<AuthContext>('authContext');
   const { navigateTo } = getContext<NavContext>('navContext');
-  const queryClient = getContext<QueryClient>('queryClient');
 
   /** Username input. */
   let usernameInput = $state('');
@@ -41,106 +33,14 @@
   /** Deduplicated version of [validationErrors]. */
   let uniqueErrors = $derived([...new Set(validationErrors)]);
 
-  /** The user with the [usernameInput] username. */
-  let user = $state<User>();
-
-  /** Determines if the user should be inserted. */
-  let insertUserAction = $state({ insert: false, isInserting: false });
-
-  /** The status of the [insertUserMutation]. */
-  let insertUserMutationStatus = $state<MutationStatus>();
-
-  /** ID for the inserted user. */
-  let insertedUserId = $state<number>();
-
-  /** The hashed password input. */
-  let hashedPassword = $state<string>();
-
-  /** Determines if a network endpoint should be created for the user. */
-  let createEndpointAction = $state({ create: false, isCreating: false });
-
-  /** The status of the [createEndpointMutation]. */
-  let createEndpointMutationStatus = $state<MutationStatus>();
-
-  // Gets the [user] from the database for the current username input.
-  $effect(() => {
-    const unsub = getUserByUsernameQuery(usernameInput).subscribe((query) => {
-      if (query.isSuccess) {
-        user = query.data;
-      }
-    });
-
-    return () => unsub();
-  });
-
-  // Inserts the [user] into the database.
-  $effect(() => {
-    let unsub: Unsubscriber = () => {};
-
-    if (insertUserAction.insert && !insertUserAction.isInserting) {
-      insertUserAction.isInserting = true;
-
-      unsub = insertUserMutation(queryClient).subscribe(async (mutation) => {
-        console.log('Inserting user...');
-
-        // Insert the user
-        insertedUserId = await mutation.mutateAsync({
-          username: usernameInput,
-          password: hashedPassword!,
-        });
-
-        insertUserMutationStatus = mutation.status;
-
-        // Trigger endpoint creation only if user is successfully inserted
-        console.log(insertUserMutationStatus);
-        console.log(mutation.status);
-        if (insertUserMutationStatus === 'success') {
-          console.log('User Inserted!');
-          insertUserAction.isInserting = false;
-          createEndpointAction.create = true;
-        }
-      });
-    }
-
-    return () => unsub();
-  });
-
-  // Creates an endpoint for the inserted user.
-  $effect(() => {
-    let unsub: Unsubscriber = () => {};
-
-    if (
-      createEndpointAction.create &&
-      insertedUserId &&
-      !createEndpointAction.isCreating
-    ) {
-      createEndpointAction.isCreating = true;
-
-      unsub = createEndpointMutation().subscribe(async (mutation) => {
-        console.log('Creating endpoint...');
-        createEndpointMutationStatus = mutation.status;
-
-        // Create the endpoint
-        await mutation.mutateAsync(insertedUserId!);
-
-        // Authorize and navigate to their dashboard after endpoint creation
-        if (createEndpointMutationStatus === 'success') {
-          console.log('Endpoint created!');
-          createEndpointAction.isCreating = false;
-          await authorize(user!);
-          await navigateTo('/dashboard', { replace: true });
-        }
-      });
-    }
-
-    return () => unsub();
-  });
-
+  // FIXME: Validate username same way as password: check for spaces, unallowed characters, etc
+  //
   /** Validates the login (username and password). */
   async function validateAndLogin() {
     isValidating = true;
 
     // Username is invalid if there is already a user in the database
+    const user = await getUserByUsername(usernameInput);
     if (user) {
       usernameIsValid = false;
       validationErrors.push('Username already exists!');
@@ -156,10 +56,17 @@
       passwordIsValid = true;
 
       // Hash password
-      hashedPassword = await hashPassword(passwordInput);
+      const hashedPassword = await hashPassword(passwordInput);
 
-      // Trigger to insert user to database.
-      insertUserAction.insert = true;
+      // Save user to database
+      const newUser = await insertUser(usernameInput, hashedPassword);
+
+      // Create network endpoint
+      await createEndpoint(newUser.id);
+
+      // Authorize and redirect to dashboard
+      await authorize(newUser);
+      await navigateTo('/dashboard', { replace: true });
     }
     isValidating = false;
   }

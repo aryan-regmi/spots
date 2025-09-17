@@ -3,15 +3,6 @@ use rand::rngs::OsRng;
 
 use crate::{commands::DatabaseState, user::User, StringResult};
 
-/// Gets the user with the specified username from the database.
-#[tauri::command]
-pub async fn get_user_by_username(
-    database: DatabaseState<'_>,
-    username: String,
-) -> StringResult<Option<User>> {
-    Ok(database.get_user_by_username(&username).await)
-}
-
 /// Hashes the given password.
 #[tauri::command]
 pub fn hash_password(password: String) -> StringResult<String> {
@@ -46,9 +37,25 @@ pub async fn insert_user(
     database: DatabaseState<'_>,
     username: String,
     password: String,
-) -> StringResult<i64> {
-    database
-        .insert_user(username, password)
+) -> StringResult<User> {
+    let id = database
+        .insert_user(&username, &password)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    Ok(User { id, username })
+}
+
+/// Gets the user with the specified username from the database.
+#[tauri::command]
+pub async fn get_user_by_username(
+    database: DatabaseState<'_>,
+    username: String,
+) -> StringResult<Option<User>> {
+    Ok(database.get_user_by_username(&username).await)
+}
+
+/// Gets the user with the specified ID from the database.
+#[tauri::command]
+pub async fn get_user_by_id(database: DatabaseState<'_>, id: i64) -> StringResult<Option<User>> {
+    Ok(database.get_user_by_id(id).await)
 }

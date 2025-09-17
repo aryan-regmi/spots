@@ -1,63 +1,43 @@
 <script lang="ts">
   import type { User } from '@/user/types';
   import { setContext } from 'svelte';
-  import type { AuthContext } from './types';
-  import { removeAuthUserMutation, setAuthUserMutation } from '@/api/auth';
+  import type { AuthContext, AuthState } from './types';
+  import { getAuthUser, removeAuthUser, setAuthUser } from '@/api/auth';
 
-  let { children, queryClient } = $props();
+  let { children } = $props();
 
   /** Currently authenticated user. */
-  let authUser = $state<User>();
+  let authState = $state<AuthState>({
+    user: undefined,
+    isAuthenticated: false,
+  });
 
-  /** Determines if the current session is authenticated. */
-  const isAuthenticated = $derived(authUser !== undefined);
-
-  /** The action to take on [userToAuthorize]. */
-  let authAction = $state<'authorize' | 'unauthorize'>();
-
-  // Authorizes/unauthorizes a user based on the [authAction].
+  // Gets the authenticated user from the database.
   $effect(() => {
-    let unsubscribers = [];
-    if (authAction === 'authorize' && authUser) {
-      unsubscribers.push(
-        setAuthUserMutation(queryClient).subscribe(async ({ mutateAsync }) =>
-          mutateAsync(authUser!)
-        )
-      );
-      console.info('User authorized: ', authUser);
-    } else if (authAction === 'unauthorize') {
-      unsubscribers.push(
-        removeAuthUserMutation(queryClient).subscribe(async ({ mutateAsync }) =>
-          mutateAsync()
-        )
-      );
-      console.info('User unauthorized');
-    }
-
-    return () => {
-      unsubscribers.forEach((f) => f());
-      authAction = undefined;
-    };
+    getAuthUser().then((user) => {
+      user ? (authState.user = user) : null;
+    });
   });
 
   /** Authenticates the specified user. */
   async function authorize(user: User) {
-    authUser = user;
-    authAction = 'authorize';
+    authState.user = user;
+    authState.isAuthenticated = true;
+    await setAuthUser(user);
   }
 
   /** Unauthenticates the specified user. */
   async function unauthorize() {
-    if (authUser) {
-      authUser = undefined;
-      authAction = 'unauthorize';
+    if (authState.user) {
+      authState.user = undefined;
+      authState.isAuthenticated = false;
+      await removeAuthUser();
     }
   }
 
   // Sets the auth context to be used by other components
   setContext<AuthContext>('authContext', {
-    authUser: () => authUser,
-    isAuthenticated: () => isAuthenticated,
+    authState,
     authorize,
     unauthorize,
   });

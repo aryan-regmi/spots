@@ -15,7 +15,6 @@
         "vite": "^7.1.2"
     },
     "dependencies": {
-        "@tanstack/svelte-query": "^5.87.4",
         "@tauri-apps/api": "^2.8.0",
         "bits-ui": "^2.9.8"
     }
