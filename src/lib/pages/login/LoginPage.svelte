@@ -11,17 +11,17 @@
   const { authorize } = getContext<AuthContext>('authContext');
   const { navigateTo } = getContext<NavContext>('navContext');
 
-  /** Username input. */
-  let usernameInput = $state('');
+  /** State of the username input. */
+  let usernameState = $state({
+    input: '',
+    isValid: true,
+  });
 
-  /** Username input. */
-  let passwordInput = $state('');
-
-  /** Username input state. */
-  let usernameIsValid = $state(true);
-
-  /** Password input state. */
-  let passwordIsValid = $state(true);
+  /** State of the password input. */
+  let passwordState = $state({
+    input: '',
+    isValid: true,
+  });
 
   /** Determines if the input is being validated. */
   let isValidating = $state(false);
@@ -37,18 +37,18 @@
     isValidating = true;
 
     // Validate username
-    const user = await getUserByUsername(usernameInput);
+    const user = await getUserByUsername(usernameState.input);
     if (!user) {
-      usernameIsValid = false;
+      usernameState.isValid = false;
       isValidating = false;
       validationErrors = [...validationErrors, 'Username not found!'];
       return;
     }
 
     // Validate password
-    const passwordVerified = await verifyPassword(user.id, passwordInput);
+    const passwordVerified = await verifyPassword(user.id, passwordState.input);
     if (!passwordVerified) {
-      passwordIsValid = false;
+      passwordState.isValid = false;
       isValidating = false;
       validationErrors = [...validationErrors, 'Incorrect password!'];
       return;
@@ -65,11 +65,11 @@
   <TextField
     class="login-page-input"
     label="Username"
-    bind:value={usernameInput}
-    invalid={!usernameIsValid}
+    bind:value={usernameState.input}
+    invalid={!usernameState.isValid}
     oninput={() => {
-      if (!usernameIsValid) {
-        usernameIsValid = true;
+      if (!usernameState.isValid) {
+        usernameState.isValid = true;
         validationErrors = [];
       }
     }}
@@ -77,8 +77,8 @@
   />
   <TextField
     class="login-page-input"
-    bind:value={passwordInput}
-    invalid={!passwordIsValid}
+    bind:value={passwordState.input}
+    invalid={!passwordState.isValid}
     label="Password"
     type="password"
     required

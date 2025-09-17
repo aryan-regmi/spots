@@ -12,17 +12,17 @@
   const { authorize } = getContext<AuthContext>('authContext');
   const { navigateTo } = getContext<NavContext>('navContext');
 
-  /** Username input. */
-  let usernameInput = $state('');
+  /** State of the username input. */
+  let usernameState = $state({
+    input: '',
+    isValid: true,
+  });
 
-  /** Username input. */
-  let passwordInput = $state('');
-
-  /** Username input state. */
-  let usernameIsValid = $state(true);
-
-  /** Password input state. */
-  let passwordIsValid = $state(true);
+  /** State of the password input. */
+  let passwordState = $state({
+    input: '',
+    isValid: true,
+  });
 
   /** Determines if the input is being validated. */
   let isValidating = $state(false);
@@ -40,26 +40,26 @@
     isValidating = true;
 
     // Username is invalid if there is already a user in the database
-    const user = await getUserByUsername(usernameInput);
+    const user = await getUserByUsername(usernameState.input);
     if (user) {
-      usernameIsValid = false;
+      usernameState.isValid = false;
       validationErrors.push('Username already exists!');
       isValidating = false;
       return;
     }
 
     // Validate password
-    const validatedPassword = validatePassword(passwordInput);
+    const validatedPassword = validatePassword(passwordState.input);
 
-    if (usernameIsValid && validatedPassword) {
-      usernameIsValid = true;
-      passwordIsValid = true;
+    if (usernameState.isValid && validatedPassword) {
+      usernameState.isValid = true;
+      passwordState.isValid = true;
 
       // Hash password
-      const hashedPassword = await hashPassword(passwordInput);
+      const hashedPassword = await hashPassword(passwordState.input);
 
       // Save user to database
-      const newUser = await insertUser(usernameInput, hashedPassword);
+      const newUser = await insertUser(usernameState.input, hashedPassword);
 
       // Create network endpoint
       await createEndpoint(newUser.id);
@@ -76,7 +76,7 @@
     let validLen = password.length >= 8;
     if (!validLen) {
       isValidating = false;
-      passwordIsValid = false;
+      passwordState.isValid = false;
       validationErrors.push('The password must be at least 8 characters long!');
       return false;
     }
@@ -84,7 +84,7 @@
     let validSymbols = password.match('^(?=.*[!@#$%^*()_+=]).*$');
     if (!validSymbols || validSymbols.length == 0) {
       isValidating = false;
-      passwordIsValid = false;
+      passwordState.isValid = false;
       validationErrors.push(
         'The password must contain at least one symbol/special character!'
       );
@@ -102,23 +102,29 @@
   <TextField
     class="login-page-input"
     label="Username"
-    bind:value={usernameInput}
-    invalid={!usernameIsValid}
+    bind:value={usernameState.input}
+    invalid={!usernameState.isValid}
+    required
     oninput={() => {
-      if (!usernameIsValid) {
-        usernameIsValid = true;
+      if (!usernameState.isValid) {
+        usernameState.isValid = true;
         validationErrors = [];
       }
     }}
-    required
   />
   <TextField
     class="login-page-input"
-    bind:value={passwordInput}
-    invalid={!passwordIsValid}
     label="Password"
     type="password"
+    bind:value={passwordState.input}
+    invalid={!passwordState.isValid}
     required
+    oninput={() => {
+      if (!passwordState.isValid) {
+        passwordState.isValid = true;
+        validationErrors = [];
+      }
+    }}
   />
   <Button.Root onclick={validateAndLogin}>
     {#if isValidating}
