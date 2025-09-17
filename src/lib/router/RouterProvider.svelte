@@ -1,18 +1,23 @@
 <script lang="ts">
   import type { NavContext } from '@/router/types';
-  import { onMount, setContext } from 'svelte';
+  import { setContext } from 'svelte';
 
   const { children } = $props();
 
-  onMount(() => {
+  $effect(() => {
     // Store current path on initial load
     window.history.replaceState({ path: currentLocation }, '', currentLocation);
 
     // Handle back/forward buttons
-    window.addEventListener('popstate', (event) => {
+    const handlePopstate = (event: PopStateEvent) => {
       const path = event.state?.path || window.location.pathname;
       currentLocation = path;
-    });
+    };
+    window.addEventListener('popstate', handlePopstate);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopstate);
+    };
   });
 
   /** The current page being displayed. */
@@ -22,10 +27,11 @@
   async function navigateTo(dest: string, options?: { replace?: boolean }) {
     if (dest === currentLocation) return;
 
-    if (options?.replace || window.location.pathname === dest) {
-      window.history.replaceState({ dest }, '', dest);
+    if (options?.replace) {
+      window.history.replaceState({ path: dest }, '', dest);
+      window.history.pushState({ path: dest }, '', dest);
     } else {
-      window.history.pushState({ dest }, '', dest);
+      window.history.pushState({ path: dest }, '', dest);
     }
     currentLocation = dest;
   }
