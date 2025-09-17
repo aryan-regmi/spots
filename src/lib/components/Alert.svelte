@@ -16,64 +16,56 @@
     children,
   }: Props = $props();
 
-  const classes = $derived.by(() => {
-    switch (level) {
-      case 'basic':
-        return `alert ${className}`;
-      case 'warning':
-        return `alert warning ${className}`;
-      case 'error':
-        return `alert error ${className}`;
-    }
+  const cardStyles = $state({
+    margin: 0,
+    padding: '0.5em 1.5em',
+    justifyContent: 'center',
+    backgroundColor: '',
+    color: '',
+    border: '1px ridge white',
+    borderColor: '',
   });
 
-  const styles = $derived.by(() => {
+  // Updates the styles based on the alert level.
+  $effect(() => {
     switch (level) {
       case 'basic':
-        return `background-color: rgba(255, 255, 255, 0.5); ${style}`;
+        cardStyles.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+        cardStyles.color = 'rgba(200, 200, 200, 1)';
+        cardStyles.borderColor = 'rgba(255, 226, 183, 0.8)';
       case 'warning':
-        return `background-color: rgba(110, 110, 30, 0.3); ${style}`;
+        cardStyles.backgroundColor = 'rgba(110, 110, 30, 0.3)';
+        cardStyles.color = 'rgba(255, 255, 190, 1)';
+        cardStyles.borderColor = 'rgba(255, 226, 183, 1)';
       case 'error':
-        return `background-color: rgba(100, 50, 50, 0.3); ${style}`;
+        cardStyles.backgroundColor = 'rgba(110, 50, 50, 0.3)';
+        cardStyles.color = 'rgba(255, 100, 100, 1)';
+        cardStyles.borderColor = 'rgba(255, 100, 100, 1)';
+      default:
+        break;
     }
   });
 </script>
 
-<Card id="alert-container" class={classes} style={styles}>
-  <Row class="alert-row-content" spacing="0.5em">
+<Card
+  class={className}
+  {style}
+  --card-margin={cardStyles.margin}
+  --card-padding={cardStyles.padding}
+  --card-justify-content={cardStyles.justifyContent}
+  --card-background-color={cardStyles.backgroundColor}
+  --card-color={cardStyles.color}
+  --card-border={cardStyles.border}
+  --card-border-color={cardStyles.borderColor}
+>
+  <Row
+    spacing="0.5em"
+    --row-margin={0}
+    --row-padding={0}
+    --row-justify-content={'center'}
+    --row-align-items={'center'}
+  >
     <WarningCircle style="font-size: 2em" />
     {@render children()}
   </Row>
 </Card>
-
-<style>
-  :global(#alert-container) {
-    justify-content: center;
-  }
-
-  :global(.alert) {
-    position: relative;
-    margin: 0;
-    padding: 0.5em 1.5em 0.5em 1.5em;
-    border: 1px ridge white;
-    color: rgba(200, 200, 200, 1);
-    border-color: rgba(255, 226, 183, 0.8);
-  }
-
-  :global(.warning) {
-    color: rgba(255, 255, 190, 1);
-    border-color: rgba(255, 226, 183, 1);
-  }
-
-  :global(.error) {
-    color: rgba(255, 100, 100, 1);
-    border-color: rgba(255, 100, 100, 1);
-  }
-
-  :global(.alert-row-content) {
-    padding: 0;
-    margin: 0;
-    justify-content: left;
-    align-items: center;
-  }
-</style>

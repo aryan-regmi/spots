@@ -8,6 +8,7 @@
   import { createEndpoint } from '@/api/network';
   import { getContext } from 'svelte';
   import { getUserByUsername, hashPassword, insertUser } from '@/api/users';
+  import { toCssString } from '@/utils/cssHelpers';
 
   const { authorize } = getContext<AuthContext>('authContext');
   const { navigateTo } = getContext<NavContext>('navContext');
@@ -32,6 +33,18 @@
 
   /** Deduplicated version of [validationErrors]. */
   let uniqueErrors = $derived([...new Set(validationErrors)]);
+
+  /** Style for the validation alerts. */
+  const alertStyle = toCssString({
+    position: 'absolute',
+    width: '15em',
+  });
+
+  /** Style for the entire form. */
+  const formStyle = toCssString({
+    justifyContent: 'center',
+    alignItems: 'center',
+  });
 
   /** Validates the login (username and password). */
   async function validateAndLogin() {
@@ -95,7 +108,7 @@
   }
 </script>
 
-<Column spacing="2em" class="login-form">
+<Column spacing="2em" style={formStyle}>
   <h1 class="app-title">Spots</h1>
 
   <!-- Form -->
@@ -138,10 +151,9 @@
   <Column spacing="1em" style="margin-bottom: 5em">
     {#each uniqueErrors as error, i}
       <Alert
-        class="login-error-alert"
         level="error"
-        style="transform: translateX(-9em) translateY({i * 3.5}em);"
-        >{error}</Alert
+        style="transform: translateX(-9em) translateY({i *
+          3.5}em); {alertStyle}">{error}</Alert
       >
     {/each}
   </Column>
@@ -152,15 +164,5 @@
     margin-bottom: 3em;
     margin-top: -1em;
     padding-top: 0;
-  }
-
-  :global(.login-form) {
-    justify-content: center;
-    align-items: center;
-  }
-
-  :global(.login-error-alert) {
-    position: absolute;
-    width: 15em;
   }
 </style>
