@@ -62,7 +62,7 @@ pub async fn load_endpoint(app_handle: AppHandle, user_id: i64) -> StringResult<
 
 /// Gets the endpoint address for the specfied user.
 #[tauri::command]
-pub async fn get_endpoint_addr(
+pub async fn get_endpoint_address(
     db: DatabaseState<'_>,
     user_id: i64,
 ) -> StringResult<Option<String>> {

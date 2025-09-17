@@ -9,7 +9,9 @@ import { invoke } from '@tauri-apps/api/core';
 /** Gets the user with the specified username from the database. */
 async function getUserByUsername(username: string): Promise<User | undefined> {
   try {
-    return await invoke<User | undefined>('get_user_by_username', { username });
+    return await invoke<User | undefined>('get_user_by_username', {
+      username,
+    });
   } catch (e: any) {
     throw new Error(e);
   }
@@ -37,7 +39,7 @@ export async function hashPassword(password: string) {
 export async function verifyPassword(userId: number, password: string) {
   try {
     return await invoke<boolean>('verify_password', {
-      user_id: userId,
+      userId,
       password,
     });
   } catch (e: any) {

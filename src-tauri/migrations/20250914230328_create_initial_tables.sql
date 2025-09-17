@@ -12,13 +12,3 @@ CREATE TABLE IF NOT EXISTS auth (
   FOREIGN KEY (username) REFERENCES users(username) ON DELETE SET NULL
 );
 INSERT INTO auth (username) VALUES (NULL);
-
-CREATE TABLE IF NOT EXISTS network (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  secret_key BLOB NOT NULL,
-  endpoint TEXT,
-  topic_id TEXT,
-  peers BLOB,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);

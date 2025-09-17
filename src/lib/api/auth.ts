@@ -10,7 +10,7 @@ import { invoke } from '@tauri-apps/api/core';
 async function setAuthUser(user: User) {
   try {
     await invoke('set_auth_user', { user });
-    console.trace('Auth user updated in database:', user);
+    console.info('Auth user updated in database:', user);
   } catch (e: any) {
     throw new Error(e);
   }
@@ -30,7 +30,7 @@ export function setAuthUserMutation(queryClient: QueryClient) {
 async function removeAuthUser() {
   try {
     await invoke('remove_auth_user');
-    console.trace('Auth user removed in database');
+    console.info('Auth user removed in database');
   } catch (e: any) {
     throw new Error(e);
   }
@@ -50,7 +50,7 @@ export function removeAuthUserMutation(queryClient: QueryClient) {
 async function getAuthUser() {
   try {
     const user = await invoke<User | null>('get_auth_user');
-    console.trace('Auth user retrieved from database:', user);
+    console.info('Auth user retrieved from database:', user);
     return user;
   } catch (e: any) {
     throw new Error(e);

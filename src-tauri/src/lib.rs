@@ -1,6 +1,9 @@
-use tauri::Manager;
+use std::sync::Arc;
 
-use crate::database::Database;
+use tauri::Manager;
+use tokio::sync::Mutex;
+
+use crate::{database::Database, network::Network};
 
 mod commands;
 mod database;
@@ -33,11 +36,11 @@ pub fn run() {
                     .expect("failed to initialize database");
 
                 // Initialize net
-                // let net = Network::new();
+                let net = Network::new();
 
                 // Manage states
                 app.manage(database);
-                // app.manage(Arc::new(Mutex::new(net)));
+                app.manage(Arc::new(Mutex::new(net)));
             });
 
             Ok(())
