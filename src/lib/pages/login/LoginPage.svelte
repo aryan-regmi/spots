@@ -54,7 +54,9 @@
       return;
     }
 
+    // Authorize and redirect to dashboard
     authorize(user);
+    await navigateTo('/dashboard', { replace: true });
   }
 </script>
 
