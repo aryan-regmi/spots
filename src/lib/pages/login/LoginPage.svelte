@@ -102,6 +102,10 @@
     }}>Sign up</Button.Root
   >
 
+  <!-- FIXME: Make ErrorMessages component! -->
+  <!--  => The entire <div> is `position: absolute` -->
+  <!--  => The errors themselves are `position: relative` -->
+
   <!-- Error messages -->
   <Column spacing="1em" style="margin-bottom: 5em">
     {#each uniqueErrors as error, i}

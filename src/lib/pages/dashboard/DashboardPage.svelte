@@ -2,7 +2,6 @@
   import { closeEndpoint } from '@/api/network';
   import type { AuthContext } from '@/auth/types';
   import type { NavContext } from '@/router/types';
-  import { resolve } from '@tauri-apps/api/path';
   import { getContext } from 'svelte';
 
   const { unauthorize } = getContext<AuthContext>('authContext');

@@ -33,12 +33,12 @@
   /** Deduplicated version of [validationErrors]. */
   let uniqueErrors = $derived([...new Set(validationErrors)]);
 
-  // FIXME: Validate username same way as password: check for spaces, unallowed characters, etc
-  //
   /** Validates the login (username and password). */
   async function validateAndLogin() {
     isValidating = true;
 
+    // FIXME: Validate username same way as password: check for spaces, unallowed characters, etc
+    //
     // Username is invalid if there is already a user in the database
     const user = await getUserByUsername(usernameState.input);
     if (user) {
