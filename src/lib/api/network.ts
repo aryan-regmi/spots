@@ -8,3 +8,12 @@ export async function createEndpoint(userId: number) {
     throw new Error(e);
   }
 }
+
+/** Closes the endpoint. */
+export async function closeEndpoint() {
+  try {
+    await invoke('close_endpoint');
+  } catch (e: any) {
+    throw new Error(e);
+  }
+}
