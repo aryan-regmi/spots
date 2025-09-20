@@ -1,5 +1,6 @@
 <script lang="ts">
     import Column from '@/components/Column.svelte';
+    import { derived } from 'svelte/store';
 
     let {
         value = $bindable(''),
@@ -13,10 +14,25 @@
         ...restProps
     } = $props();
 
-    let isFocused = $state(false);
-    const showFloatingLabel = $derived(isFocused || value.length > 0);
+    /** Determines if this is the first time the component is being displayed. */
+    let initialDisplay = $state(true);
 
+    /** Determines if the text field is focused/has focus. */
+    let isFocused = $state(false);
+
+    /** Determines if the label should be floated. */
+    let showFloatingLabel = $derived(isFocused || value.length > 0);
+
+    /** The actual label text. */
     const labelText = `${label}${required ? '*' : null}`;
+
+    /** Determines if the input is invalid. */
+    let invalidEntry = $derived(
+        !initialDisplay && required && (invalid || value.trim() === '')
+    );
+
+    /** Determines if the helper text should be displayed. */
+    let displayHelperText = $derived(isFocused || invalidEntry);
 </script>
 
 <!-- FIXME: Change style when `required` is set! -->
@@ -26,21 +42,39 @@
     <input
         class="text-input {className}"
         class:float={showFloatingLabel}
+        class:invalid={invalidEntry}
         type="text"
         bind:value
-        onfocus={() => (isFocused = true)}
-        onblur={() => (isFocused = false)}
-        onfocusout={() => (isFocused = false)}
+        onfocus={() => {
+            isFocused = true;
+            if (initialDisplay) {
+                initialDisplay = false;
+            }
+        }}
+        onblur={() => {
+            isFocused = false;
+        }}
+        onfocusout={() => {
+            isFocused = false;
+        }}
         {oninput}
         {style}
         {...restProps}
     />
-    <div id="label" class:float={showFloatingLabel}>{labelText}</div>
-    {#if showFloatingLabel}
-        <div id="helper-text">
+    <div
+        id="label"
+        class:float={showFloatingLabel}
+        class:invalid={invalidEntry}
+    >
+        {labelText}
+    </div>
+    <!-- {#if showFloatingLabel || invalidEntry} -->
+    {#if displayHelperText}
+        <div id="helper-text" class:invalid={invalidEntry}>
             {@render helperText()}
         </div>
     {/if}
+    <!-- {/if} -->
 </Column>
 
 <style>
@@ -65,6 +99,11 @@
         border: 1px solid #0077ff;
     }
 
+    .text-input.invalid {
+        border-color: red;
+        color: red;
+    }
+
     #label {
         position: absolute;
         transform: translateY(0.75em) translateX(1em);
@@ -83,11 +122,19 @@
         color: #0077ff;
     }
 
+    #label.invalid {
+        color: red;
+    }
+
     #helper-text {
         position: absolute;
         font-size: 0.9em;
         font-weight: bold;
         transform: translateY(4em) translateX(1em);
         color: #777fff;
+    }
+
+    #helper-text.invalid {
+        color: red;
     }
 </style>
