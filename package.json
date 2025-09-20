@@ -16,6 +16,7 @@
     },
     "dependencies": {
         "@tauri-apps/api": "^2.8.0",
-        "bits-ui": "^2.9.8"
+        "bits-ui": "^2.9.8",
+        "zod": "^4.1.11"
     }
 }

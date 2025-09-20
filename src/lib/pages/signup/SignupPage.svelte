@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Alert from '@/components/Alert.svelte';
     import Column from '@/components/Column.svelte';
     import TextField from '@/components/inputs/TextField.svelte';
     import type { AuthContext } from '@/auth/types';
@@ -10,6 +9,7 @@
     import { getUserByUsername, hashPassword, insertUser } from '@/api/users';
     import { toCssString } from '@/utils/cssHelpers';
     import AlertBox from '@/components/AlertBox.svelte';
+    import { passwordSchema, usernameSchema } from '@/utils/inputParsers';
 
     const { authorize } = getContext<AuthContext>('authContext');
     const { navigateTo } = getContext<NavContext>('navContext');
@@ -48,7 +48,7 @@
     });
 
     const usernameInputStyle = () => {
-        if (usernameState.input === '' && !firstEnter) {
+        if (!usernameState.isValid && !firstEnter) {
             return toCssString({
                 marginBottom: '0.8em',
             });
@@ -87,24 +87,12 @@
 
     /** Validates the password input. */
     function validatePassword(password: string) {
-        // Invalid if length less than 8
-        let validLen = password.length >= 8;
-        if (!validLen) {
+        const result = passwordSchema.safeParse(password);
+        if (!result.success) {
             isValidating = false;
             passwordState.isValid = false;
-            validationErrors.push(
-                'The password must be at least 8 characters long!'
-            );
-            return false;
-        }
-
-        // Invalid if no special symbols included
-        let validSymbols = password.match('^(?=.*[!@#$%^*()_+=]).*$');
-        if (!validSymbols || validSymbols.length == 0) {
-            isValidating = false;
-            passwordState.isValid = false;
-            validationErrors.push(
-                'The password must contain at least one symbol/special character!'
+            result.error.issues.forEach((e) =>
+                validationErrors.push(e.message)
             );
             return false;
         }
@@ -114,42 +102,23 @@
 
     /** Validates the username input. */
     async function validateUsername(username: string) {
-        console.log('Validating username...');
-
-        // Invalid if username is empty
-        let validLen = username.length >= 1;
-        if (!validLen || username.trim() === '') {
+        const result = usernameSchema.safeParse(username);
+        if (!result.success) {
             isValidating = false;
             usernameState.isValid = false;
-            validationErrors.push(
-                'The username must be at least 1 character long!'
+            result.error.issues.forEach((e) =>
+                validationErrors.push(e.message)
             );
             return false;
         }
-        console.log('Length valid!');
 
-        // Invalid if starts with special character or contains a space
-        const validContents = username.match('^[^a-zA-Z0-9]|.* ');
-        console.log(validContents);
-        if (validContents) {
-            isValidating = false;
-            usernameState.isValid = false;
-            validationErrors.push(
-                'The username must not contain a space, and must not start with a special character!'
-            );
-            return false;
-        }
-        console.log('Contents valid!');
-
-        // Username is invalid if there is already a user in the database
-        const user = await getUserByUsername(usernameState.input);
+        const user = await getUserByUsername(username);
         if (user) {
+            isValidating = false;
             usernameState.isValid = false;
             validationErrors.push('Username already exists!');
-            isValidating = false;
             return false;
         }
-        console.log('User valid!');
 
         return true;
     }
