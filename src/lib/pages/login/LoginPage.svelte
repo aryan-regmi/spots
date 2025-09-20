@@ -45,10 +45,6 @@
         alignItems: 'center',
     });
 
-    const usernameInputStyle = toCssString({
-        marginBottom: '0',
-    });
-
     /** Validates the login (username and password). */
     async function validateAndLogin() {
         isValidating = true;
@@ -85,7 +81,6 @@
 
     <!-- Form -->
     <TextField
-        style={usernameInputStyle}
         label="Username"
         bind:value={usernameState.input}
         invalid={!usernameState.isValid}

@@ -24,7 +24,7 @@
     let showFloatingLabel = $derived(isFocused || value.length > 0);
 
     /** The actual label text. */
-    const labelText = `${label}${required ? '*' : null}`;
+    const labelText = `${label}${required ? '*' : ''}`;
 
     /** Determines if the input is invalid. */
     let invalidEntry = $derived(
@@ -99,6 +99,7 @@
     .text-input.invalid {
         border-color: red;
         color: red;
+        margin-bottom: 1em;
     }
 
     #label {
@@ -115,7 +116,8 @@
 
     #label.float {
         font-size: 0.9em;
-        transform: translateY(0.3em) translateX(1em);
+        /* transform: translateY(0.3em) translateX(1em); */
+        transform: translateY(-1.25em);
         font-weight: bold;
         color: #0077ff;
     }
