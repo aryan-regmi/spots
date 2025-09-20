@@ -57,23 +57,12 @@
 
     /** Validates the login (username and password). */
     async function validateAndLogin() {
+        // Validate inputs
         isValidating = true;
+        const usernameIsValid = await validateUsername(usernameState.input);
+        const passwordIsValid = validatePassword(passwordState.input);
 
-        // FIXME: Validate username same way as password: check for spaces, unallowed characters, etc
-        //
-        // Username is invalid if there is already a user in the database
-        const user = await getUserByUsername(usernameState.input);
-        if (user) {
-            usernameState.isValid = false;
-            validationErrors.push('Username already exists!');
-            isValidating = false;
-            return;
-        }
-
-        // Validate password
-        const validatedPassword = validatePassword(passwordState.input);
-
-        if (usernameState.isValid && validatedPassword) {
+        if (usernameIsValid && passwordIsValid) {
             usernameState.isValid = true;
             passwordState.isValid = true;
 
@@ -98,6 +87,7 @@
 
     /** Validates the password input. */
     function validatePassword(password: string) {
+        // Invalid if length less than 8
         let validLen = password.length >= 8;
         if (!validLen) {
             isValidating = false;
@@ -108,6 +98,7 @@
             return false;
         }
 
+        // Invalid if no special symbols included
         let validSymbols = password.match('^(?=.*[!@#$%^*()_+=]).*$');
         if (!validSymbols || validSymbols.length == 0) {
             isValidating = false;
@@ -117,6 +108,48 @@
             );
             return false;
         }
+
+        return true;
+    }
+
+    /** Validates the username input. */
+    async function validateUsername(username: string) {
+        console.log('Validating username...');
+
+        // Invalid if username is empty
+        let validLen = username.length >= 1;
+        if (!validLen || username.trim() === '') {
+            isValidating = false;
+            usernameState.isValid = false;
+            validationErrors.push(
+                'The username must be at least 1 character long!'
+            );
+            return false;
+        }
+        console.log('Length valid!');
+
+        // Invalid if starts with special character or contains a space
+        const validContents = username.match('^[^a-zA-Z0-9]|.* ');
+        console.log(validContents);
+        if (validContents) {
+            isValidating = false;
+            usernameState.isValid = false;
+            validationErrors.push(
+                'The username must not contain a space, and must not start with a special character!'
+            );
+            return false;
+        }
+        console.log('Contents valid!');
+
+        // Username is invalid if there is already a user in the database
+        const user = await getUserByUsername(usernameState.input);
+        if (user) {
+            usernameState.isValid = false;
+            validationErrors.push('Username already exists!');
+            isValidating = false;
+            return false;
+        }
+        console.log('User valid!');
 
         return true;
     }
@@ -175,7 +208,7 @@
 
     <!-- Error messages -->
     <AlertBox
-        style="transform: translateY(21em);"
+        style="position: relative"
         {alertStyle}
         alerts={uniqueErrors.map((text) => ({
             level: 'error',
