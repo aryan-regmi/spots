@@ -167,6 +167,9 @@
             Enter a password...
         {/snippet}
     </TextField>
+
+    <!-- TODO: Add password confirmation field! -->
+
     <Button.Root onclick={validateAndLogin}>
         {#if isValidating}
             Logging in...

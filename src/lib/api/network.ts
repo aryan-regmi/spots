@@ -9,6 +9,15 @@ export async function createEndpoint(userId: number) {
   }
 }
 
+/** Loads the stored endpoint for the user. */
+export async function loadEndpoint(userId: number) {
+  try {
+    await invoke('load_endpoint', { userId });
+  } catch (e: any) {
+    throw new Error(e);
+  }
+}
+
 /** Closes the endpoint. */
 export async function closeEndpoint() {
   try {

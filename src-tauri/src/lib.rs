@@ -55,6 +55,7 @@ pub fn run() {
             commands::users::get_user_by_username,
             commands::users::insert_user,
             commands::network::create_new_endpoint,
+            commands::network::load_endpoint,
             commands::network::close_endpoint,
         ])
         .run(tauri::generate_context!())

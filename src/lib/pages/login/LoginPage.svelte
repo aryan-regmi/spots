@@ -9,6 +9,7 @@
     import { getUserByUsername, verifyPassword } from '@/api/users';
     import { toCssString } from '@/utils/cssHelpers';
     import AlertBox from '@/components/AlertBox.svelte';
+    import { loadEndpoint } from '@/api/network';
 
     const { authorize } = getContext<AuthContext>('authContext');
     const { navigateTo } = getContext<NavContext>('navContext');
@@ -70,8 +71,18 @@
             return;
         }
 
-        // Authorize and redirect to dashboard
+        usernameState.isValid = true;
+        passwordState.isValid = true;
+        validationErrors = [];
+
+        // Authorize user
         authorize(user);
+
+        // Load network endpoint
+        loadEndpoint(user.id);
+
+        // Go to dashboard
+        isValidating = false;
         await navigateTo('/dashboard', { replace: true });
     }
 </script>
