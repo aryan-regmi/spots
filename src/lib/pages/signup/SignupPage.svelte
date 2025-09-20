@@ -27,6 +27,12 @@
         isValid: true,
     });
 
+    /** State of the password confirmation input. */
+    let confirmPasswordState = $state({
+        input: '',
+        isValid: true,
+    });
+
     /** Determines if the input is being validated. */
     let isValidating = $state(false);
 
@@ -47,8 +53,8 @@
         alignItems: 'center',
     });
 
-    const usernameInputStyle = () => {
-        if (!usernameState.isValid && !firstEnter) {
+    const textInputStyle = (state: typeof usernameState) => {
+        if (!state.isValid && !firstEnter) {
             return toCssString({
                 marginBottom: '0.8em',
             });
@@ -97,6 +103,13 @@
             return false;
         }
 
+        if (passwordState.input !== confirmPasswordState.input) {
+            isValidating = false;
+            confirmPasswordState.isValid = false;
+            validationErrors.push('Passwords must match!');
+            return false;
+        }
+
         return true;
     }
 
@@ -129,7 +142,7 @@
 
     <!-- Form -->
     <TextField
-        style={usernameInputStyle()}
+        style={textInputStyle(usernameState)}
         label="Username"
         bind:value={usernameState.input}
         invalid={!usernameState.isValid}
@@ -151,6 +164,7 @@
         {/snippet}
     </TextField>
     <TextField
+        style={textInputStyle(passwordState)}
         label="Password"
         type="password"
         bind:value={passwordState.input}
@@ -169,6 +183,23 @@
     </TextField>
 
     <!-- TODO: Add password confirmation field! -->
+    <TextField
+        label="Confirm password"
+        type="password"
+        bind:value={confirmPasswordState.input}
+        invalid={!confirmPasswordState.isValid}
+        required
+        oninput={() => {
+            if (!confirmPasswordState.isValid) {
+                confirmPasswordState.isValid = true;
+                validationErrors = [];
+            }
+        }}
+    >
+        {#snippet helperText()}
+            Re-enter password...
+        {/snippet}
+    </TextField>
 
     <Button.Root onclick={validateAndLogin}>
         {#if isValidating}
