@@ -32,11 +32,8 @@
     );
 
     /** Determines if the helper text should be displayed. */
-    let displayHelperText = $derived(isFocused || invalidEntry);
+    let displayHelperText = $derived(invalidEntry);
 </script>
-
-<!-- FIXME: Change style when `required` is set! -->
-<!--    - Change style when `invalid` is set! -->
 
 <Column class="container" spacing="0">
     <input
@@ -96,7 +93,7 @@
     }
 
     .text-input.float {
-        border: 1px solid #0077ff;
+        /* border: 1px solid #0077ff; */
     }
 
     .text-input.invalid {
@@ -118,7 +115,8 @@
 
     #label.float {
         font-size: 0.9em;
-        transform: translateY(-1.2em);
+        transform: translateY(0.3em) translateX(1em);
+        font-weight: bold;
         color: #0077ff;
     }
 

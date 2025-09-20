@@ -46,7 +46,7 @@
     });
 
     const usernameInputStyle = toCssString({
-        marginBottom: '1.5em',
+        marginBottom: '0',
     });
 
     /** Validates the login (username and password). */
