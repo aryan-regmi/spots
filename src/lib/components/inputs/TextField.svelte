@@ -7,7 +7,10 @@
         helperText = () => null,
         class: className = '',
         style = '',
-        oninput = undefined,
+        oninput = () => {},
+        onfocus = () => {},
+        onblur = () => {},
+        onfocusout = () => {},
         required = false,
         invalid = false,
         label = '',
@@ -36,6 +39,7 @@
 </script>
 
 <Column class="container" spacing="0">
+    <!-- The text input -->
     <input
         class="text-input {className}"
         class:float={showFloatingLabel}
@@ -47,17 +51,22 @@
             if (initialDisplay) {
                 initialDisplay = false;
             }
+            onfocus();
         }}
         onblur={() => {
             isFocused = false;
+            onblur();
         }}
         onfocusout={() => {
             isFocused = false;
+            onfocusout();
         }}
         {oninput}
         {style}
         {...restProps}
     />
+
+    <!-- The floating label -->
     <div
         id="label"
         class:float={showFloatingLabel}
@@ -65,13 +74,13 @@
     >
         {labelText}
     </div>
-    <!-- {#if showFloatingLabel || invalidEntry} -->
+
+    <!-- The helper text -->
     {#if displayHelperText}
         <div id="helper-text" class:invalid={invalidEntry}>
             {@render helperText()}
         </div>
     {/if}
-    <!-- {/if} -->
 </Column>
 
 <style>
@@ -92,14 +101,9 @@
         outline: none;
     }
 
-    .text-input.float {
-        /* border: 1px solid #0077ff; */
-    }
-
     .text-input.invalid {
         border-color: red;
         color: red;
-        margin-bottom: 1em;
     }
 
     #label {

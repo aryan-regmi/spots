@@ -91,11 +91,7 @@
                 validationErrors = [];
             }
         }}
-    >
-        {#snippet helperText()}
-            Enter a username
-        {/snippet}
-    </TextField>
+    />
     <TextField
         bind:value={passwordState.input}
         invalid={!passwordState.isValid}
@@ -108,11 +104,7 @@
                 validationErrors = [];
             }
         }}
-    >
-        {#snippet helperText()}
-            Enter a password
-        {/snippet}
-    </TextField>
+    />
     <Button.Root onclick={validateAndLogin}>
         {#if isValidating}
             Logging in...
