@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Alert from '@/components/Alert.svelte';
     import Column from '@/components/Column.svelte';
     import TextField from '@/components/inputs/TextField.svelte';
     import type { AuthContext } from '@/auth/types';

@@ -3,7 +3,10 @@
     import Alert from './Alert.svelte';
     import Column from './Column.svelte';
 
-    type AlertValue = { level?: 'basic' | 'warning' | 'error'; text: string };
+    export type AlertValue = {
+        level?: 'basic' | 'warning' | 'error';
+        text: string;
+    };
 
     type Props = {
         class?: string;

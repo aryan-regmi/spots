@@ -8,10 +8,16 @@
     import { getContext } from 'svelte';
     import { getUserByUsername, hashPassword, insertUser } from '@/api/users';
     import { toCssString } from '@/utils/cssHelpers';
-    import AlertBox from '@/components/AlertBox.svelte';
+    import AlertBox, { type AlertValue } from '@/components/AlertBox.svelte';
     import { passwordSchema, usernameSchema } from '@/utils/inputParsers';
+
     const { authorize } = getContext<AuthContext>('authContext');
     const { navigateTo } = getContext<NavContext>('navContext');
+
+    type ValidationErrors =
+        | 'Username already exists!'
+        | 'Passwords must match!'
+        | { unknownError: string };
 
     /** State of the username input. */
     let usernameState = $state({
@@ -36,10 +42,19 @@
     let isValidating = $state(false);
 
     /** List of validation errors. */
-    let validationErrors = $state<string[]>([]);
+    let validationErrors = $state<ValidationErrors[]>([]);
 
     /** Deduplicated version of [validationErrors]. */
-    let uniqueErrors = $derived([...new Set(validationErrors)]);
+    // let uniqueErrors = $derived([...new Set(validationErrors)]);
+    let uniqueErrors = $derived.by(() => {
+        const seen = new Set<string>();
+        return validationErrors.filter((err) => {
+            const msg = typeof err === 'string' ? err : err.unknownError;
+            if (seen.has(msg)) return false;
+            seen.add(msg);
+            return true;
+        });
+    });
 
     /** Style for the validation alerts. */
     const alertStyle = toCssString({
@@ -68,6 +83,67 @@
             return toCssString({
                 marginBottom: '0.8em',
             });
+        }
+    });
+
+    const signupDisabled = $derived.by(() => {
+        return !usernameState.isValid || !passwordState.isValid || isValidating;
+    });
+
+    let alerts: AlertValue[] = $derived.by(() => {
+        return uniqueErrors.map((err) => {
+            let errMsg: string = '';
+
+            if (typeof err === 'string') {
+                switch (err) {
+                    case 'Username already exists!':
+                    case 'Passwords must match!':
+                        errMsg = err;
+                }
+            } else {
+                errMsg = err.unknownError;
+            }
+
+            return {
+                level: 'error',
+                text: errMsg,
+            };
+        });
+    });
+
+    $effect(() => {
+        if (!passwordState.isValid && passwordState.input.length >= 8) {
+            // Remove matching error from validationErrors
+            validationErrors = validationErrors.filter((err) => {
+                return !(
+                    typeof err !== 'string' &&
+                    err.unknownError.trim() ===
+                        'Password must be at least 8 characters long'
+                );
+            });
+
+            // Mark password state as valid again
+            passwordState.isValid = true;
+        }
+    });
+
+    $effect(() => {
+        if (
+            !passwordState.isValid &&
+            passwordState.input.match(/[^a-zA-Z0-9]/)
+        ) {
+            console.log(validationErrors);
+            // Remove matching error from validationErrors
+            validationErrors = validationErrors.filter((err) => {
+                return !(
+                    typeof err !== 'string' &&
+                    err.unknownError.trim() ===
+                        'Password must contain at least one special character'
+                );
+            });
+
+            // Mark password state as valid again
+            passwordState.isValid = true;
         }
     });
 
@@ -108,7 +184,7 @@
             isValidating = false;
             passwordState.isValid = false;
             result.error.issues.forEach((e) =>
-                validationErrors.push(e.message)
+                validationErrors.push({ unknownError: e.message })
             );
             return false;
         }
@@ -130,7 +206,7 @@
             isValidating = false;
             usernameState.isValid = false;
             result.error.issues.forEach((e) =>
-                validationErrors.push(e.message)
+                validationErrors.push({ unknownError: e.message })
             );
             return false;
         }
@@ -163,10 +239,7 @@
             }
         }}
         oninput={() => {
-            if (!usernameState.isValid) {
-                usernameState.isValid = true;
-                validationErrors = [];
-            }
+            validateUsername(usernameState.input);
         }}
     >
         {#snippet helperText()}
@@ -181,10 +254,7 @@
         invalid={!passwordState.isValid}
         required
         oninput={() => {
-            if (!passwordState.isValid) {
-                passwordState.isValid = true;
-                validationErrors = [];
-            }
+            validatePassword(passwordState.input);
         }}
     >
         {#snippet helperText()}
@@ -208,7 +278,7 @@
             Re-enter password...
         {/snippet}
     </TextField>
-    <Button.Root onclick={validateAndLogin}>
+    <Button.Root onclick={validateAndLogin} disabled={signupDisabled}>
         {#if isValidating}
             Logging in...
         {:else}
@@ -220,10 +290,7 @@
     <AlertBox
         style="position: relative; max-height: 15em; overflow-y: auto; padding-right: 1em;"
         {alertStyle}
-        alerts={uniqueErrors.map((text) => ({
-            level: 'error',
-            text,
-        }))}
+        {alerts}
     />
 </Column>
 

@@ -134,7 +134,7 @@
         position: absolute;
         font-size: 0.9em;
         font-weight: bold;
-        transform: translateY(4em) translateX(1em);
+        transform: translateY(4em) translateX(10em);
         color: #777fff;
     }
 
