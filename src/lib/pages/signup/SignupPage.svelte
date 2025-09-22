@@ -14,38 +14,69 @@
     const { authorize } = getContext<AuthContext>('authContext');
     const { navigateTo } = getContext<NavContext>('navContext');
 
-    type ValidationErrors =
+    type ValidationError =
         | 'Username already exists!'
         | 'Passwords must match!'
         | { unknownError: string };
 
-    /** State of the username input. */
-    let usernameState = $state({
-        input: '',
-        isValid: true,
-    });
-    let firstEnter = $state(true);
+    let usernameInputInitialFocus = $state(true);
+    let passwordInputInitialFocus = $state(true);
+    let confirmPasswordInputInitialFocus = $state(true);
 
-    /** State of the password input. */
-    let passwordState = $state({
-        input: '',
-        isValid: true,
-    });
+    let usernameInput = $state('');
+    let passwordInput = $state('');
+    let confirmPasswordInput = $state('');
 
-    /** State of the password confirmation input. */
-    let confirmPasswordState = $state({
-        input: '',
-        isValid: true,
+    /** List of validation errors. */
+    let validationErrors = $derived.by(() => {
+        const errors: ValidationError[] = [];
+
+        if (!usernameInputInitialFocus) {
+            // Username validation
+            const usernameResult = usernameSchema.safeParse(usernameInput);
+            if (!usernameResult.success) {
+                for (const issue of usernameResult.error.issues) {
+                    errors.push({ unknownError: issue.message });
+                }
+            }
+        }
+
+        if (!passwordInputInitialFocus) {
+            // Password validation
+            const passwordResult = passwordSchema.safeParse(passwordInput);
+            if (!passwordResult.success) {
+                for (const issue of passwordResult.error.issues) {
+                    errors.push({ unknownError: issue.message });
+                }
+            }
+        }
+
+        if (!confirmPasswordInputInitialFocus) {
+            // Confirm password validation
+            if (passwordInput != confirmPasswordInput) {
+                errors.push('Passwords must match!');
+            }
+        }
+
+        return errors;
     });
 
     /** Determines if the input is being validated. */
     let isValidating = $state(false);
 
-    /** List of validation errors. */
-    let validationErrors = $state<ValidationErrors[]>([]);
+    const isUsernameValid = $derived.by(() => {
+        return usernameSchema.safeParse(usernameInput).success;
+    });
+
+    const isPasswordValid = $derived.by(() => {
+        return passwordSchema.safeParse(passwordInput).success;
+    });
+
+    const isConfirmPasswordValid = $derived.by(() => {
+        return confirmPasswordInput === passwordInput;
+    });
 
     /** Deduplicated version of [validationErrors]. */
-    // let uniqueErrors = $derived([...new Set(validationErrors)]);
     let uniqueErrors = $derived.by(() => {
         const seen = new Set<string>();
         return validationErrors.filter((err) => {
@@ -69,7 +100,7 @@
 
     /** Style for the username text input. */
     const usernameInputStyle = $derived.by(() => {
-        if (!usernameState.isValid && !firstEnter) {
+        if (!isUsernameValid && !usernameInputInitialFocus) {
             return toCssString({
                 marginBottom: '0.8em',
             });
@@ -79,93 +110,39 @@
 
     /** Style for the password text input. */
     const passwordInputStyle = $derived.by(() => {
-        if (!passwordState.isValid && !firstEnter) {
+        if (!isPasswordValid && !passwordInputInitialFocus) {
             return toCssString({
                 marginBottom: '0.8em',
             });
         }
     });
 
+    /** Determines if the signup button is disabled. */
     const signupDisabled = $derived.by(() => {
-        return !usernameState.isValid || !passwordState.isValid || isValidating;
+        return !isUsernameValid || !isPasswordValid || isValidating;
     });
 
+    /** The alerts to display to the user (based on validation errors). */
     let alerts: AlertValue[] = $derived.by(() => {
-        return uniqueErrors.map((err) => {
-            let errMsg: string = '';
-
-            if (typeof err === 'string') {
-                switch (err) {
-                    case 'Username already exists!':
-                    case 'Passwords must match!':
-                        errMsg = err;
-                }
-            } else {
-                errMsg = err.unknownError;
-            }
-
-            return {
-                level: 'error',
-                text: errMsg,
-            };
-        });
-    });
-
-    $effect(() => {
-        if (!passwordState.isValid && passwordState.input.length >= 8) {
-            // Remove matching error from validationErrors
-            validationErrors = validationErrors.filter((err) => {
-                return !(
-                    typeof err !== 'string' &&
-                    err.unknownError.trim() ===
-                        'Password must be at least 8 characters long'
-                );
-            });
-
-            // Mark password state as valid again
-            passwordState.isValid = true;
-        }
-    });
-
-    $effect(() => {
-        if (
-            !passwordState.isValid &&
-            passwordState.input.match(/[^a-zA-Z0-9]/)
-        ) {
-            console.log(validationErrors);
-            // Remove matching error from validationErrors
-            validationErrors = validationErrors.filter((err) => {
-                return !(
-                    typeof err !== 'string' &&
-                    err.unknownError.trim() ===
-                        'Password must contain at least one special character'
-                );
-            });
-
-            // Mark password state as valid again
-            passwordState.isValid = true;
-        }
+        return uniqueErrors.map((err) => ({
+            level: 'error',
+            text: typeof err === 'string' ? err : err.unknownError,
+        }));
     });
 
     /** Validates the login (username and password). */
     async function validateAndLogin() {
         // Validate inputs
         isValidating = true;
-        const usernameIsValid = await validateUsername(usernameState.input);
-        const passwordIsValid = validatePassword(passwordState.input);
+        const usernameIsValid =
+            (await validateUsername(usernameInput)) && isUsernameValid;
 
-        if (usernameIsValid && passwordIsValid) {
-            usernameState.isValid = true;
-            passwordState.isValid = true;
-
+        if (usernameIsValid && isPasswordValid) {
             // Hash password
-            const hashedPassword = await hashPassword(passwordState.input);
+            const hashedPassword = await hashPassword(passwordInput);
 
             // Save user to database
-            const newUser = await insertUser(
-                usernameState.input,
-                hashedPassword
-            );
+            const newUser = await insertUser(usernameInput, hashedPassword);
 
             // Create network endpoint
             await createEndpoint(newUser.id);
@@ -177,46 +154,14 @@
         isValidating = false;
     }
 
-    /** Validates the password input. */
-    function validatePassword(password: string) {
-        const result = passwordSchema.safeParse(password);
-        if (!result.success) {
-            isValidating = false;
-            passwordState.isValid = false;
-            result.error.issues.forEach((e) =>
-                validationErrors.push({ unknownError: e.message })
-            );
-            return false;
-        }
-
-        if (passwordState.input !== confirmPasswordState.input) {
-            isValidating = false;
-            confirmPasswordState.isValid = false;
-            validationErrors.push('Passwords must match!');
-            return false;
-        }
-
-        return true;
-    }
-
     /** Validates the username input. */
     async function validateUsername(username: string) {
-        const result = usernameSchema.safeParse(username);
-        if (!result.success) {
-            isValidating = false;
-            usernameState.isValid = false;
-            result.error.issues.forEach((e) =>
-                validationErrors.push({ unknownError: e.message })
-            );
-            return false;
-        }
-
-        const user = await getUserByUsername(username);
-        if (user) {
-            isValidating = false;
-            usernameState.isValid = false;
-            validationErrors.push('Username already exists!');
-            return false;
+        if (isUsernameValid && username.length > 0) {
+            const user = await getUserByUsername(username);
+            if (user) {
+                validationErrors.push('Username already exists!');
+                return false;
+            }
         }
 
         return true;
@@ -230,17 +175,15 @@
     <TextField
         style={usernameInputStyle}
         label="Username"
-        bind:value={usernameState.input}
-        invalid={!usernameState.isValid}
+        bind:value={usernameInput}
+        invalid={!isUsernameValid}
         required
         onfocus={() => {
-            if (firstEnter) {
-                firstEnter = false;
+            if (usernameInputInitialFocus) {
+                usernameInputInitialFocus = false;
             }
         }}
-        oninput={() => {
-            validateUsername(usernameState.input);
-        }}
+        oninput={() => validateUsername(usernameInput)}
     >
         {#snippet helperText()}
             Enter a username...
@@ -250,12 +193,13 @@
         style={passwordInputStyle}
         label="Password"
         type="password"
-        bind:value={passwordState.input}
-        invalid={!passwordState.isValid}
+        bind:value={passwordInput}
+        invalid={!isPasswordValid}
         required
-        oninput={() => {
-            validatePassword(passwordState.input);
-        }}
+        onfocus={() =>
+            passwordInputInitialFocus
+                ? (passwordInputInitialFocus = false)
+                : null}
     >
         {#snippet helperText()}
             Enter a password...
@@ -264,15 +208,13 @@
     <TextField
         label="Confirm password"
         type="password"
-        bind:value={confirmPasswordState.input}
-        invalid={!confirmPasswordState.isValid}
+        bind:value={confirmPasswordInput}
+        invalid={!isConfirmPasswordValid}
         required
-        oninput={() => {
-            if (!confirmPasswordState.isValid) {
-                confirmPasswordState.isValid = true;
-                validationErrors = [];
-            }
-        }}
+        onfocus={() =>
+            confirmPasswordInputInitialFocus
+                ? (confirmPasswordInputInitialFocus = false)
+                : null}
     >
         {#snippet helperText()}
             Re-enter password...
