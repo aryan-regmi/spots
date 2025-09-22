@@ -10,7 +10,6 @@
     import { toCssString } from '@/utils/cssHelpers';
     import AlertBox from '@/components/AlertBox.svelte';
     import { passwordSchema, usernameSchema } from '@/utils/inputParsers';
-
     const { authorize } = getContext<AuthContext>('authContext');
     const { navigateTo } = getContext<NavContext>('navContext');
 
@@ -53,6 +52,7 @@
         alignItems: 'center',
     });
 
+    /** Style for the username text input. */
     const usernameInputStyle = $derived.by(() => {
         if (!usernameState.isValid && !firstEnter) {
             return toCssString({
@@ -62,15 +62,14 @@
         return '';
     });
 
-    const passwordInputStyle = () => {
+    /** Style for the password text input. */
+    const passwordInputStyle = $derived.by(() => {
         if (!passwordState.isValid && !firstEnter) {
             return toCssString({
                 marginBottom: '0.8em',
             });
         }
-    };
-
-    // FIXME: Dont return directly from validate funcs (so errors can be any combination.)
+    });
 
     /** Validates the login (username and password). */
     async function validateAndLogin() {
@@ -175,7 +174,7 @@
         {/snippet}
     </TextField>
     <TextField
-        style={passwordInputStyle()}
+        style={passwordInputStyle}
         label="Password"
         type="password"
         bind:value={passwordState.input}
@@ -192,8 +191,6 @@
             Enter a password...
         {/snippet}
     </TextField>
-
-    <!-- TODO: Add password confirmation field! -->
     <TextField
         label="Confirm password"
         type="password"
@@ -211,7 +208,6 @@
             Re-enter password...
         {/snippet}
     </TextField>
-
     <Button.Root onclick={validateAndLogin}>
         {#if isValidating}
             Logging in...
