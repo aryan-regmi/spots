@@ -1,15 +1,20 @@
 <script lang="ts">
-    import type { AuthContext } from '@/auth/types';
     import Column from '@/components/Column.svelte';
     import Row from '@/components/Row.svelte';
-    import { toCssString } from '@/utils/cssHelpers';
-    import { stringToColour } from '@/utils/stringToColor';
-    import { Avatar, Button, NavigationMenu, Popover } from 'bits-ui';
-    import { getContext } from 'svelte';
-    import { fly } from 'svelte/transition';
     import SignOut from 'phosphor-svelte/lib/SignOut';
+    import Spiral from 'phosphor-svelte/lib/Spiral';
+    import type { AuthContext } from '@/auth/types';
+    import type { NavContext } from '@/router/types';
+    import { Avatar, Button, NavigationMenu, Popover } from 'bits-ui';
+    import { fly } from 'svelte/transition';
+    import { getContext } from 'svelte';
+    import { stringToColour } from '@/utils/stringToColor';
+    import { toCssString } from '@/utils/cssHelpers';
+    import { closeEndpoint } from '@/api/network';
+    import Spinner from '@/components/Spinner.svelte';
 
-    const { authUser } = getContext<AuthContext>('authContext');
+    const { authUser, unauthorize } = getContext<AuthContext>('authContext');
+    const { navigateTo } = getContext<NavContext>('navContext');
 
     /** The user the dashboard is for. */
     const currentUser = $derived(authUser());
@@ -27,11 +32,18 @@
         display: 'flex',
         alignItems: 'center',
     });
+    const triggerOpacity = $derived.by(() => {
+        if (displayMenuDrawer) {
+            return 0;
+        } else {
+            return 1.0;
+        }
+    });
     const triggerAvatarStyle = $derived(
         toCssString({
             ...baseAvatarStyle,
             transform: 'translateX(-8em) translateY(-8em)',
-            opacity: buttonOpacity,
+            opacity: triggerOpacity,
             transition: '0.2s',
         })
     );
@@ -54,7 +66,7 @@
         height: '100vh',
         backdropFilter: 'blur(10px)',
         '-webkit-backdrop-filter': 'blur(10px)',
-        backgroundColor: 'rgba(10, 3, 10, 0.8)',
+        backgroundColor: 'rgba(50, 30, 50, 0.3)',
         border: '1px solid rgba(255, 255, 255, 0.2)',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
         borderBottomRightRadius: '0.75em',
@@ -115,117 +127,153 @@
             borderRadius: '0.1em',
         })
     );
+
+    /** Determines if the user is being logged out. */
+    let isLoggingOut = $state(false);
+
+    /** Unauthenticates the user, closes the network endpoint and returns to the landing page. */
+    async function logout() {
+        isLoggingOut = true;
+        await unauthorize();
+        await closeEndpoint();
+        await navigateTo('/', { replace: true });
+    }
 </script>
 
-<Popover.Root bind:open={displayMenuDrawer}>
-    <!-- Avatar -->
-    <Popover.Trigger
-        style={avatarButtonStyle}
-        onmouseenter={() => {
-            if (!displayMenuDrawer) {
-                buttonOpacity = 0.8;
-            }
-        }}
-        onmouseleave={() => {
-            if (!displayMenuDrawer) {
-                buttonOpacity = 1.0;
-            }
-        }}
-        onmousedown={() => {
-            if (!displayMenuDrawer) {
-                buttonOpacity = 0.5;
-            }
-        }}
-        onmouseup={() => {
-            if (!displayMenuDrawer) {
-                buttonOpacity = 1.0;
-            }
-        }}
+{#if isLoggingOut}
+    <Column
+        style="align-items: center; text-align: center; justify-content: center;"
     >
-        <Avatar.Root style={triggerAvatarStyle}>
-            <Avatar.Fallback>
-                {currentUser && currentUser.username.length > 0
-                    ? currentUser.username.charAt(0)
-                    : ''}
-            </Avatar.Fallback>
-        </Avatar.Root>
-    </Popover.Trigger>
+        Logging out...
+        <Spinner />
+    </Column>
+{:else}
+    <Popover.Root bind:open={displayMenuDrawer}>
+        <!-- Avatar -->
+        <Popover.Trigger
+            style={avatarButtonStyle}
+            onmouseenter={() => {
+                if (!displayMenuDrawer) {
+                    buttonOpacity = 0.8;
+                }
+            }}
+            onmouseleave={() => {
+                if (!displayMenuDrawer) {
+                    buttonOpacity = 1.0;
+                }
+            }}
+            onmousedown={() => {
+                if (!displayMenuDrawer) {
+                    buttonOpacity = 0.5;
+                }
+            }}
+            onmouseup={() => {
+                if (!displayMenuDrawer) {
+                    buttonOpacity = 1.0;
+                }
+            }}
+        >
+            <Avatar.Root
+                style="opacity: {triggerOpacity}; {triggerAvatarStyle}"
+            >
+                <Avatar.Fallback>
+                    {currentUser && currentUser.username.length > 0
+                        ? currentUser.username.charAt(0)
+                        : ''}
+                </Avatar.Fallback>
+            </Avatar.Root>
+        </Popover.Trigger>
 
-    <!-- Menu drawer -->
-    <Popover.Content
-        trapFocus={false}
-        align="end"
-        side="left"
-        sideOffset={-150}
-        forceMount
-    >
-        {#snippet child({ wrapperProps, props, open })}
-            {#if open}
-                <div {...wrapperProps}>
-                    <div {...props} in:fly={{ duration: 150, x: '-300' }}>
-                        <div style={menuDrawerStyle} bind:this={menuDrawer}>
-                            <Column style="padding: 3em 2em;">
-                                <!-- Header -->
-                                <Button.Root
-                                    style={headerButtonStyle}
-                                    onmouseenter={() => {
-                                        buttonOpacity = 0.8;
-                                    }}
-                                    onmouseleave={() => {
-                                        buttonOpacity = 1.0;
-                                    }}
-                                >
-                                    <Row spacing="0.5em" style={headerRowStyle}>
-                                        <Avatar.Root style={baseAvatarStyle}>
-                                            <Avatar.Fallback>
-                                                {currentUser &&
-                                                currentUser.username.length > 0
-                                                    ? currentUser.username.charAt(
-                                                          0
-                                                      )
-                                                    : ''}
-                                            </Avatar.Fallback>
-                                        </Avatar.Root>
-
-                                        <h3>{currentUser?.username}</h3>
-                                    </Row>
-                                    <span style={viewProfileStyle}
-                                        >View Profile</span
+        <!-- Menu drawer -->
+        <Popover.Content
+            trapFocus={false}
+            align="end"
+            side="left"
+            sideOffset={-125}
+            forceMount
+        >
+            {#snippet child({ wrapperProps, props, open })}
+                {#if open}
+                    <div {...wrapperProps}>
+                        <div {...props} in:fly={{ duration: 150, x: '-300' }}>
+                            <div style={menuDrawerStyle} bind:this={menuDrawer}>
+                                <Column style="padding: 3em 2em;">
+                                    <!-- Header -->
+                                    <Button.Root
+                                        style={headerButtonStyle}
+                                        onmouseenter={() => {
+                                            buttonOpacity = 0.8;
+                                        }}
+                                        onmouseleave={() => {
+                                            buttonOpacity = 1.0;
+                                        }}
                                     >
-                                </Button.Root>
-                                <div class="divider" style={dividerStyle}></div>
-
-                                <!-- Menu Items -->
-                                <NavigationMenu.Root orientation="vertical">
-                                    <NavigationMenu.List style={menuListStyle}>
-                                        <NavigationMenu.Item>
-                                            <NavigationMenu.Trigger
-                                                style={menuButtonStyle}
-                                                onmouseenter={() => {
-                                                    menuBtnBorderOpacity = 0.5;
-                                                    menuItemBtnOpacity = 0.5;
-                                                }}
-                                                onmouseleave={() => {
-                                                    menuBtnBorderOpacity = 0.8;
-                                                    menuItemBtnOpacity = 1.0;
-                                                }}
+                                        <Row
+                                            spacing="0.5em"
+                                            style={headerRowStyle}
+                                        >
+                                            <Avatar.Root
+                                                style={baseAvatarStyle}
                                             >
-                                                <Row
-                                                    spacing="0.5em"
-                                                    style="opacity: {menuItemBtnOpacity};"
+                                                <Avatar.Fallback>
+                                                    {currentUser &&
+                                                    currentUser.username
+                                                        .length > 0
+                                                        ? currentUser.username.charAt(
+                                                              0
+                                                          )
+                                                        : ''}
+                                                </Avatar.Fallback>
+                                            </Avatar.Root>
+
+                                            <h3>{currentUser?.username}</h3>
+                                        </Row>
+                                        <span style={viewProfileStyle}
+                                            >View Profile</span
+                                        >
+                                    </Button.Root>
+                                    <div
+                                        class="divider"
+                                        style={dividerStyle}
+                                    ></div>
+
+                                    <!-- Menu Items -->
+                                    <NavigationMenu.Root orientation="vertical">
+                                        <NavigationMenu.List
+                                            style={menuListStyle}
+                                        >
+                                            <NavigationMenu.Item
+                                                openOnHover={false}
+                                            >
+                                                <NavigationMenu.Trigger
+                                                    style={menuButtonStyle}
+                                                    onmouseenter={() => {
+                                                        menuBtnBorderOpacity = 0.5;
+                                                        menuItemBtnOpacity = 0.5;
+                                                    }}
+                                                    onmouseleave={() => {
+                                                        menuBtnBorderOpacity = 0.8;
+                                                        menuItemBtnOpacity = 1.0;
+                                                    }}
+                                                    onclick={logout}
                                                 >
-                                                    <SignOut />
-                                                    Log out
-                                                </Row>
-                                            </NavigationMenu.Trigger>
-                                        </NavigationMenu.Item>
-                                    </NavigationMenu.List>
-                                </NavigationMenu.Root>
-                            </Column>
+                                                    <Row
+                                                        spacing="0.5em"
+                                                        style="opacity: {menuItemBtnOpacity};"
+                                                    >
+                                                        <SignOut />
+                                                        Log out
+                                                    </Row>
+                                                </NavigationMenu.Trigger>
+                                            </NavigationMenu.Item>
+                                        </NavigationMenu.List>
+                                    </NavigationMenu.Root>
+                                </Column>
+                            </div>
                         </div>
                     </div>
-                </div>
-            {/if}
-        {/snippet}
-    </Popover.Content>
-</Popover.Root>
+                {/if}
+            {/snippet}
+        </Popover.Content>
+    </Popover.Root>
+{/if}
