@@ -2,7 +2,6 @@
     import Column from '@/components/Column.svelte';
     import Row from '@/components/Row.svelte';
     import SignOut from 'phosphor-svelte/lib/SignOut';
-    import Spiral from 'phosphor-svelte/lib/Spiral';
     import type { AuthContext } from '@/auth/types';
     import type { NavContext } from '@/router/types';
     import { Avatar, Button, NavigationMenu, Popover } from 'bits-ui';
@@ -141,12 +140,12 @@
 </script>
 
 {#if isLoggingOut}
-    <Column
-        style="align-items: center; text-align: center; justify-content: center;"
-    >
-        Logging out...
-        <Spinner />
-    </Column>
+    <div class="logout-container">
+        <div class="spinner-content">
+            Logging out...
+            <Spinner />
+        </div>
+    </div>
 {:else}
     <Popover.Root bind:open={displayMenuDrawer}>
         <!-- Avatar -->
@@ -277,3 +276,26 @@
         </Popover.Content>
     </Popover.Root>
 {/if}
+
+<style>
+    .logout-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .spinner-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        gap: 1em;
+    }
+</style>
