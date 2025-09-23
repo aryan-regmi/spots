@@ -4,9 +4,10 @@
     import Row from '@/components/Row.svelte';
     import { toCssString } from '@/utils/cssHelpers';
     import { stringToColour } from '@/utils/stringToColor';
-    import { Avatar, Button, Popover, Separator } from 'bits-ui';
+    import { Avatar, Button, NavigationMenu, Popover } from 'bits-ui';
     import { getContext } from 'svelte';
-    import { fade, fly, slide } from 'svelte/transition';
+    import { fly } from 'svelte/transition';
+    import SignOut from 'phosphor-svelte/lib/SignOut';
 
     const { authUser } = getContext<AuthContext>('authContext');
 
@@ -44,6 +45,7 @@
     /** Determines if the menu drawer should be displayed. */
     let displayMenuDrawer = $state(false);
 
+    /** The actual element for the drawer. */
     let menuDrawer = $state<HTMLElement>();
 
     /** Menu drawer style. */
@@ -62,9 +64,57 @@
         userSelect: 'none',
     });
 
-    const menuContainerStyle = toCssString({
-        padding: '3em 2em',
+    // Styles for the header
+    const headerButtonStyle = $derived(
+        toCssString({
+            all: 'unset',
+            cursor: 'pointer',
+            margin: 0,
+            padding: 0,
+            textAlign: 'left',
+            opacity: buttonOpacity,
+        })
+    );
+    const headerRowStyle = toCssString({
+        alignItems: 'center',
+        paddingBottom: 0,
+        marginBottom: '-0.5em',
     });
+    const viewProfileStyle = toCssString({
+        fontSize: '0.7em',
+        margin: 0,
+        padding: 0,
+        paddingLeft: '1em',
+        color: 'darkgray',
+    });
+    const dividerStyle = toCssString({
+        borderTop: '1px solid white',
+        margin: 0,
+        paddingBottom: '1em',
+    });
+
+    // Styles for the menu
+    let menuBtnBorderOpacity = $state(1.0);
+    let menuItemBtnOpacity = $state(1.0);
+    const menuListStyle = toCssString({
+        listStyleType: 'none',
+        alignItems: 'left',
+        justifyContent: 'left',
+        textAlign: 'left',
+        margin: 0,
+        padding: 0,
+    });
+    const menuButtonStyle = $derived(
+        toCssString({
+            width: '100%',
+            textAlign: 'left',
+            backgroundColor: 'inherit',
+            border: 'none',
+            borderBottom: `1px solid rgba(100, 100, 100, ${menuBtnBorderOpacity})`,
+            outline: 'none',
+            borderRadius: '0.1em',
+        })
+    );
 </script>
 
 <Popover.Root bind:open={displayMenuDrawer}>
@@ -112,15 +162,12 @@
         {#snippet child({ wrapperProps, props, open })}
             {#if open}
                 <div {...wrapperProps}>
-                    <div
-                        {...props}
-                        in:fly={{ duration: 150, x: '-300' }}
-                        out:fade={{ duration: 300 }}
-                    >
+                    <div {...props} in:fly={{ duration: 150, x: '-300' }}>
                         <div style={menuDrawerStyle} bind:this={menuDrawer}>
-                            <Column style={menuContainerStyle}>
+                            <Column style="padding: 3em 2em;">
+                                <!-- Header -->
                                 <Button.Root
-                                    style="all: unset; cursor: pointer; padding: 0; margin: 0; text-align: left; opacity: {buttonOpacity};"
+                                    style={headerButtonStyle}
                                     onmouseenter={() => {
                                         buttonOpacity = 0.8;
                                     }}
@@ -128,10 +175,7 @@
                                         buttonOpacity = 1.0;
                                     }}
                                 >
-                                    <Row
-                                        spacing="0.5em"
-                                        style="align-items: center; padding-bottom: 0; margin-bottom: 0;"
-                                    >
+                                    <Row spacing="0.5em" style={headerRowStyle}>
                                         <Avatar.Root style={baseAvatarStyle}>
                                             <Avatar.Fallback>
                                                 {currentUser &&
@@ -145,15 +189,38 @@
 
                                         <h3>{currentUser?.username}</h3>
                                     </Row>
-                                    <span
-                                        style="font-size: 0.7em; padding: 0; margin: 0; margin-top: -3em; text-align: left; padding-top: 0.25em; padding-left: 1em; color: darkgray;"
+                                    <span style={viewProfileStyle}
                                         >View Profile</span
                                     >
                                 </Button.Root>
-                                <div
-                                    class="divider"
-                                    style={`border-top: 1px solid white; margin: 0;`}
-                                ></div>
+                                <div class="divider" style={dividerStyle}></div>
+
+                                <!-- Menu Items -->
+                                <NavigationMenu.Root orientation="vertical">
+                                    <NavigationMenu.List style={menuListStyle}>
+                                        <NavigationMenu.Item>
+                                            <NavigationMenu.Trigger
+                                                style={menuButtonStyle}
+                                                onmouseenter={() => {
+                                                    menuBtnBorderOpacity = 0.5;
+                                                    menuItemBtnOpacity = 0.5;
+                                                }}
+                                                onmouseleave={() => {
+                                                    menuBtnBorderOpacity = 0.8;
+                                                    menuItemBtnOpacity = 1.0;
+                                                }}
+                                            >
+                                                <Row
+                                                    spacing="0.5em"
+                                                    style="opacity: {menuItemBtnOpacity};"
+                                                >
+                                                    <SignOut />
+                                                    Log out
+                                                </Row>
+                                            </NavigationMenu.Trigger>
+                                        </NavigationMenu.Item>
+                                    </NavigationMenu.List>
+                                </NavigationMenu.Root>
                             </Column>
                         </div>
                     </div>
