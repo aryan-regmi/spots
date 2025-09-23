@@ -1,130 +1,20 @@
 <script lang="ts">
   import Column from '@/components/Column.svelte';
+  import IconButton from '@/components/IconButton.svelte';
   import Row from '@/components/Row.svelte';
   import SignOut from 'phosphor-svelte/lib/SignOut';
+  import Spinner from '@/components/Spinner.svelte';
   import type { AuthContext } from '@/auth/types';
   import type { NavContext } from '@/router/types';
-  import { Avatar, Button, NavigationMenu, Popover } from 'bits-ui';
+  import { Avatar, NavigationMenu, Popover } from 'bits-ui';
+  import { closeEndpoint } from '@/api/network';
   import { fly } from 'svelte/transition';
   import { getContext } from 'svelte';
   import { stringToColour } from '@/utils/stringToColor';
   import { toCssString } from '@/utils/cssHelpers';
-  import { closeEndpoint } from '@/api/network';
-  import Spinner from '@/components/Spinner.svelte';
 
   const { authUser, unauthorize } = getContext<AuthContext>('authContext');
   const { navigateTo } = getContext<NavContext>('navContext');
-
-  /** The user the dashboard is for. */
-  const currentUser = $derived(authUser());
-
-  // Styles for the avatar.
-  let buttonOpacity = $state(1.0);
-  const baseAvatarStyle = $derived({
-    backgroundColor: stringToColour(authUser()?.username ?? ''),
-    borderRadius: '50%',
-    width: '2.5em',
-    height: '2.5em',
-    justifyContent: 'center',
-    textAlign: 'center',
-    verticalAlign: 'middle',
-    display: 'flex',
-    alignItems: 'center',
-  });
-  const triggerOpacity = $derived.by(() => {
-    if (displayMenuDrawer) {
-      return 0;
-    } else {
-      return 1.0;
-    }
-  });
-  const triggerAvatarStyle = $derived(
-    toCssString({
-      ...baseAvatarStyle,
-      transform: 'translateX(-8em) translateY(-8em)',
-      opacity: triggerOpacity,
-      transition: '0.2s',
-    })
-  );
-  const avatarButtonStyle = toCssString({
-    all: 'unset',
-    cursor: 'pointer',
-    borderRadius: '50%',
-    display: 'inline-block',
-  });
-
-  /** Determines if the menu drawer should be displayed. */
-  let displayMenuDrawer = $state(false);
-
-  /** The actual element for the drawer. */
-  let menuDrawer = $state<HTMLElement>();
-
-  /** Menu drawer style. */
-  const menuDrawerStyle = toCssString({
-    width: '75vw',
-    height: '100vh',
-    backdropFilter: 'blur(10px)',
-    '-webkit-backdrop-filter': 'blur(10px)',
-    backgroundColor: 'rgba(50, 30, 50, 0.3)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-    borderBottomRightRadius: '0.75em',
-    borderTopRightRadius: '0.75em',
-    justifyContent: 'center',
-    alignItems: 'center',
-    userSelect: 'none',
-  });
-
-  // Styles for the header
-  const headerButtonStyle = $derived(
-    toCssString({
-      all: 'unset',
-      cursor: 'pointer',
-      margin: 0,
-      padding: 0,
-      textAlign: 'left',
-      opacity: buttonOpacity,
-    })
-  );
-  const headerRowStyle = toCssString({
-    alignItems: 'center',
-    paddingBottom: 0,
-    marginBottom: '-0.5em',
-  });
-  const viewProfileStyle = toCssString({
-    fontSize: '0.7em',
-    margin: 0,
-    padding: 0,
-    paddingLeft: '1em',
-    color: 'darkgray',
-  });
-  const dividerStyle = toCssString({
-    borderTop: '1px solid white',
-    margin: 0,
-    paddingBottom: '1em',
-  });
-
-  // Styles for the menu
-  let menuBtnBorderOpacity = $state(1.0);
-  const menuListStyle = toCssString({
-    listStyleType: 'none',
-    alignItems: 'left',
-    justifyContent: 'left',
-    textAlign: 'left',
-    margin: 0,
-    padding: 0,
-  });
-  const menuButtonStyle = $derived((opacity: number) => {
-    return toCssString({
-      width: '100%',
-      textAlign: 'left',
-      backgroundColor: 'inherit',
-      border: 'none',
-      borderBottom: `1px solid rgba(100, 100, 100, ${opacity})`,
-      outline: 'none',
-      borderRadius: '0.1em',
-    });
-  });
 
   // TODO: Make this a prop
   //
@@ -138,16 +28,131 @@
     },
   ]);
 
+  /** The user the dashboard is for. */
+  const currentUser = $derived(authUser());
+
+  /** Opacity for the buttons. */
+  let buttonOpacities = $state({
+    trigger: 1.0,
+    header: 1.0,
+  });
+
+  /** Determines if the menu drawer should be displayed. */
+  let displayMenuDrawer = $state(false);
+
+  /** The actual element for the drawer. */
+  let menuDrawer = $state<HTMLElement>();
+
   /** Determines if the user is being logged out. */
   let isLoggingOut = $state(false);
+
+  $effect(() => {
+    if (displayMenuDrawer) {
+      buttonOpacities.trigger = 0;
+    }
+  });
 
   /** Unauthenticates the user, closes the network endpoint and returns to the landing page. */
   async function logout() {
     isLoggingOut = true;
     await unauthorize();
     await closeEndpoint();
-    await navigateTo('/', { replace: true });
+    navigateTo('/', { replace: true });
   }
+
+  /** Styles for the avatar. */
+  const baseAvatarStyle = $derived({
+    backgroundColor: stringToColour(authUser()?.username ?? ''),
+    borderRadius: '50%',
+    width: '2.5em',
+    height: '2.5em',
+    justifyContent: 'center',
+    textAlign: 'center',
+    verticalAlign: 'middle',
+    display: 'flex',
+    alignItems: 'center',
+  });
+  const triggerAvatarDisplay = $derived.by(() => {
+    if (displayMenuDrawer) {
+      return 'hidden';
+    } else {
+      return 'visible';
+    }
+  });
+  const triggerAvatarStyle = $derived(
+    toCssString({
+      all: 'unset',
+      transform: 'translateX(-8em) translateY(-8em)',
+      cursor: 'pointer',
+      opacity: buttonOpacities.trigger,
+      transition: '0.2s',
+      visibility: triggerAvatarDisplay,
+    })
+  );
+
+  /** Styles for the header. */
+  const headerStyles = $state({
+    row: toCssString({
+      alignItems: 'center',
+      paddingBottom: 0,
+      marginBottom: '-0.5em',
+    }),
+    viewProfile: toCssString({
+      fontSize: '0.7em',
+      margin: 0,
+      padding: 0,
+      paddingRight: '3em',
+      paddingLeft: '1em',
+      color: 'darkgray',
+      textAlign: 'left',
+    }),
+    divider: toCssString({
+      borderTop: '1px solid white',
+      margin: 0,
+      paddingBottom: '1em',
+    }),
+  });
+
+  /** Styles for the menu drawer. */
+  const drawerStyles = {
+    base: toCssString({
+      width: '75vw',
+      height: '100vh',
+      backdropFilter: 'blur(10px)',
+      '-webkit-backdrop-filter': 'blur(10px)',
+      backgroundColor: 'rgba(50, 30, 50, 0.3)',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+      borderBottomRightRadius: '0.75em',
+      borderTopRightRadius: '0.75em',
+      justifyContent: 'center',
+      alignItems: 'center',
+      userSelect: 'none',
+    }),
+    list: toCssString({
+      listStyleType: 'none',
+      alignItems: 'left',
+      justifyContent: 'left',
+      textAlign: 'left',
+      margin: 0,
+      padding: 0,
+    }),
+    button: toCssString({
+      width: '100%',
+      textAlign: 'left',
+      backgroundColor: 'inherit',
+      border: 'none',
+      borderBottom: `1px solid rgba(50, 50, 50, 0.8)`,
+      outline: 'none',
+      borderRadius: '0.1em',
+      paddingBottom: '0.5em',
+    }),
+    row: toCssString({
+      verticalAlign: 'middle',
+      justifyContent: 'left',
+      alignItems: 'center',
+    }),
+  };
 </script>
 
 {#if isLoggingOut}
@@ -161,29 +166,14 @@
   <Popover.Root bind:open={displayMenuDrawer}>
     <!-- Avatar -->
     <Popover.Trigger
-      style={avatarButtonStyle}
-      onmouseenter={() => {
-        if (!displayMenuDrawer) {
-          buttonOpacity = 0.8;
-        }
-      }}
-      onmouseleave={() => {
-        if (!displayMenuDrawer) {
-          buttonOpacity = 1.0;
-        }
-      }}
-      onmousedown={() => {
-        if (!displayMenuDrawer) {
-          buttonOpacity = 0.5;
-        }
-      }}
-      onmouseup={() => {
-        if (!displayMenuDrawer) {
-          buttonOpacity = 1.0;
-        }
-      }}
+      style={triggerAvatarStyle}
+      onmouseenter={() => (buttonOpacities.trigger = 0.5)}
+      onmouseleave={() => (buttonOpacities.trigger = 1.0)}
+      onmouseup={() => (buttonOpacities.trigger = 0.5)}
+      onmousedown={() => (buttonOpacities.trigger = 1.0)}
+      onclick={() => (buttonOpacities.trigger = 0.0)}
     >
-      <Avatar.Root style="opacity: {triggerOpacity}; {triggerAvatarStyle}">
+      <Avatar.Root style={baseAvatarStyle}>
         <Avatar.Fallback>
           {currentUser && currentUser.username.length > 0
             ? currentUser.username.charAt(0)
@@ -197,65 +187,50 @@
       trapFocus={false}
       align="end"
       side="left"
-      sideOffset={-125}
+      sideOffset={-100}
       forceMount
+      onclose={() => (buttonOpacities.trigger = 1.0)}
     >
       {#snippet child({ wrapperProps, props, open })}
         {#if open}
           <div {...wrapperProps}>
-            <div {...props} in:fly={{ duration: 150, x: '-300' }}>
-              <div style={menuDrawerStyle} bind:this={menuDrawer}>
+            <div {...props} transition:fly={{ duration: 150, x: '-300' }}>
+              <div style={drawerStyles.base} bind:this={menuDrawer}>
                 <Column style="padding: 3em 2em;">
                   <!-- Header -->
-                  <Button.Root
-                    style={headerButtonStyle}
-                    onmouseenter={() => {
-                      buttonOpacity = 0.8;
-                    }}
-                    onmouseleave={() => {
-                      buttonOpacity = 1.0;
-                    }}
-                    onclick={() => navigateTo('/profile')}
-                  >
-                    <Row spacing="0.5em" style={headerRowStyle}>
-                      <Avatar.Root style={baseAvatarStyle}>
-                        <Avatar.Fallback>
-                          {currentUser && currentUser.username.length > 0
-                            ? currentUser.username.charAt(0)
-                            : ''}
-                        </Avatar.Fallback>
-                      </Avatar.Root>
+                  <IconButton onclick={() => navigateTo('/profile')}>
+                    <Column>
+                      <Row spacing="0.5em" style={headerStyles.row}>
+                        <Avatar.Root style={baseAvatarStyle}>
+                          <Avatar.Fallback>
+                            {currentUser && currentUser.username.length > 0
+                              ? currentUser.username.charAt(0)
+                              : ''}
+                          </Avatar.Fallback>
+                        </Avatar.Root>
 
-                      <h3>{currentUser?.username}</h3>
-                    </Row>
-                    <span style={viewProfileStyle}>View Profile</span>
-                  </Button.Root>
-                  <div class="divider" style={dividerStyle}></div>
+                        <h3>{currentUser?.username}</h3>
+                      </Row>
+                      <span style={headerStyles.viewProfile}>View Profile</span>
+                    </Column>
+                  </IconButton>
+                  <div class="divider" style={headerStyles.divider}></div>
 
                   <!-- Menu Items -->
                   <NavigationMenu.Root orientation="vertical">
-                    <NavigationMenu.List style={menuListStyle}>
+                    <NavigationMenu.List style={drawerStyles.list}>
                       {#each menuItems as menuItem}
                         <NavigationMenu.Item openOnHover={false}>
-                          <NavigationMenu.Trigger
-                            style={menuButtonStyle(menuItem.opacity)}
-                            onmouseenter={() => {
-                              menuItem.opacity = 0.5;
-                            }}
-                            onmouseleave={() => {
-                              menuItem.opacity = 1.0;
-                            }}
+                          <IconButton
                             onclick={menuItem.onclick}
+                            style={drawerStyles.button}
                           >
-                            <Row
-                              spacing="0.5em"
-                              style="opacity: {menuItem.opacity};"
-                            >
+                            <Row spacing="0.5em" style={drawerStyles.row}>
                               {@const Component = menuItem.icon}
-                              <Component />
+                              <Component font-size="1.5em" />
                               Log out
                             </Row>
-                          </NavigationMenu.Trigger>
+                          </IconButton>
                         </NavigationMenu.Item>
                       {/each}
                     </NavigationMenu.List>

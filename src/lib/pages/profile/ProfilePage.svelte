@@ -2,8 +2,6 @@
   import { getEndpointAddress } from '@/api/network';
   import type { AuthContext } from '@/auth/types';
   import Column from '@/components/Column.svelte';
-  import { Button } from 'bits-ui';
-  import page, { type Callback } from 'page';
   import { getContext } from 'svelte';
   import QR from '@svelte-put/qr/img/QR.svelte';
   import CaretLeft from 'phosphor-svelte/lib/CaretLeft';
@@ -27,7 +25,10 @@
 <div>
   <Column spacing="1em">
     <IconButton onclick={navigateBack}>
-      <CaretLeft font-size="2em" style="padding-bottom: -2em;" />
+      <CaretLeft
+        font-size="2em"
+        style="padding-bottom: -2em; transform: translateX(-4em);"
+      />
     </IconButton>
     <div style="padding: 0.5em; background-color: white; border-radius: 1em;">
       <QR
