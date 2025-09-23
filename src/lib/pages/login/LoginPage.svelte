@@ -115,7 +115,7 @@
             }
         }}
     />
-    <Button.Root onclick={validateAndLogin}>
+    <Button.Root onclick={validateAndLogin} disabled={isValidating}>
         {#if isValidating}
             Logging in...
         {:else}
