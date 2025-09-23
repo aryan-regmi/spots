@@ -106,7 +106,6 @@
 
     // Styles for the menu
     let menuBtnBorderOpacity = $state(1.0);
-    let menuItemBtnOpacity = $state(1.0);
     const menuListStyle = toCssString({
         listStyleType: 'none',
         alignItems: 'left',
@@ -126,6 +125,15 @@
             borderRadius: '0.1em',
         })
     );
+
+    const menuItems = $state([
+        {
+            label: 'Log out',
+            icon: SignOut,
+            opacity: 1,
+            onclick: logout,
+        },
+    ]);
 
     /** Determines if the user is being logged out. */
     let isLoggingOut = $state(false);
@@ -241,30 +249,32 @@
                                         <NavigationMenu.List
                                             style={menuListStyle}
                                         >
-                                            <NavigationMenu.Item
-                                                openOnHover={false}
-                                            >
-                                                <NavigationMenu.Trigger
-                                                    style={menuButtonStyle}
-                                                    onmouseenter={() => {
-                                                        menuBtnBorderOpacity = 0.5;
-                                                        menuItemBtnOpacity = 0.5;
-                                                    }}
-                                                    onmouseleave={() => {
-                                                        menuBtnBorderOpacity = 0.8;
-                                                        menuItemBtnOpacity = 1.0;
-                                                    }}
-                                                    onclick={logout}
+                                            {#each menuItems as menuItem}
+                                                <NavigationMenu.Item
+                                                    openOnHover={false}
                                                 >
-                                                    <Row
-                                                        spacing="0.5em"
-                                                        style="opacity: {menuItemBtnOpacity};"
+                                                    <NavigationMenu.Trigger
+                                                        style={menuButtonStyle}
+                                                        onmouseenter={() => {
+                                                            menuBtnBorderOpacity = 0.5;
+                                                            menuItem.opacity = 0.5;
+                                                        }}
+                                                        onmouseleave={() => {
+                                                            menuBtnBorderOpacity = 0.8;
+                                                            menuItem.opacity = 1.0;
+                                                        }}
+                                                        onclick={menuItem.onclick}
                                                     >
-                                                        <SignOut />
-                                                        Log out
-                                                    </Row>
-                                                </NavigationMenu.Trigger>
-                                            </NavigationMenu.Item>
+                                                        <Row
+                                                            spacing="0.5em"
+                                                            style="opacity: {menuItem.opacity};"
+                                                        >
+                                                            <SignOut />
+                                                            Log out
+                                                        </Row>
+                                                    </NavigationMenu.Trigger>
+                                                </NavigationMenu.Item>
+                                            {/each}
                                         </NavigationMenu.List>
                                     </NavigationMenu.Root>
                                 </Column>
