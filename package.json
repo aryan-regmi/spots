@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@svelte-put/qr": "^2.1.0",
     "@sveltejs/vite-plugin-svelte": "^6.1.1",
     "@types/page": "^1.11.9",
     "phosphor-svelte": "^3.0.1",

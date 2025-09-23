@@ -42,6 +42,10 @@
           page.show(path);
         }
       },
+      navigateBack: function () {
+        window.history.go(-1);
+        return;
+      },
     });
   });
 </script>
