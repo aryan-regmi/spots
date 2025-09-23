@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { User } from '@/user/types';
-  import { setContext } from 'svelte';
   import type { AuthContext } from './types';
+  import type { User } from '@/user/types';
   import { getAuthUser, removeAuthUser, setAuthUser } from '@/api/auth';
+  import { setContext } from 'svelte';
 
   let { children } = $props();
 

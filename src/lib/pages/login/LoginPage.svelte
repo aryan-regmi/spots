@@ -72,14 +72,15 @@
     validationErrors = [];
 
     // Authorize user
-    authorize(user);
+    await authorize(user);
 
     // Load network endpoint
-    loadEndpoint(user.id);
+    await loadEndpoint(user.id);
 
     // Go to dashboard
     isValidating = false;
-    await navigateTo('/dashboard', { replace: true });
+    // navigateTo('/dashboard', { replace: true });
+    navigateTo('/dashboard');
   }
 </script>
 
@@ -122,10 +123,10 @@
 
   <!-- Navigate to `Sign up` -->
   <Button.Root
-    href="#"
+    href=""
     onclick={async (e) => {
       e.preventDefault();
-      await navigateTo('/signup');
+      navigateTo('/signup');
     }}>Sign up</Button.Root
   >
 

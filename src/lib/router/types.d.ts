@@ -1,11 +1,8 @@
 import type { Component } from 'svelte';
 
-/** The navigation context. */
+/** Represents a navigation context. */
 export type NavContext = {
-  navigateTo: (path: string, options?: { replace?: boolean }) => Promise<void>;
-  getLocation: () => string | undefined;
-  setLocation: (path: string) => Promise<void>;
+  currentComponent: () => Component | undefined;
+  setCurrentComponent: (component: Component) => void;
+  navigateTo: (string, options?: { replace?: boolean }) => void;
 };
-
-/** Represents a route. */
-export type Route = { path: string; component: Component };
