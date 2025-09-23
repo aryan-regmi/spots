@@ -4,9 +4,9 @@
     import Row from '@/components/Row.svelte';
     import { toCssString } from '@/utils/cssHelpers';
     import { stringToColour } from '@/utils/stringToColor';
-    import { Avatar, Popover } from 'bits-ui';
+    import { Avatar, Popover, Separator } from 'bits-ui';
     import { getContext } from 'svelte';
-    import { fade, slide } from 'svelte/transition';
+    import { fade, fly, slide } from 'svelte/transition';
 
     const { authUser } = getContext<AuthContext>('authContext');
 
@@ -67,7 +67,7 @@
     });
 </script>
 
-<Popover.Root>
+<Popover.Root bind:open={displayMenuDrawer}>
     <!-- Avatar -->
     <Popover.Trigger
         style={avatarButtonStyle}
@@ -107,19 +107,46 @@
         align="end"
         side="left"
         sideOffset={-150}
+        forceMount
     >
-        <div style={menuDrawerStyle} bind:this={menuDrawer}>
-            <Column style={menuContainerStyle}>
-                <Row>
-                    <Avatar.Root style={baseAvatarStyle}>
-                        <Avatar.Fallback>
-                            {currentUser && currentUser.username.length > 0
-                                ? currentUser.username.charAt(0)
-                                : ''}
-                        </Avatar.Fallback>
-                    </Avatar.Root>
-                </Row>
-            </Column>
-        </div>
+        {#snippet child({ wrapperProps, props, open })}
+            {#if open}
+                <div {...wrapperProps}>
+                    <div
+                        {...props}
+                        in:fly={{ duration: 150, x: '-300' }}
+                        out:fade={{ duration: 300 }}
+                    >
+                        <div style={menuDrawerStyle} bind:this={menuDrawer}>
+                            <Column style={menuContainerStyle}>
+                                <Row
+                                    spacing="0.5em"
+                                    style="align-items: center;"
+                                >
+                                    <Avatar.Root style={baseAvatarStyle}>
+                                        <Avatar.Fallback>
+                                            {currentUser &&
+                                            currentUser.username.length > 0
+                                                ? currentUser.username.charAt(0)
+                                                : ''}
+                                        </Avatar.Fallback>
+                                    </Avatar.Root>
+
+                                    <h3>{currentUser?.username}</h3>
+                                </Row>
+                                <span
+                                    style="font-size: 0.7em; padding: 0; margin: 0; margin-top: -1em; text-align: left; padding-top: 0.25em; padding-left: 1em; color: darkgray;"
+                                    >View Profile</span
+                                >
+                                <div
+                                    class="divider"
+                                    style={`border-top: 1px solid white; margin: 0;`}
+                                ></div>
+                            </Column>
+                        </div>
+                    </div>
+                </div>
+            {/if}
+        {/snippet}
     </Popover.Content>
 </Popover.Root>
