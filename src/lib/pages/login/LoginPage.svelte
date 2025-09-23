@@ -80,7 +80,6 @@
     // Go to dashboard
     isValidating = false;
     navigateTo('/dashboard', { replace: true });
-    navigateTo('/dashboard');
   }
 </script>
 

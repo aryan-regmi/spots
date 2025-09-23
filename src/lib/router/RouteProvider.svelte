@@ -30,15 +30,17 @@
         }
       },
       navigateTo: function (path: string, options?: { replace?: boolean }) {
-        let destPage = routes.find((route) => route.path === path);
-        if (currentPage && destPage) {
-          currentPage.component = destPage.component;
-        }
+        if (path != window.location.pathname) {
+          let destPage = routes.find((route) => route.path === path);
+          if (currentPage && destPage) {
+            currentPage.component = destPage.component;
+          }
 
-        if (options?.replace) {
-          page.replace(path);
+          if (options?.replace) {
+            page.replace(path, { dest: window.location.pathname });
+          }
+          page.show(path);
         }
-        page.show(path);
       },
     });
   });
