@@ -136,12 +136,6 @@
       opacity: 1,
       onclick: logout,
     },
-    {
-      label: 'Log out',
-      icon: SignOut,
-      opacity: 1,
-      onclick: logout,
-    },
   ]);
 
   /** Determines if the user is being logged out. */
@@ -221,6 +215,7 @@
                     onmouseleave={() => {
                       buttonOpacity = 1.0;
                     }}
+                    onclick={() => navigateTo('/profile')}
                   >
                     <Row spacing="0.5em" style={headerRowStyle}>
                       <Avatar.Root style={baseAvatarStyle}>

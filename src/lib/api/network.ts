@@ -18,6 +18,15 @@ export async function loadEndpoint(userId: number) {
   }
 }
 
+/** Gets the endpoint address for the specfied user. */
+export async function getEndpointAddress(userId: number) {
+  try {
+    return await invoke<string | undefined>('get_endpoint_address', { userId });
+  } catch (e: any) {
+    throw new Error(e);
+  }
+}
+
 /** Closes the endpoint. */
 export async function closeEndpoint() {
   try {

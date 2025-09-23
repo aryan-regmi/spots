@@ -27,6 +27,12 @@
     }
   });
 
+  $effect(() => {
+    if (getLocation() === '/dashboard' && !isAuthenticated()) {
+      throw navigateTo('/login', { replace: true });
+    }
+  });
+
   /** The current path. */
   const location = $derived.by(() => getLocation());
 
