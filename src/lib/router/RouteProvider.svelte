@@ -29,10 +29,14 @@
           currentPage.component = component;
         }
       },
-      navigateTo: function (path: string) {
+      navigateTo: function (path: string, options?: { replace?: boolean }) {
         let destPage = routes.find((route) => route.path === path);
         if (currentPage && destPage) {
           currentPage.component = destPage.component;
+        }
+
+        if (options?.replace) {
+          page.replace(path);
         }
         page.show(path);
       },

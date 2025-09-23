@@ -4,8 +4,9 @@ import LoginPage from '@/pages/login/LoginPage.svelte';
 import ProfilePage from '@/pages/profile/ProfilePage.svelte';
 import SignupPage from '@/pages/signup/SignupPage.svelte';
 import page, { type Callback } from 'page';
-import type { Component } from 'svelte';
+import { getContext, type Component } from 'svelte';
 import { getAuthUser } from '@/api/auth';
+import type { AuthContext } from '@/auth/types';
 
 /** Describes a route. */
 export type RouteInfo = {
@@ -18,8 +19,10 @@ export type RouteInfo = {
 async function authRedirectLoader() {
   const authUser = await getAuthUser();
   if (authUser) {
+    page.replace('/dashboard');
     page.show('/dashboard');
   } else {
+    page.replace('/login');
     page.show('/login');
   }
 }
@@ -45,6 +48,7 @@ export const routes: RouteInfo[] = [
     loader: async () => {
       const authUser = await getAuthUser();
       if (!authUser) {
+        page.replace('/login');
         page.show('/login');
       }
     },
