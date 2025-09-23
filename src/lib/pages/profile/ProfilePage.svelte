@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { getEndpointAddress } from '@/api/network';
-  import type { AuthContext } from '@/auth/types';
-  import Column from '@/components/Column.svelte';
-  import { getContext } from 'svelte';
-  import QR from '@svelte-put/qr/img/QR.svelte';
   import CaretLeft from 'phosphor-svelte/lib/CaretLeft';
+  import Column from '@/components/Column.svelte';
   import IconButton from '@/components/IconButton.svelte';
-  import type { NavContext } from '@/router/types';
+  import QR from '@svelte-put/qr/img/QR.svelte';
+  import type { AuthContext } from '@/auth/types';
+  import { getContext } from 'svelte';
+  import { getEndpointAddress } from '@/api/network';
+  import { navContextKey, type NavContext } from '@/router/types';
 
   const { isAuthenticated, authUser } = getContext<AuthContext>('authContext');
-  const { navigateBack } = getContext<NavContext>('navContext');
+  const { navigateBack } = getContext<NavContext>(navContextKey);
 
   let endpointAddress = $state<string>();
   $effect(() => {

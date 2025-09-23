@@ -1,18 +1,18 @@
 <script lang="ts">
+  import AlertBox, { type AlertValue } from '@/components/AlertBox.svelte';
   import Column from '@/components/Column.svelte';
   import TextField from '@/components/inputs/TextField.svelte';
-  import type { AuthContext } from '@/auth/types';
-  import type { NavContext } from '@/router/types';
   import { Button } from 'bits-ui';
+  import { authContextKey, type AuthContext } from '@/auth/types';
   import { createEndpoint } from '@/api/network';
   import { getContext } from 'svelte';
   import { getUserByUsername, hashPassword, insertUser } from '@/api/users';
-  import { toCssString } from '@/utils/cssHelpers';
-  import AlertBox, { type AlertValue } from '@/components/AlertBox.svelte';
+  import { navContextKey, type NavContext } from '@/router/types';
   import { passwordSchema, usernameSchema } from '@/utils/inputParsers';
+  import { toCssString } from '@/utils/cssHelpers';
 
-  const { authorize } = getContext<AuthContext>('authContext');
-  const { navigateTo } = getContext<NavContext>('navContext');
+  const { authorize } = getContext<AuthContext>(authContextKey);
+  const { navigateTo } = getContext<NavContext>(navContextKey);
 
   type ValidationError =
     | 'Username already exists!'

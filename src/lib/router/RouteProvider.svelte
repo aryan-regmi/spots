@@ -1,6 +1,6 @@
 <script lang="ts">
   import page from 'page';
-  import type { NavContext } from './types';
+  import { navContextKey, type NavContext } from './types';
   import { routes, type RouteInfo } from '@/pages/routes.svelte';
   import { setContext, type Component } from 'svelte';
 
@@ -20,7 +20,7 @@
 
     page();
 
-    setContext<NavContext>('navContext', {
+    setContext<NavContext>(navContextKey, {
       currentComponent: function () {
         return currentPage?.component;
       },

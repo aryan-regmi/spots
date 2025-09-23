@@ -4,6 +4,8 @@
   import Router from '@/router/Router.svelte';
 </script>
 
+<!-- FIXME: Add theme context ASAP so i dont have to update everything later! -->
+
 <main>
   <AuthProvider>
     <RouteProvider>

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { AuthContext } from './types';
   import type { User } from '@/user/types';
+  import { authContextKey, type AuthContext } from './types';
   import { getAuthUser, removeAuthUser, setAuthUser } from '@/api/auth';
   import { setContext } from 'svelte';
 
@@ -42,7 +42,7 @@
   }
 
   // Sets the auth context to be used by other components
-  setContext<AuthContext>('authContext', {
+  setContext<AuthContext>(authContextKey, {
     authUser: () => {
       return authUser;
     },

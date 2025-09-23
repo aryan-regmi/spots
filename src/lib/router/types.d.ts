@@ -7,3 +7,6 @@ export type NavContext = {
   navigateTo: (string, options?: { replace?: boolean }) => void;
   navigateBack: () => void;
 };
+
+/** The key for the nav context. */
+export const navContextKey = Symbol();

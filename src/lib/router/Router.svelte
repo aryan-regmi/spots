@@ -1,8 +1,8 @@
 <script lang="ts">
   import { getContext } from 'svelte';
-  import type { NavContext } from './types';
+  import { navContextKey, type NavContext } from './types';
 
-  let { currentComponent } = $state(getContext<NavContext>('navContext'));
+  let { currentComponent } = $state(getContext<NavContext>(navContextKey));
 
   let currentPage = $derived(currentComponent());
 </script>

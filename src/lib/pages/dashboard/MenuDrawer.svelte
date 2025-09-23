@@ -4,17 +4,17 @@
   import Row from '@/components/Row.svelte';
   import SignOut from 'phosphor-svelte/lib/SignOut';
   import Spinner from '@/components/Spinner.svelte';
-  import type { AuthContext } from '@/auth/types';
-  import type { NavContext } from '@/router/types';
   import { Avatar, NavigationMenu, Popover } from 'bits-ui';
+  import { authContextKey, type AuthContext } from '@/auth/types';
   import { closeEndpoint } from '@/api/network';
   import { fly } from 'svelte/transition';
   import { getContext } from 'svelte';
+  import { navContextKey, type NavContext } from '@/router/types';
   import { stringToColour } from '@/utils/stringToColor';
   import { toCssString } from '@/utils/cssHelpers';
 
-  const { authUser, unauthorize } = getContext<AuthContext>('authContext');
-  const { navigateTo } = getContext<NavContext>('navContext');
+  const { authUser, unauthorize } = getContext<AuthContext>(authContextKey);
+  const { navigateTo } = getContext<NavContext>(navContextKey);
 
   // TODO: Make this a prop
   //
