@@ -114,22 +114,28 @@
     margin: 0,
     padding: 0,
   });
-  const menuButtonStyle = $derived(
-    toCssString({
+  const menuButtonStyle = $derived((opacity: number) => {
+    return toCssString({
       width: '100%',
       textAlign: 'left',
       backgroundColor: 'inherit',
       border: 'none',
-      borderBottom: `1px solid rgba(100, 100, 100, ${menuBtnBorderOpacity})`,
+      borderBottom: `1px solid rgba(100, 100, 100, ${opacity})`,
       outline: 'none',
       borderRadius: '0.1em',
-    })
-  );
+    });
+  });
 
   // TODO: Make this a prop
   //
   /** The menu options. */
   const menuItems = $state([
+    {
+      label: 'Log out',
+      icon: SignOut,
+      opacity: 1,
+      onclick: logout,
+    },
     {
       label: 'Log out',
       icon: SignOut,
@@ -237,13 +243,11 @@
                       {#each menuItems as menuItem}
                         <NavigationMenu.Item openOnHover={false}>
                           <NavigationMenu.Trigger
-                            style={menuButtonStyle}
+                            style={menuButtonStyle(menuItem.opacity)}
                             onmouseenter={() => {
-                              menuBtnBorderOpacity = 0.5;
                               menuItem.opacity = 0.5;
                             }}
                             onmouseleave={() => {
-                              menuBtnBorderOpacity = 0.8;
                               menuItem.opacity = 1.0;
                             }}
                             onclick={menuItem.onclick}
@@ -252,7 +256,8 @@
                               spacing="0.5em"
                               style="opacity: {menuItem.opacity};"
                             >
-                              <SignOut />
+                              {@const Component = menuItem.icon}
+                              <Component />
                               Log out
                             </Row>
                           </NavigationMenu.Trigger>
