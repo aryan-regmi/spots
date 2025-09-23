@@ -4,7 +4,7 @@
     import Row from '@/components/Row.svelte';
     import { toCssString } from '@/utils/cssHelpers';
     import { stringToColour } from '@/utils/stringToColor';
-    import { Avatar, Popover, Separator } from 'bits-ui';
+    import { Avatar, Button, Popover, Separator } from 'bits-ui';
     import { getContext } from 'svelte';
     import { fade, fly, slide } from 'svelte/transition';
 
@@ -14,7 +14,7 @@
     const currentUser = $derived(authUser());
 
     // Styles for the avatar.
-    let avatarButtonOpacity = $state(1.0);
+    let buttonOpacity = $state(1.0);
     const baseAvatarStyle = $derived({
         backgroundColor: stringToColour(authUser()?.username ?? ''),
         borderRadius: '50%',
@@ -30,7 +30,7 @@
         toCssString({
             ...baseAvatarStyle,
             transform: 'translateX(-8em) translateY(-8em)',
-            opacity: avatarButtonOpacity,
+            opacity: buttonOpacity,
             transition: '0.2s',
         })
     );
@@ -73,22 +73,22 @@
         style={avatarButtonStyle}
         onmouseenter={() => {
             if (!displayMenuDrawer) {
-                avatarButtonOpacity = 0.8;
+                buttonOpacity = 0.8;
             }
         }}
         onmouseleave={() => {
             if (!displayMenuDrawer) {
-                avatarButtonOpacity = 1.0;
+                buttonOpacity = 1.0;
             }
         }}
         onmousedown={() => {
             if (!displayMenuDrawer) {
-                avatarButtonOpacity = 0.5;
+                buttonOpacity = 0.5;
             }
         }}
         onmouseup={() => {
             if (!displayMenuDrawer) {
-                avatarButtonOpacity = 1.0;
+                buttonOpacity = 1.0;
             }
         }}
     >
@@ -119,25 +119,37 @@
                     >
                         <div style={menuDrawerStyle} bind:this={menuDrawer}>
                             <Column style={menuContainerStyle}>
-                                <Row
-                                    spacing="0.5em"
-                                    style="align-items: center;"
+                                <Button.Root
+                                    style="all: unset; cursor: pointer; padding: 0; margin: 0; text-align: left; opacity: {buttonOpacity};"
+                                    onmouseenter={() => {
+                                        buttonOpacity = 0.8;
+                                    }}
+                                    onmouseleave={() => {
+                                        buttonOpacity = 1.0;
+                                    }}
                                 >
-                                    <Avatar.Root style={baseAvatarStyle}>
-                                        <Avatar.Fallback>
-                                            {currentUser &&
-                                            currentUser.username.length > 0
-                                                ? currentUser.username.charAt(0)
-                                                : ''}
-                                        </Avatar.Fallback>
-                                    </Avatar.Root>
+                                    <Row
+                                        spacing="0.5em"
+                                        style="align-items: center; padding-bottom: 0; margin-bottom: 0;"
+                                    >
+                                        <Avatar.Root style={baseAvatarStyle}>
+                                            <Avatar.Fallback>
+                                                {currentUser &&
+                                                currentUser.username.length > 0
+                                                    ? currentUser.username.charAt(
+                                                          0
+                                                      )
+                                                    : ''}
+                                            </Avatar.Fallback>
+                                        </Avatar.Root>
 
-                                    <h3>{currentUser?.username}</h3>
-                                </Row>
-                                <span
-                                    style="font-size: 0.7em; padding: 0; margin: 0; margin-top: -1em; text-align: left; padding-top: 0.25em; padding-left: 1em; color: darkgray;"
-                                    >View Profile</span
-                                >
+                                        <h3>{currentUser?.username}</h3>
+                                    </Row>
+                                    <span
+                                        style="font-size: 0.7em; padding: 0; margin: 0; margin-top: -3em; text-align: left; padding-top: 0.25em; padding-left: 1em; color: darkgray;"
+                                        >View Profile</span
+                                    >
+                                </Button.Root>
                                 <div
                                     class="divider"
                                     style={`border-top: 1px solid white; margin: 0;`}
