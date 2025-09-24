@@ -116,7 +116,6 @@
   #label {
     position: absolute;
     transform: translateY(0.75em) translateX(1em);
-    color: #999;
     font-size: 1.25em;
     pointer-events: none;
     transition:
@@ -127,7 +126,6 @@
 
   #label.float {
     font-size: 0.9em;
-    /* transform: translateY(0.3em) translateX(1em); */
     transform: translateY(-1.25em);
     font-weight: bold;
   }
@@ -141,10 +139,5 @@
     font-size: 0.9em;
     font-weight: bold;
     transform: translateY(4em) translateX(8em);
-    color: #777fff;
-  }
-
-  #helper-text.invalid {
-    color: red;
   }
 </style>

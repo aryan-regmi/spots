@@ -1,18 +1,18 @@
 <script lang="ts">
   import AlertBox from '@/components/AlertBox.svelte';
+  import Button from '@/components/Button.svelte';
   import Column from '@/components/Column.svelte';
   import TextField from '@/components/inputs/TextField.svelte';
-  import Button from '@/components/Button.svelte';
+  import type { ThemeContext } from '@/theme/types';
   import { authContextKey } from '@/auth/authContextKey';
   import { getContext } from 'svelte';
   import { getUserByUsername, verifyPassword } from '@/api/users';
   import { loadEndpoint } from '@/api/network';
   import { navContextKey } from '@/router/navContextKey';
+  import { themeContextKey } from '@/theme/themeContextKey';
   import { toCssString } from '@/utils/cssHelpers';
   import { type AuthContext } from '@/auth/types';
   import { type NavContext } from '@/router/types';
-  import type { ThemeContext } from '@/theme/types';
-  import { themeContextKey } from '@/theme/themeContextKey';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);
@@ -88,15 +88,6 @@
     justifyContent: 'center',
     alignItems: 'center',
   });
-
-  /** Style for the login button. */
-  const loginButtonStyle = $derived(
-    toCssString({
-      color: palette.text.primary,
-      backgroundColor: palette.background.surface,
-      // borderColor: palette.primary.main,
-    })
-  );
 </script>
 
 <Column spacing="2em" style={formStyle}>
