@@ -5,13 +5,15 @@
   import SignOut from 'phosphor-svelte/lib/SignOut';
   import Spinner from '@/components/Spinner.svelte';
   import { Avatar, NavigationMenu, Popover } from 'bits-ui';
-  import { authContextKey, type AuthContext } from '@/auth/types';
+  import { authContextKey } from '@/auth/authContextKey';
   import { closeEndpoint } from '@/api/network';
   import { fly } from 'svelte/transition';
   import { getContext } from 'svelte';
-  import { navContextKey, type NavContext } from '@/router/types';
+  import { navContextKey } from '@/router/navContextKey';
   import { stringToColour } from '@/utils/stringToColor';
   import { toCssString } from '@/utils/cssHelpers';
+  import { type AuthContext } from '@/auth/types';
+  import { type NavContext } from '@/router/types';
 
   const { authUser, unauthorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getContext } from 'svelte';
-  import { navContextKey, type NavContext } from './types';
+  import { navContextKey } from './navContextKey';
+  import { type NavContext } from '@/router/types';
 
   let { currentComponent } = $state(getContext<NavContext>(navContextKey));
 

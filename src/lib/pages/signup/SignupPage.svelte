@@ -3,13 +3,15 @@
   import Column from '@/components/Column.svelte';
   import TextField from '@/components/inputs/TextField.svelte';
   import { Button } from 'bits-ui';
-  import { authContextKey, type AuthContext } from '@/auth/types';
+  import { authContextKey } from '@/auth/authContextKey';
   import { createEndpoint } from '@/api/network';
   import { getContext } from 'svelte';
   import { getUserByUsername, hashPassword, insertUser } from '@/api/users';
-  import { navContextKey, type NavContext } from '@/router/types';
+  import { navContextKey } from '@/router/navContextKey';
   import { passwordSchema, usernameSchema } from '@/utils/inputParsers';
   import { toCssString } from '@/utils/cssHelpers';
+  import { type AuthContext } from '@/auth/types';
+  import { type NavContext } from '@/router/types';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);

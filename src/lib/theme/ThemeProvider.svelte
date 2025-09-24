@@ -1,17 +1,14 @@
 <script lang="ts">
+  import { darkPalette, lightPalette } from './palettes';
   import { setContext } from 'svelte';
-  import {
-    darkPalette,
-    lightPalette,
-    themeContextKey,
-    type ThemeContext,
-  } from './types';
+  import { themeContextKey } from './themeContextKey';
+  import { type ThemeContext } from './types';
+
+  let { children } = $props();
 
   /** The theme context. */
   let themeContext: ThemeContext = $state({
     theme: 'dark',
-
-    palette: darkPalette,
 
     /** Switches to the specified theme. */
     switchTheme: function (theme: ThemeContext['theme']) {
@@ -41,3 +38,5 @@
   // Sets the theme context to be used by other components.
   setContext<ThemeContext>(themeContextKey, themeContext);
 </script>
+
+{@render children()}

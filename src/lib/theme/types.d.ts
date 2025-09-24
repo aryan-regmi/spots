@@ -1,27 +1,24 @@
-/** The key for the theme context. */
-export const themeContextKey = Symbol();
-
 /** The context for the theme. */
 export type ThemeContext = {
   theme: 'light' | 'dark';
   switchTheme: (theme: ThemeContext['theme']) => void;
-  palette: string[];
+  currentPalette: () => Palette;
 };
 
-/** The dark theme palette. */
-export const darkPalette = [
-  '#4D5382',
-  '#514663',
-  '#8CBA80',
-  '#B3B3F1',
-  '#CACF85',
-];
-
-/** The light theme palette. */
-export const lightPalette = [
-  '#555B6E',
-  '#72E1D1',
-  '#7EA172',
-  '#BCCCF0',
-  '#FFD6BA',
-];
+/** Represents a palette. */
+export type Palette = {
+  primary: { main: string; contrast: string };
+  secondary: { main: string; contrast: string };
+  accent: { main: string; contrast: string };
+  background: { default: string; surface: string };
+  text: {
+    primary: string;
+    secondary: string;
+    inverted: string;
+  };
+  border: {
+    light: string;
+    strong: string;
+  };
+  basic: { primary: string; secondary: string };
+};

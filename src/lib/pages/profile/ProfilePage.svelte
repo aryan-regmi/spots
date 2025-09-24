@@ -4,11 +4,13 @@
   import IconButton from '@/components/IconButton.svelte';
   import QR from '@svelte-put/qr/img/QR.svelte';
   import type { AuthContext } from '@/auth/types';
+  import { authContextKey } from '@/auth/authContextKey';
   import { getContext } from 'svelte';
   import { getEndpointAddress } from '@/api/network';
-  import { navContextKey, type NavContext } from '@/router/types';
+  import { navContextKey } from '@/router/navContextKey';
+  import { type NavContext } from '@/router/types';
 
-  const { isAuthenticated, authUser } = getContext<AuthContext>('authContext');
+  const { isAuthenticated, authUser } = getContext<AuthContext>(authContextKey);
   const { navigateBack } = getContext<NavContext>(navContextKey);
 
   let endpointAddress = $state<string>();

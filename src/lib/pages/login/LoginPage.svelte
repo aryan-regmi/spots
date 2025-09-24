@@ -2,16 +2,23 @@
   import AlertBox from '@/components/AlertBox.svelte';
   import Column from '@/components/Column.svelte';
   import TextField from '@/components/inputs/TextField.svelte';
-  import { Button } from 'bits-ui';
-  import { authContextKey, type AuthContext } from '@/auth/types';
+  import Button from '@/components/Button.svelte';
+  import { authContextKey } from '@/auth/authContextKey';
   import { getContext } from 'svelte';
   import { getUserByUsername, verifyPassword } from '@/api/users';
   import { loadEndpoint } from '@/api/network';
-  import { navContextKey, type NavContext } from '@/router/types';
+  import { navContextKey } from '@/router/navContextKey';
   import { toCssString } from '@/utils/cssHelpers';
+  import { type AuthContext } from '@/auth/types';
+  import { type NavContext } from '@/router/types';
+  import type { ThemeContext } from '@/theme/types';
+  import { themeContextKey } from '@/theme/themeContextKey';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);
+  const { currentPalette } = getContext<ThemeContext>(themeContextKey);
+
+  const palette = $derived(currentPalette());
 
   /** State of the username input. */
   let usernameState = $state({
@@ -33,17 +40,6 @@
 
   /** Deduplicated version of [validationErrors]. */
   let uniqueErrors = $derived([...new Set(validationErrors)]);
-
-  /** Style for the validation alerts. */
-  const alertStyle = toCssString({
-    width: '15em',
-  });
-
-  /** Style for the entire form. */
-  const formStyle = toCssString({
-    justifyContent: 'center',
-    alignItems: 'center',
-  });
 
   /** Validates the login (username and password). */
   async function validateAndLogin() {
@@ -81,6 +77,26 @@
     isValidating = false;
     navigateTo('/dashboard', { replace: true });
   }
+
+  /** Style for the validation alerts. */
+  const alertStyle = toCssString({
+    width: '15em',
+  });
+
+  /** Style for the entire form. */
+  const formStyle = toCssString({
+    justifyContent: 'center',
+    alignItems: 'center',
+  });
+
+  /** Style for the login button. */
+  const loginButtonStyle = $derived(
+    toCssString({
+      color: palette.text.primary,
+      backgroundColor: palette.background.surface,
+      // borderColor: palette.primary.main,
+    })
+  );
 </script>
 
 <Column spacing="2em" style={formStyle}>
@@ -98,7 +114,11 @@
         validationErrors = [];
       }
     }}
-  />
+  >
+    {#snippet helperText()}
+      <span color={palette.basic.secondary}>Username is required!</span>
+    {/snippet}
+  </TextField>
   <TextField
     bind:value={passwordState.input}
     invalid={!passwordState.isValid}
@@ -111,23 +131,21 @@
         validationErrors = [];
       }
     }}
-  />
-  <Button.Root onclick={validateAndLogin} disabled={isValidating}>
+  >
+    {#snippet helperText()}
+      <span color={palette.basic.secondary}>Password is required!</span>
+    {/snippet}
+  </TextField>
+  <Button onclick={validateAndLogin} disabled={isValidating}>
     {#if isValidating}
       Logging in...
     {:else}
       Login
     {/if}
-  </Button.Root>
+  </Button>
 
   <!-- Navigate to `Sign up` -->
-  <Button.Root
-    href=""
-    onclick={async (e) => {
-      e.preventDefault();
-      navigateTo('/signup');
-    }}>Sign up</Button.Root
-  >
+  <Button onclick={() => navigateTo('/signup')}>Sign up</Button>
 
   <!-- Error messages -->
   <AlertBox

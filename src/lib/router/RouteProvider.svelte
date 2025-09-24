@@ -1,8 +1,9 @@
 <script lang="ts">
   import page from 'page';
-  import { navContextKey, type NavContext } from './types';
+  import { navContextKey } from './navContextKey';
   import { routes, type RouteInfo } from '@/pages/routes.svelte';
   import { setContext, type Component } from 'svelte';
+  import { type NavContext } from './types';
 
   let { children } = $props();
 
