@@ -13,11 +13,11 @@
   import { toCssString } from '@/utils/cssHelpers';
   import { type AuthContext } from '@/auth/types';
   import { type NavContext } from '@/router/types';
+  import Link from '@/components/Link.svelte';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);
   const { currentPalette } = getContext<ThemeContext>(themeContextKey);
-
   const palette = $derived(currentPalette());
 
   /** State of the username input. */
@@ -107,7 +107,7 @@
     }}
   >
     {#snippet helperText()}
-      <span color={palette.basic.secondary}>Username is required!</span>
+      Username is required!
     {/snippet}
   </TextField>
   <TextField
@@ -124,10 +124,14 @@
     }}
   >
     {#snippet helperText()}
-      <span color={palette.basic.secondary}>Password is required!</span>
+      Password is required!
     {/snippet}
   </TextField>
-  <Button onclick={validateAndLogin} disabled={isValidating}>
+  <Button
+    onclick={validateAndLogin}
+    disabled={isValidating}
+    style="width: 5em;"
+  >
     {#if isValidating}
       Logging in...
     {:else}
@@ -136,7 +140,7 @@
   </Button>
 
   <!-- Navigate to `Sign up` -->
-  <Button onclick={() => navigateTo('/signup')}>Sign up</Button>
+  <Link onclick={() => navigateTo('/signup')}>Sign up</Link>
 
   <!-- Error messages -->
   <AlertBox

@@ -3,20 +3,17 @@
   import type { ThemeContext } from '@/theme/types';
   import { toCssString } from '@/utils/cssHelpers';
   import { getContext } from 'svelte';
-  import { derived } from 'svelte/store';
 
   type Props = {
     children?: () => any;
     onclick?: () => void;
     disabled?: boolean;
     style?: string;
-    restProps?: any;
+    [key: string]: any;
   };
-
   const { children, onclick, disabled, style, ...restProps }: Props = $props();
 
   const { currentPalette } = getContext<ThemeContext>(themeContextKey);
-
   const palette = $derived(currentPalette());
 
   const defaultBackgroundColor = $derived(palette.secondary.main);
@@ -44,6 +41,9 @@
     if (disabled) {
       backgroundColor = palette.background.surface;
       borderColor = palette.border.light;
+    } else {
+      backgroundColor = defaultBackgroundColor;
+      borderColor = defaultBorderColor;
     }
   });
 
