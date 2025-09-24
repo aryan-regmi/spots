@@ -1,11 +1,11 @@
+import { getAuthUser } from '@/api/auth';
 import DashboardPage from '@/pages/dashboard/DashboardPage.svelte';
 import LoadingPage from '@/pages/loading/LoadingPage.svelte';
 import LoginPage from '@/pages/login/LoginPage.svelte';
 import ProfilePage from '@/pages/profile/ProfilePage.svelte';
 import SignupPage from '@/pages/signup/SignupPage.svelte';
-import { getContext, type Component } from 'svelte';
-import { getAuthUser } from '@/api/auth';
-import type { AuthContext } from '@/auth/types';
+import { type Component } from 'svelte';
+import wrap from 'svelte-spa-router/wrap';
 
 /** Describes a route. */
 export type RouteInfo = {
@@ -14,35 +14,34 @@ export type RouteInfo = {
 };
 
 /** The various routes of the app. */
-export const routes = [
-  {
-    path: '/',
-    action: () => {
-      return '<LoadingPage/>';
-    },
-  },
-  {
-    path: '/login',
-    action: () => {
-      return '<LoginPage/>';
-    },
-  },
-  {
-    path: '/signup',
-    action: () => {
-      return '<SignupPage/>';
-    },
-  },
-  {
-    path: '/dashboard',
-    action: () => {
-      return '<DashboardPage/>';
-    },
-  },
-  {
-    path: '/profile',
-    action: () => {
-      return '<ProfilePage/>';
-    },
-  },
-];
+export const routes = {
+  '/': wrap({
+    component: LoginPage,
+    loadingComponent: LoadingPage,
+    conditions: [
+      async () => {
+        const authUser = await getAuthUser();
+        if (authUser) {
+          return true;
+        }
+        return false;
+      },
+    ],
+  }),
+  '/login': wrap({
+    component: LoginPage,
+    loadingComponent: LoadingPage,
+  }),
+  '/signup': wrap({
+    component: SignupPage,
+    loadingComponent: LoadingPage,
+  }),
+  '/dashboard': wrap({
+    component: DashboardPage,
+    loadingComponent: LoadingPage,
+  }),
+  '/profile': wrap({
+    component: ProfilePage,
+    loadingComponent: LoadingPage,
+  }),
+};

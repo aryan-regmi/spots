@@ -1,17 +1,26 @@
 <script lang="ts">
   import AuthProvider from '@/auth/AuthProvider.svelte';
+  import { routes } from '@/pages/routes.svelte';
+  import RouteLoader, {
+    conditionsFailed,
+    routeLoaded,
+  } from '@/router/RouteLoader.svelte';
   import RouteProvider from '@/router/RouteProvider.svelte';
-  import Router from '@/router/Router.svelte';
   import ThemeProvider from '@/theme/ThemeProvider.svelte';
+  import Router from 'svelte-spa-router';
 </script>
-
-<!-- FIXME: Add theme context ASAP so i dont have to update everything later! -->
 
 <main>
   <ThemeProvider>
     <AuthProvider>
       <RouteProvider>
-        <Router />
+        <RouteLoader>
+          <Router
+            {routes}
+            on:conditionsFailed={conditionsFailed}
+            on:routeLoaded={routeLoaded}
+          />
+        </RouteLoader>
       </RouteProvider>
     </AuthProvider>
   </ThemeProvider>

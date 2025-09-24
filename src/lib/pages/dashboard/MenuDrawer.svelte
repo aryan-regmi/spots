@@ -59,7 +59,7 @@
     isLoggingOut = true;
     await unauthorize();
     await closeEndpoint();
-    navigateTo('/', { replace: true });
+    navigateTo('/login', { replace: true });
   }
 
   /** Styles for the avatar. */
