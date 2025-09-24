@@ -4,8 +4,11 @@
   import { routes, type RouteInfo } from '@/pages/routes.svelte';
   import { setContext, type Component } from 'svelte';
   import { type NavContext } from './types';
+  import UniversalRouter from 'universal-router';
 
   let { children } = $props();
+
+  const router = new UniversalRouter(routes);
 
   /** The current page being displayed. */
   let currentPage = $state<RouteInfo>();
@@ -39,8 +42,9 @@
 
           if (options?.replace) {
             page.replace(path, { dest: window.location.pathname });
+          } else {
+            page.show(path);
           }
-          page.show(path);
         }
       },
       navigateBack: function () {

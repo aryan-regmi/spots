@@ -41,7 +41,6 @@
         cardStyles.borderColor = palette.border.strong;
         break;
       case 'warning':
-        console.log('here');
         cardStyles.backgroundColor = palette.text.secondary;
         cardStyles.color = palette.text.inverted;
         cardStyles.borderColor = palette.accent.main;

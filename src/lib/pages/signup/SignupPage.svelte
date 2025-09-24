@@ -126,7 +126,6 @@
       (await validateUsername(usernameInput)) && isUsernameValid;
 
     if (usernameExists && isPasswordValid) {
-      console.log('VALID!!');
       // Hash password
       const hashedPassword = await hashPassword(passwordInput);
 
@@ -134,14 +133,10 @@
       const newUser = await insertUser(usernameInput, hashedPassword);
 
       // Create network endpoint
-      console.log('Creating endpoint...');
       await createEndpoint(newUser.id);
-      console.log('Endpoint created!');
 
       // Authorize and redirect to dashboard
-      console.log('Authorizing...');
       await authorize(newUser);
-      console.log('Authorized!');
       navigateTo('/dashboard', { replace: true });
     }
     isValidating = false;

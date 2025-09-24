@@ -126,7 +126,7 @@
   <Button
     onclick={validateAndLogin}
     disabled={isValidating}
-    style="width: 5em;"
+    style="padding: 1em 2em;"
   >
     {#if isValidating}
       Logging in...

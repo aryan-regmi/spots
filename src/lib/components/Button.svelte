@@ -37,6 +37,7 @@
 
   const combinedStyle = $derived(`${defaultStyle} ${style}`);
 
+  // FIXME: Replace with $derived (see SignupPage)
   $effect(() => {
     if (disabled) {
       backgroundColor = palette.background.surface;
