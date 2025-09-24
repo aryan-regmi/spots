@@ -2,7 +2,6 @@
   import AlertBox, { type AlertValue } from '@/components/AlertBox.svelte';
   import Column from '@/components/Column.svelte';
   import TextField from '@/components/inputs/TextField.svelte';
-  import { Button } from 'bits-ui';
   import { authContextKey } from '@/auth/authContextKey';
   import { createEndpoint } from '@/api/network';
   import { getContext } from 'svelte';
@@ -12,6 +11,7 @@
   import { toCssString } from '@/utils/cssHelpers';
   import { type AuthContext } from '@/auth/types';
   import { type NavContext } from '@/router/types';
+  import Button from '@/components/Button.svelte';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);
@@ -100,28 +100,14 @@
     alignItems: 'center',
   });
 
-  /** Style for the username text input. */
-  const usernameInputStyle = $derived.by(() => {
-    if (!isUsernameValid && !usernameInputInitialFocus) {
-      return toCssString({
-        marginBottom: '0.8em',
-      });
-    }
-    return '';
-  });
-
-  /** Style for the password text input. */
-  const passwordInputStyle = $derived.by(() => {
-    if (!isPasswordValid && !passwordInputInitialFocus) {
-      return toCssString({
-        marginBottom: '0.8em',
-      });
-    }
-  });
-
   /** Determines if the signup button is disabled. */
   const signupDisabled = $derived.by(() => {
-    return !isUsernameValid || !isPasswordValid || isValidating;
+    return (
+      !isUsernameValid ||
+      !isPasswordValid ||
+      isValidating ||
+      passwordInput !== confirmPasswordInput
+    );
   });
 
   /** The alerts to display to the user (based on validation errors). */
@@ -136,10 +122,11 @@
   async function validateAndLogin() {
     // Validate inputs
     isValidating = true;
-    const usernameIsValid =
+    const usernameExists =
       (await validateUsername(usernameInput)) && isUsernameValid;
 
-    if (usernameIsValid && isPasswordValid) {
+    if (usernameExists && isPasswordValid) {
+      console.log('VALID!!');
       // Hash password
       const hashedPassword = await hashPassword(passwordInput);
 
@@ -147,11 +134,15 @@
       const newUser = await insertUser(usernameInput, hashedPassword);
 
       // Create network endpoint
+      console.log('Creating endpoint...');
       await createEndpoint(newUser.id);
+      console.log('Endpoint created!');
 
       // Authorize and redirect to dashboard
+      console.log('Authorizing...');
       await authorize(newUser);
-      await navigateTo('/dashboard', { replace: true });
+      console.log('Authorized!');
+      navigateTo('/dashboard', { replace: true });
     }
     isValidating = false;
   }
@@ -161,7 +152,7 @@
     if (isUsernameValid && username.length > 0) {
       const user = await getUserByUsername(username);
       if (user) {
-        validationErrors.push('Username already exists!');
+        validationErrors = [...validationErrors, 'Username already exists!'];
         return false;
       }
     }
@@ -175,7 +166,6 @@
 
   <!-- Form -->
   <TextField
-    style={usernameInputStyle}
     label="Username"
     bind:value={usernameInput}
     invalid={!isUsernameValid}
@@ -192,7 +182,6 @@
     {/snippet}
   </TextField>
   <TextField
-    style={passwordInputStyle}
     label="Password"
     type="password"
     bind:value={passwordInput}
@@ -220,13 +209,13 @@
       Re-enter password...
     {/snippet}
   </TextField>
-  <Button.Root onclick={validateAndLogin} disabled={signupDisabled}>
+  <Button onclick={validateAndLogin} disabled={signupDisabled}>
     {#if isValidating}
       Logging in...
     {:else}
       Sign up
     {/if}
-  </Button.Root>
+  </Button>
 
   <!-- Error messages -->
   <AlertBox

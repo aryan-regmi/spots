@@ -2,23 +2,19 @@
   import AlertBox from '@/components/AlertBox.svelte';
   import Button from '@/components/Button.svelte';
   import Column from '@/components/Column.svelte';
+  import Link from '@/components/Link.svelte';
   import TextField from '@/components/inputs/TextField.svelte';
-  import type { ThemeContext } from '@/theme/types';
   import { authContextKey } from '@/auth/authContextKey';
   import { getContext } from 'svelte';
   import { getUserByUsername, verifyPassword } from '@/api/users';
   import { loadEndpoint } from '@/api/network';
   import { navContextKey } from '@/router/navContextKey';
-  import { themeContextKey } from '@/theme/themeContextKey';
   import { toCssString } from '@/utils/cssHelpers';
   import { type AuthContext } from '@/auth/types';
   import { type NavContext } from '@/router/types';
-  import Link from '@/components/Link.svelte';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);
-  const { currentPalette } = getContext<ThemeContext>(themeContextKey);
-  const palette = $derived(currentPalette());
 
   /** State of the username input. */
   let usernameState = $state({
