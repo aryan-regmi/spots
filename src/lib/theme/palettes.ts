@@ -2,48 +2,66 @@ import type { Palette } from './types';
 
 /** The dark theme palette. */
 export const darkPalette: Palette = {
-  primary: { main: '#8DA4B1', contrast: '#1A1A1A' }, // Soft desaturated blue
-  secondary: { main: '#A9BDB0', contrast: '#1A1A1A' }, // Gentle muted green
-  accent: { main: '#E8D5D0', contrast: '#1A1A1A' }, // Light blush
+  primary: { main: '#8AAEB5', contrast: '#1A1A1A' }, // Muted blue
+  secondary: { main: '#A6BFA2', contrast: '#1A1A1A' }, // Dusty green
+  accent: { main: '#D8A7A0', contrast: '#1A1A1A' }, // Soft rose
+  tertiary: { main: '#D9A675', contrast: '#1A1A1A' }, // Warm peach
+  info: { main: '#95CFC0', contrast: '#1A1A1A' }, // Cool mint
+  success: { main: '#A3C9A8', contrast: '#1A1A1A' }, // Gentle green
+  warning: { main: '#E2BC7C', contrast: '#1A1A1A' }, // Dusty gold
+  error: { main: '#D19898', contrast: '#1A1A1A' }, // Dusty rose-red
+
   background: {
-    default: '#1F1F1F',
-    surface: '#2A2A2A',
+    default: '#1B1B1B', // Deep gray
+    surface: '#2A2A2A', // Slightly lighter for cards, etc.
   },
+
   text: {
-    primary: '#F0F0F0',
-    secondary: '#C2C2C2',
+    primary: '#F0F0F0', // Near white
+    secondary: '#BEBEBE', // Muted gray
     inverted: '#000000',
   },
+
   border: {
-    light: '#3A3A3A',
-    strong: '#5A5A5A',
+    light: '#3D3D3D', // Subtle gray for UI outlines
+    strong: '#666666', // Stronger border for emphasis
   },
+
   basic: {
-    primary: '#8DA4B1',
-    secondary: '#E8D5D0',
+    primary: '#8AAEB5', // Match with primary
+    secondary: '#D8A7A0', // Match with accent
   },
 };
 
 /** The light theme palette. */
 export const lightPalette: Palette = {
-  primary: { main: '#6C7A89', contrast: '#ffffff' }, // Slate gray-blue
-  secondary: { main: '#A3B5A6', contrast: '#ffffff' }, // Dusty green-gray
-  accent: { main: '#E3C9C1', contrast: '#000000' }, // Warm blush
+  primary: { main: '#AEC6CF', contrast: '#1A1A1A' }, // Pastel blue
+  secondary: { main: '#C5D8A4', contrast: '#1A1A1A' }, // Pastel green
+  accent: { main: '#F7CAC9', contrast: '#1A1A1A' }, // Pastel pink
+  tertiary: { main: '#FFD3B6', contrast: '#1A1A1A' }, // Soft peach
+  info: { main: '#B5EAD7', contrast: '#1A1A1A' }, // Mint
+  success: { main: '#D5E8D4', contrast: '#1A1A1A' }, // Light green
+  warning: { main: '#FFE0AC', contrast: '#1A1A1A' }, // Pale orange
+  error: { main: '#FFB3BA', contrast: '#1A1A1A' }, // Soft red
+
   background: {
-    default: '#FAFAFA',
-    surface: '#FFFFFF',
+    default: '#FDF6F0', // Very soft warm beige
+    surface: '#FFFFFF', // Standard white for contrast
   },
+
   text: {
-    primary: '#1A1A1A',
-    secondary: '#666666',
+    primary: '#2E2E2E', // Soft black
+    secondary: '#6E6E6E', // Muted gray
     inverted: '#FFFFFF',
   },
+
   border: {
-    light: '#E6E6E6',
-    strong: '#BFBFBF',
+    light: '#E4E4E4', // Light pastel gray
+    strong: '#B0B0B0', // Medium pastel gray
   },
+
   basic: {
-    primary: '#6C7A89',
-    secondary: '#E3C9C1',
+    primary: '#AEC6CF', // Matching primary
+    secondary: '#F7CAC9', // Matching accent
   },
 };

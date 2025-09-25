@@ -10,15 +10,30 @@ export type Palette = {
   primary: { main: string; contrast: string };
   secondary: { main: string; contrast: string };
   accent: { main: string; contrast: string };
-  background: { default: string; surface: string };
+  tertiary: { main: string; contrast: string };
+  info: { main: string; contrast: string };
+  success: { main: string; contrast: string };
+  warning: { main: string; contrast: string };
+  error: { main: string; contrast: string };
+
+  background: {
+    default: string;
+    surface: string;
+  };
+
   text: {
     primary: string;
     secondary: string;
     inverted: string;
   };
+
   border: {
     light: string;
     strong: string;
   };
-  basic: { primary: string; secondary: string };
+
+  basic: {
+    primary: string;
+    secondary: string;
+  };
 };
