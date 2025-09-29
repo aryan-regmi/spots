@@ -5,7 +5,7 @@
   import { getContext } from 'svelte';
   import { themeContextKey } from '@/theme/themeContextKey';
   import type { ThemeContext } from '@/theme/types';
-  import { derived } from 'svelte/store';
+  import { TextFieldState } from './TextFieldState.svelte';
 
   type Props = {
     class?: string;
@@ -19,6 +19,7 @@
     onfocus?: () => void;
     onblur?: () => void;
     onfocusout?: () => void;
+    onclick?: () => void;
   } & RestProps;
   let {
     class: className,
@@ -32,6 +33,7 @@
     onfocus,
     onblur,
     onfocusout,
+    onclick,
     ...restProps
   }: Props = $props();
 
@@ -39,29 +41,16 @@
   const { currentPalette } = getContext<ThemeContext>(themeContextKey);
   const palette = $derived(currentPalette());
 
-  /** The label text. */
-  const labelText = `${label}${required ? '*' : ''}`;
-
-  /** Determines if the input has focus. */
-  let isFocused = $state(false);
-
-  /** Determines if the label is floating. */
-  const isFloated = $derived(isFocused || value.length > 0);
-
-  function handleOnFocus() {
-    isFocused = true;
-    onfocus?.();
-  }
-
-  function handleOnBlur() {
-    isFocused = false;
-    onblur?.();
-  }
-
-  function handleOnFocusOut() {
-    isFocused = false;
-    onfocusout?.();
-  }
+  /** The state of the text field. */
+  let textFieldState = new TextFieldState({
+    value,
+    label,
+    required,
+    onfocus,
+    onblur,
+    onfocusout,
+    onclick,
+  });
 
   // Styles
   // --------------------------
@@ -88,23 +77,28 @@
   );
 </script>
 
-<Column class={containerStyle} spacing="0">
+<Column style={containerStyle} spacing="0">
   <!-- The text input -->
   <input
     class={inputStyles.class}
     style={inputStyles.style}
     type="text"
-    bind:value
+    bind:value={textFieldState.value}
     {oninput}
-    onfocus={handleOnFocus}
-    onblur={handleOnBlur}
-    onfocusout={handleOnFocusOut}
+    onfocus={textFieldState.handleOnFocus}
+    onblur={textFieldState.handleOnBlur}
+    onfocusout={textFieldState.handleOnFocusOut}
+    onclick={textFieldState.handleOnClick}
     {...restProps}
   />
 
   <!-- The floating label -->
-  <div class="input-label" class:float={isFloated} style={labelStyle}>
-    {labelText}
+  <div
+    class="input-label"
+    class:float={textFieldState.isFloated}
+    style={labelStyle}
+  >
+    {textFieldState.labelText}
   </div>
 </Column>
 
