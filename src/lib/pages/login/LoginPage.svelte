@@ -1,9 +1,9 @@
 <script lang="ts">
   import AlertBox from '@/components/AlertBox.svelte';
   import Button from '@/components/Button.svelte';
-  import Column from '@/components/Column.svelte';
+  import Column from '@/components/ui/Column.svelte';
   import Link from '@/components/Link.svelte';
-  import TextField from '@/components/inputs/TextField.svelte';
+  import TextField from '@/components/ui/inputs/TextField.svelte';
   import { authContextKey } from '@/auth/authContextKey';
   import { getContext } from 'svelte';
   import { getUserByUsername, verifyPassword } from '@/api/users';

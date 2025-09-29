@@ -3,6 +3,7 @@
   import { getContext } from 'svelte';
   import { themeContextKey } from '@/theme/themeContextKey';
   import { type ThemeContext } from '@/theme/types';
+  import Text from '@/components/ui/Text.svelte';
 
   let {
     value = $bindable(''),
@@ -85,7 +86,7 @@
       : palette.text.secondary}
     style="color: {palette.text.secondary};"
   >
-    {labelText}
+    <Text>{labelText}</Text>
   </div>
 
   <!-- The helper text -->
