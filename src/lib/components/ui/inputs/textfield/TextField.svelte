@@ -14,7 +14,7 @@
     label?: string;
     required?: boolean;
     invalid?: boolean;
-    helperText?: () => void;
+    helperText?: any;
     oninput?: () => void;
     onfocus?: () => void;
     onblur?: () => void;
@@ -52,12 +52,17 @@
     onclick,
   });
 
+  const displayHelperText = $derived(
+    !textFieldState.firstRender && textFieldState.value?.trim() === ''
+  );
+
   // Styles
   // --------------------------
 
   const containerStyle = toCssString({
     margin: 0,
     padding: 0,
+    paddingBottom: '0.75em',
     width: '100%',
     boxSizing: 'border-box',
   });
@@ -80,10 +85,10 @@
 <Column style={containerStyle} spacing="0">
   <!-- The text input -->
   <input
-    class={inputStyles.class}
-    style={inputStyles.style}
     type="text"
     bind:value={textFieldState.value}
+    class={inputStyles.class}
+    style={inputStyles.style}
     {oninput}
     onfocus={textFieldState.handleOnFocus}
     onblur={textFieldState.handleOnBlur}
@@ -100,6 +105,13 @@
   >
     {textFieldState.labelText}
   </div>
+
+  <!-- The helper text -->
+  {#if displayHelperText}
+    <div class="helper-text" style="color: {palette.error.main};">
+      {@render helperText()}
+    </div>
+  {/if}
 </Column>
 
 <style>
@@ -129,6 +141,12 @@
   .input-label.float {
     font-size: 0.9em;
     font-weight: bold;
-    transform: translateY(-1.25em);
+    transform: translateX(0.25em) translateY(-1.25em);
+  }
+
+  .helper-text {
+    transform: translateX(3.5em);
+    padding-bottom: -1em;
+    margin-bottom: -1em;
   }
 </style>

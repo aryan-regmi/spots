@@ -24,6 +24,9 @@ export class TextFieldState {
   /** The text in the text field. */
   value = $state<string>();
 
+  /** Determines if this is the first time the component is being rendered. */
+  firstRender = $state(true);
+
   /** Determines if the input has focus. */
   isFocused = $state(false);
 
@@ -43,6 +46,9 @@ export class TextFieldState {
   /** Sets [isFocused] and calls the provided `onfocus` function. */
   handleOnFocus = () => {
     this.isFocused = true;
+    if (this.firstRender) {
+      this.firstRender = false;
+    }
     this.onfocus?.();
   };
 

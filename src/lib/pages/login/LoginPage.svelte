@@ -86,7 +86,7 @@
   });
 </script>
 
-<Column spacing="2em" style={formStyle}>
+<Column spacing="1em" style={formStyle}>
   <h1 class="app-title">Spots</h1>
 
   <!-- Form -->
