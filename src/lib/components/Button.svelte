@@ -61,7 +61,7 @@
 <!--
 @component
 
-## Button
+# Button
 A button component.
 
 # Props
@@ -70,7 +70,6 @@ A button component.
 * disabled - hether the button is disabled or not.
 * style - Styles for the component.
 -->
-
 <button
   id="btn"
   style={combinedStyle}

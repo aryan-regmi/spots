@@ -12,8 +12,7 @@
 
   let defaultColor = $derived(palette.basic.primary);
 
-  // svelte-ignore state_referenced_locally
-  let color = $state(defaultColor);
+  let color = $derived(defaultColor);
 
   const defaultStyle = $derived(
     toCssString({
@@ -34,6 +33,16 @@
   }
 </script>
 
+<!--
+@component
+
+# Link
+A link component.
+
+## Props
+* children - Child components.
+* onclick - On-click handler.
+-->
 <Button
   style={defaultStyle}
   onclick={() => {
