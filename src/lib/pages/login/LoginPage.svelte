@@ -74,6 +74,9 @@
     navigateTo('/dashboard', { replace: true });
   }
 
+  // Styles
+  // ------------
+
   /** Style for the validation alerts. */
   const alertStyle = toCssString({
     width: '15em',

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AlertBox, { type AlertValue } from '@/components/ui/AlertBox.svelte';
   import Button from '@/components/ui/Button.svelte';
+  import Text from '@/components/ui/Text.svelte';
   import Column from '@/components/ui/Column.svelte';
   import TextField from '@/components/inputs/TextField.svelte';
   import { authContextKey } from '@/auth/authContextKey';
@@ -16,10 +16,32 @@
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);
 
-  type ValidationError =
-    | 'Username already exists!'
-    | 'Passwords must match!'
-    | { unknownError: string };
+  type InputState = {
+    input: string;
+    isValid: boolean;
+    errMsgs: string[];
+  };
+
+  /** State of the username input. */
+  let usernameState = $state<InputState>({
+    input: '',
+    isValid: true,
+    errMsgs: [],
+  });
+
+  /** State of the password input. */
+  let passwordState = $state<InputState>({
+    input: '',
+    isValid: true,
+    errMsgs: [],
+  });
+
+  /** State of the confirm password input. */
+  let confirmPasswordState = $state<InputState>({
+    input: '',
+    isValid: true,
+    errMsgs: [],
+  });
 
   let usernameInputInitialFocus = $state(true);
   let passwordInputInitialFocus = $state(true);
@@ -31,14 +53,16 @@
 
   /** List of validation errors. */
   let validationErrors = $derived.by(() => {
-    const errors: ValidationError[] = [];
+    const usernameErrors: string[] = [];
+    const passwordErrors: string[] = [];
+    const confirmPasswordErrors: string[] = [];
 
     if (!usernameInputInitialFocus) {
       // Username validation
       const usernameResult = usernameSchema.safeParse(usernameInput);
       if (!usernameResult.success) {
         for (const issue of usernameResult.error.issues) {
-          errors.push({ unknownError: issue.message });
+          usernameErrors.push(issue.message);
         }
       }
     }
@@ -48,7 +72,7 @@
       const passwordResult = passwordSchema.safeParse(passwordInput);
       if (!passwordResult.success) {
         for (const issue of passwordResult.error.issues) {
-          errors.push({ unknownError: issue.message });
+          passwordErrors.push(issue.message);
         }
       }
     }
@@ -56,11 +80,15 @@
     if (!confirmPasswordInputInitialFocus) {
       // Confirm password validation
       if (passwordInput != confirmPasswordInput) {
-        errors.push('Passwords must match!');
+        confirmPasswordErrors.push('Passwords must match!');
       }
     }
 
-    return errors;
+    return {
+      usernameErrors,
+      passwordErrors,
+      confirmPasswordErrors,
+    };
   });
 
   /** Determines if the input is being validated. */
@@ -81,12 +109,35 @@
   /** Deduplicated version of [validationErrors]. */
   let uniqueErrors = $derived.by(() => {
     const seen = new Set<string>();
-    return validationErrors.filter((err) => {
-      const msg = typeof err === 'string' ? err : err.unknownError;
-      if (seen.has(msg)) return false;
-      seen.add(msg);
+    const usernameErrors = validationErrors.usernameErrors.filter((err) => {
+      if (seen.has(err)) {
+        return false;
+      }
+      seen.add(err);
       return true;
     });
+
+    const passwordErrors = validationErrors.passwordErrors.filter((err) => {
+      if (seen.has(err)) {
+        return false;
+      }
+      seen.add(err);
+      return true;
+    });
+    const confirmPasswordErrors = validationErrors.confirmPasswordErrors.filter(
+      (err) => {
+        if (seen.has(err)) {
+          return false;
+        }
+        seen.add(err);
+        return true;
+      }
+    );
+    return {
+      usernameErrors,
+      passwordErrors,
+      confirmPasswordErrors,
+    };
   });
 
   /** Style for the validation alerts. */
@@ -108,14 +159,6 @@
       isValidating ||
       passwordInput !== confirmPasswordInput
     );
-  });
-
-  /** The alerts to display to the user (based on validation errors). */
-  let alerts: AlertValue[] = $derived.by(() => {
-    return uniqueErrors.map((err) => ({
-      level: 'error',
-      text: typeof err === 'string' ? err : err.unknownError,
-    }));
   });
 
   /** Validates the login (username and password). */
@@ -147,7 +190,10 @@
     if (isUsernameValid && username.length > 0) {
       const user = await getUserByUsername(username);
       if (user) {
-        validationErrors = [...validationErrors, 'Username already exists!'];
+        validationErrors.usernameErrors = [
+          ...validationErrors.usernameErrors,
+          'Username already exists!',
+        ];
         return false;
       }
     }
@@ -173,7 +219,11 @@
     oninput={() => validateUsername(usernameInput)}
   >
     {#snippet helperText()}
-      Enter a username...
+      <!-- <div style="display: flex; flex-direction: row; flex-wrap: wrap;"> -->
+      <!-- <Text> -->
+      {validationErrors.usernameErrors.pop()}
+      <!-- </Text> -->
+      <!-- </div> -->
     {/snippet}
   </TextField>
   <TextField
@@ -211,13 +261,6 @@
       Sign up
     {/if}
   </Button>
-
-  <!-- Error messages -->
-  <AlertBox
-    style="position: relative; max-height: 15em; overflow-y: auto; padding-right: 1em;"
-    {alertStyle}
-    {alerts}
-  />
 </Column>
 
 <style>

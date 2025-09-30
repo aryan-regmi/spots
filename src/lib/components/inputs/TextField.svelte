@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Column from '@/components/Column.svelte';
+  import Column from '@/components/ui/Column.svelte';
+  import Text from '@/components/ui/Text.svelte';
   import { getContext } from 'svelte';
   import { themeContextKey } from '@/theme/themeContextKey';
   import { type ThemeContext } from '@/theme/types';
-  import Text from '@/components/ui/Text.svelte';
 
   let {
     value = $bindable(''),
@@ -136,9 +136,7 @@
   }
 
   #helper-text {
-    position: absolute;
     font-size: 0.9em;
     font-weight: bold;
-    transform: translateY(4em) translateX(8em);
   }
 </style>
