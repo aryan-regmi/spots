@@ -19,47 +19,57 @@
   const defaultBackgroundColor = $derived(palette.secondary.main);
   const defaultBorderColor = $derived(palette.border.strong);
 
-  // svelte-ignore state_referenced_locally
-  let backgroundColor = $state(defaultBackgroundColor);
-
-  // svelte-ignore state_referenced_locally
-  let borderColor = $state(defaultBorderColor);
+  let colors = $derived.by(() => {
+    if (disabled) {
+      return {
+        background: palette.background.surface,
+        border: palette.border.light,
+      };
+    } else {
+      return {
+        background: defaultBackgroundColor,
+        border: defaultBorderColor,
+      };
+    }
+  });
 
   const defaultStyle = $derived(
     toCssString({
       padding: '0.5em',
-      backgroundColor: backgroundColor,
+      backgroundColor: colors.background,
       color: palette.text.inverted,
       border: '1px solid',
-      borderColor: borderColor,
+      borderColor: colors.border,
     })
   );
 
   const combinedStyle = $derived(`${defaultStyle} ${style}`);
 
-  // FIXME: Replace with $derived (see SignupPage)
-  $effect(() => {
-    if (disabled) {
-      backgroundColor = palette.background.surface;
-      borderColor = palette.border.light;
-    } else {
-      backgroundColor = defaultBackgroundColor;
-      borderColor = defaultBorderColor;
-    }
-  });
-
   function handleHoverOn() {
     if (!disabled) {
-      backgroundColor = palette.accent.main;
+      colors = { ...colors, background: palette.accent.main };
     }
   }
 
   function handleHoverOff() {
     if (!disabled) {
-      backgroundColor = defaultBackgroundColor;
+      colors = { ...colors, background: defaultBackgroundColor };
     }
   }
 </script>
+
+<!--
+@component
+
+## Button
+A button component.
+
+# Props
+* children - Child components.
+* onclick - On-click handler.
+* disabled - hether the button is disabled or not.
+* style - Styles for the component.
+-->
 
 <button
   id="btn"
