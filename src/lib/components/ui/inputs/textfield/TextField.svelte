@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Column from '@/components/Column.svelte';
+  import Column from '@/components/ui/Column.svelte';
   import type { RestProps } from '@/utils/restProps';
   import { toCssString } from '@/utils/cssHelpers';
   import { getContext } from 'svelte';
@@ -71,13 +71,19 @@
     class: `text-input ${className}`,
     style: toCssString({
       backgroundColor: palette.background.surface,
-      borderColor: invalid ? palette.error.main : palette.border.strong,
+      borderColor:
+        invalid || displayHelperText
+          ? palette.error.main
+          : palette.border.strong,
     }),
   });
 
   const labelStyle = $derived(
     toCssString({
-      color: invalid ? palette.error.main : palette.text.primary,
+      color:
+        invalid || displayHelperText
+          ? palette.error.main
+          : palette.text.primary,
     })
   );
 </script>
@@ -108,7 +114,10 @@
 
   <!-- The helper text -->
   {#if displayHelperText}
-    <div class="helper-text" style="color: {palette.error.main};">
+    <div
+      class="helper-text"
+      style="color: {palette.error.main}; display: flex; flex-wrap: wrap;"
+    >
       {@render helperText()}
     </div>
   {/if}
@@ -145,8 +154,6 @@
   }
 
   .helper-text {
-    transform: translateX(3.5em);
-    padding-bottom: -1em;
-    margin-bottom: -1em;
+    transform: translateX(0.5em);
   }
 </style>

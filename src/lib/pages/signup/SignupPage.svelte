@@ -2,7 +2,7 @@
   import Button from '@/components/ui/Button.svelte';
   import Text from '@/components/ui/Text.svelte';
   import Column from '@/components/ui/Column.svelte';
-  import TextField from '@/components/inputs/TextField.svelte';
+  import TextField from '@/components/ui/inputs/textfield/TextField.svelte';
   import { authContextKey } from '@/auth/authContextKey';
   import { createEndpoint } from '@/api/network';
   import { getContext } from 'svelte';
