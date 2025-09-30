@@ -1,6 +1,7 @@
 <script lang="ts">
-  import AlertBox, { type AlertValue } from '@/components/AlertBox.svelte';
-  import Column from '@/components/Column.svelte';
+  import AlertBox, { type AlertValue } from '@/components/ui/AlertBox.svelte';
+  import Button from '@/components/ui/Button.svelte';
+  import Column from '@/components/ui/Column.svelte';
   import TextField from '@/components/inputs/TextField.svelte';
   import { authContextKey } from '@/auth/authContextKey';
   import { createEndpoint } from '@/api/network';
@@ -11,7 +12,6 @@
   import { toCssString } from '@/utils/cssHelpers';
   import { type AuthContext } from '@/auth/types';
   import { type NavContext } from '@/router/types';
-  import Button from '@/components/Button.svelte';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);

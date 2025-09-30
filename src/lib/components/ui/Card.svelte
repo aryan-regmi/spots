@@ -1,3 +1,5 @@
+<!-- FIXME: Rename to Paper -->
+
 <script lang="ts">
   const {
     children = undefined,

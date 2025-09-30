@@ -1,8 +1,8 @@
 <script lang="ts">
-  import AlertBox from '@/components/AlertBox.svelte';
-  import Button from '@/components/Button.svelte';
+  import AlertBox from '@/components/ui/AlertBox.svelte';
+  import Button from '@/components/ui/Button.svelte';
   import Column from '@/components/ui/Column.svelte';
-  import Link from '@/components/Link.svelte';
+  import Link from '@/components/ui/Link.svelte';
   import TextField from '@/components/ui/inputs/textfield/TextField.svelte';
   import { authContextKey } from '@/auth/authContextKey';
   import { getContext } from 'svelte';

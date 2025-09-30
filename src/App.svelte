@@ -10,6 +10,8 @@
   import Router from 'svelte-spa-router';
 </script>
 
+<!-- FIXME: Make default background color from palette! -->
+
 <main>
   <ThemeProvider>
     <AuthProvider>

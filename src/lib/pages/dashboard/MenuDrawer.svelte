@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Column from '@/components/Column.svelte';
+  import Column from '@/components/ui/Column.svelte';
   import IconButton from '@/components/IconButton.svelte';
-  import Row from '@/components/Row.svelte';
+  import Row from '@/components/ui/Row.svelte';
   import SignOut from 'phosphor-svelte/lib/SignOut';
-  import Spinner from '@/components/Spinner.svelte';
+  import Spinner from '@/components/ui/Spinner.svelte';
   import { Avatar, NavigationMenu, Popover } from 'bits-ui';
   import { authContextKey } from '@/auth/authContextKey';
   import { closeEndpoint } from '@/api/network';
