@@ -56,6 +56,13 @@
     !textFieldState.firstRender && textFieldState.value?.trim() === ''
   );
 
+  // Keep prop `value` and `textFieldState` in sync
+  $effect(() => {
+    if (value !== textFieldState.value) {
+      value = textFieldState.value ?? '';
+    }
+  });
+
   // Styles
   // --------------------------
 
