@@ -7,7 +7,7 @@
 
   type Props = {
     children?: () => any;
-    onclick?: () => void;
+    onclick?: (event?: MouseEvent) => void;
     disabled?: boolean;
     style?: string;
   } & RestProps;
@@ -74,10 +74,10 @@ A button component.
   id="btn"
   style={combinedStyle}
   {disabled}
-  onclick={() => {
+  onclick={(e) => {
     handleHoverOn();
     if (onclick) {
-      onclick();
+      onclick(e);
     }
   }}
   onmouseenter={handleHoverOn}

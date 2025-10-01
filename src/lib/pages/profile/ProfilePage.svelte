@@ -1,6 +1,6 @@
 <script lang="ts">
   import CaretLeft from 'phosphor-svelte/lib/CaretLeft';
-  import Column from '@/components/Column.svelte';
+  import Column from '@/components/ui/Column.svelte';
   import IconButton from '@/components/IconButton.svelte';
   import QR from '@svelte-put/qr/img/QR.svelte';
   import type { AuthContext } from '@/auth/types';

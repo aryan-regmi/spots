@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Column from '@/components/Column.svelte';
+  import Column from '@/components/ui/Column.svelte';
   import MenuDrawer from './MenuDrawer.svelte';
 </script>
 

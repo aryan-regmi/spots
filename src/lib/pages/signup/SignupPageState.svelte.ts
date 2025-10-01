@@ -6,17 +6,17 @@ import { createEndpoint } from '@/api/network';
 
 /** The state of the signup page. */
 export class SignupPageState {
-  constructor() { }
+  constructor() {}
 
   /** Determines if the input is being validated. */
   isValidating = $state(false);
 
   /** State of the username input. */
-  usernameState = new InputState(async (username: string) => {
+  usernameState = new InputState(async () => {
     this.isValidating = true;
 
     // Validate the schema
-    const validationResult = usernameSchema.safeParse(username);
+    const validationResult = usernameSchema.safeParse(this.usernameState.input);
     if (!validationResult.success) {
       for (const issue of validationResult.error.issues) {
         this.usernameState.errMsgs = [
@@ -27,8 +27,8 @@ export class SignupPageState {
     }
 
     // Validate the username in the server
-    if (validationResult.success && username.length > 0) {
-      const user = await getUserByUsername(username);
+    if (validationResult.success && this.usernameState.input.length > 0) {
+      const user = await getUserByUsername(this.usernameState.input);
       if (user) {
         this.usernameState.errMsgs = [
           ...this.usernameState.errMsgs,
@@ -44,11 +44,11 @@ export class SignupPageState {
   });
 
   /** State of the password input. */
-  passwordState = new InputState(async (password: string) => {
+  passwordState = new InputState(async () => {
     this.isValidating = true;
 
     // Validate the schema
-    const validationResult = passwordSchema.safeParse(password);
+    const validationResult = passwordSchema.safeParse(this.passwordState.input);
     if (!validationResult.success) {
       for (const issue of validationResult.error.issues) {
         this.passwordState.errMsgs = [
@@ -64,17 +64,19 @@ export class SignupPageState {
   });
 
   /** State of the confirm password input. */
-  confirmPasswordState = new InputState(
-    async ({
-      password,
-      confirmPassword,
-    }: {
-      password: string;
-      confirmPassword: string;
-    }) => {
-      return confirmPassword === password;
-    }
-  );
+  confirmPasswordState: InputState = new InputState(async () => {
+    return this.confirmPasswordState.input === this.passwordState.input;
+  });
+
+  /** Determines if the signup button is disabled. */
+  signupDisabled = $derived.by(() => {
+    return (
+      !this.usernameState.validateInput() ||
+      !this.passwordState.validateInput() ||
+      !this.confirmPasswordState.validateInput() ||
+      this.isValidating
+    );
+  });
 
   /** Validates the login (username and password). */
   validateAndLogin = async (

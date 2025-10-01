@@ -1,5 +1,4 @@
 import type { User } from '@/user/types';
-import { Writable } from 'svelte/store';
 
 /** The authentication context. */
 export type AuthContext = {
