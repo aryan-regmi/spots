@@ -19,6 +19,7 @@
   type InputState = {
     input: string;
     isValid: boolean;
+    initialFocus: boolean;
     errMsgs: string[];
   };
 
@@ -26,6 +27,7 @@
   let usernameState = $state<InputState>({
     input: '',
     isValid: true,
+    initialFocus: true,
     errMsgs: [],
   });
 
@@ -33,6 +35,7 @@
   let passwordState = $state<InputState>({
     input: '',
     isValid: true,
+    initialFocus: true,
     errMsgs: [],
   });
 
@@ -40,16 +43,9 @@
   let confirmPasswordState = $state<InputState>({
     input: '',
     isValid: true,
+    initialFocus: true,
     errMsgs: [],
   });
-
-  let usernameInputInitialFocus = $state(true);
-  let passwordInputInitialFocus = $state(true);
-  let confirmPasswordInputInitialFocus = $state(true);
-
-  let usernameInput = $state('');
-  let passwordInput = $state('');
-  let confirmPasswordInput = $state('');
 
   /** List of validation errors. */
   let validationErrors = $derived.by(() => {
@@ -57,9 +53,9 @@
     const passwordErrors: string[] = [];
     const confirmPasswordErrors: string[] = [];
 
-    if (!usernameInputInitialFocus) {
+    if (!usernameState.initialFocus) {
       // Username validation
-      const usernameResult = usernameSchema.safeParse(usernameInput);
+      const usernameResult = usernameSchema.safeParse(usernameState.input);
       if (!usernameResult.success) {
         for (const issue of usernameResult.error.issues) {
           usernameErrors.push(issue.message);
@@ -67,9 +63,9 @@
       }
     }
 
-    if (!passwordInputInitialFocus) {
+    if (!passwordState.initialFocus) {
       // Password validation
-      const passwordResult = passwordSchema.safeParse(passwordInput);
+      const passwordResult = passwordSchema.safeParse(passwordState.input);
       if (!passwordResult.success) {
         for (const issue of passwordResult.error.issues) {
           passwordErrors.push(issue.message);
@@ -77,9 +73,9 @@
       }
     }
 
-    if (!confirmPasswordInputInitialFocus) {
+    if (!confirmPasswordState.initialFocus) {
       // Confirm password validation
-      if (passwordInput != confirmPasswordInput) {
+      if (confirmPasswordState.input != passwordState.input) {
         confirmPasswordErrors.push('Passwords must match!');
       }
     }
@@ -95,15 +91,15 @@
   let isValidating = $state(false);
 
   const isUsernameValid = $derived.by(() => {
-    return usernameSchema.safeParse(usernameInput).success;
+    return usernameSchema.safeParse(usernameState.input).success;
   });
 
   const isPasswordValid = $derived.by(() => {
-    return passwordSchema.safeParse(passwordInput).success;
+    return passwordSchema.safeParse(passwordState.input).success;
   });
 
   const isConfirmPasswordValid = $derived.by(() => {
-    return confirmPasswordInput === passwordInput;
+    return confirmPasswordState.input === passwordState.input;
   });
 
   /** Deduplicated version of [validationErrors]. */
@@ -157,7 +153,7 @@
       !isUsernameValid ||
       !isPasswordValid ||
       isValidating ||
-      passwordInput !== confirmPasswordInput
+      passwordState.input !== confirmPasswordState.input
     );
   });
 
@@ -166,14 +162,14 @@
     // Validate inputs
     isValidating = true;
     const usernameExists =
-      (await validateUsername(usernameInput)) && isUsernameValid;
+      (await validateUsername(usernameState.input)) && isUsernameValid;
 
     if (usernameExists && isPasswordValid) {
       // Hash password
-      const hashedPassword = await hashPassword(passwordInput);
+      const hashedPassword = await hashPassword(passwordState.input);
 
       // Save user to database
-      const newUser = await insertUser(usernameInput, hashedPassword);
+      const newUser = await insertUser(usernameState.input, hashedPassword);
 
       // Create network endpoint
       await createEndpoint(newUser.id);
@@ -208,15 +204,15 @@
   <!-- Form -->
   <TextField
     label="Username"
-    bind:value={usernameInput}
+    bind:value={usernameState.input}
     invalid={!isUsernameValid}
     required
     onfocus={() => {
-      if (usernameInputInitialFocus) {
-        usernameInputInitialFocus = false;
+      if (usernameState.initialFocus) {
+        usernameState.initialFocus = false;
       }
     }}
-    oninput={() => validateUsername(usernameInput)}
+    oninput={() => validateUsername(usernameState.input)}
   >
     {#snippet helperText()}
       <!-- <div style="display: flex; flex-direction: row; flex-wrap: wrap;"> -->
@@ -229,11 +225,11 @@
   <TextField
     label="Password"
     type="password"
-    bind:value={passwordInput}
+    bind:value={passwordState.input}
     invalid={!isPasswordValid}
     required
     onfocus={() =>
-      passwordInputInitialFocus ? (passwordInputInitialFocus = false) : null}
+      passwordState.initialFocus ? (passwordState.initialFocus = false) : null}
   >
     {#snippet helperText()}
       Enter a password...
@@ -242,12 +238,12 @@
   <TextField
     label="Confirm password"
     type="password"
-    bind:value={confirmPasswordInput}
+    bind:value={confirmPasswordState.input}
     invalid={!isConfirmPasswordValid}
     required
     onfocus={() =>
-      confirmPasswordInputInitialFocus
-        ? (confirmPasswordInputInitialFocus = false)
+      confirmPasswordState.initialFocus
+        ? (confirmPasswordState.initialFocus = false)
         : null}
   >
     {#snippet helperText()}

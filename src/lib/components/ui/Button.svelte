@@ -2,6 +2,7 @@
   import { themeContextKey } from '@/theme/themeContextKey';
   import type { ThemeContext } from '@/theme/types';
   import { toCssString } from '@/utils/cssHelpers';
+  import type { RestProps } from '@/utils/restProps';
   import { getContext } from 'svelte';
 
   type Props = {
@@ -9,8 +10,7 @@
     onclick?: () => void;
     disabled?: boolean;
     style?: string;
-    [key: string]: any;
-  };
+  } & RestProps;
   const { children, onclick, disabled, style, ...restProps }: Props = $props();
 
   const { currentPalette } = getContext<ThemeContext>(themeContextKey);
