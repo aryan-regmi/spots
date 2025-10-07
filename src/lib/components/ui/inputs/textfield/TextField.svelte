@@ -7,6 +7,7 @@
   import type { ThemeContext } from '@/theme/types';
   import { TextFieldState } from './TextFieldState.svelte';
 
+  // TODO: Add prop for helperText style
   type Props = {
     class?: string;
     style?: string;
@@ -53,7 +54,8 @@
   });
 
   const displayHelperText = $derived(
-    !textFieldState.firstRender && textFieldState.value?.trim() === ''
+    invalid ||
+      (!textFieldState.firstRender && textFieldState.value?.trim() === '')
   );
 
   // Keep prop `value` and `textFieldState` in sync
@@ -121,10 +123,7 @@
 
   <!-- The helper text -->
   {#if displayHelperText}
-    <div
-      class="helper-text"
-      style="color: {palette.error.main}; display: flex; flex-wrap: wrap;"
-    >
+    <div class="helper-text" style="color: {palette.error.main};">
       {@render helperText()}
     </div>
   {/if}
@@ -161,6 +160,9 @@
   }
 
   .helper-text {
+    width: 15em;
     transform: translateX(0.5em);
+    justify-content: left;
+    text-align: left;
   }
 </style>

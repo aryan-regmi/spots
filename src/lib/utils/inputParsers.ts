@@ -3,7 +3,7 @@ import { z } from 'zod';
 /** Username must start with letter or number and not contain spaces. */
 export const usernameSchema = z
   .string()
-  .min(1, 'Username is required')
+  .nonempty('Username must not be empty')
   .regex(/^[a-zA-Z0-9]/, 'Username must start with a letter or number')
   .regex(/^\S*$/, 'Username must not contain spaces');
 

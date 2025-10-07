@@ -22,21 +22,36 @@
 
   // FIXME: Separate server and client validations
 
-  class InputState {
-    value = $state('');
-    errMsgs = $state<string[]>([]);
-    firstRender = $state(true);
-    isValid = $state(true);
-  }
+  type Input = {
+    value: string;
+    errMsgs: Set<string>;
+    firstRender: boolean;
+    isValid: boolean;
+  };
 
   /** State of the username input. */
-  let username = new InputState();
+  let username = $state<Input>({
+    value: '',
+    errMsgs: new Set([]),
+    firstRender: true,
+    isValid: true,
+  });
 
   /** State of the password input. */
-  let password = new InputState();
+  let password = $state<Input>({
+    value: '',
+    errMsgs: new Set([]),
+    firstRender: true,
+    isValid: true,
+  });
 
   /** State of the confirm password input. */
-  let confirmPassword = new InputState();
+  let confirmPassword = $state<Input>({
+    value: '',
+    errMsgs: new Set([]),
+    firstRender: true,
+    isValid: true,
+  });
 
   /** Determines if the input is being validated. */
   let isValidating = $state(false);
@@ -51,66 +66,104 @@
     );
   });
 
-  /** Validates the username. */
-  async function validateUsername() {
+  /** Validates the username against the Zod schema. */
+  async function validateUsernameClientSide() {
     isValidating = true;
+    username.errMsgs.clear();
 
     // Validate the schema
     let validationResult = usernameSchema.safeParse(username.value);
     if (!validationResult.success) {
       for (const issue of validationResult.error.issues) {
-        username.errMsgs = [...username.errMsgs, issue.message];
+        username.errMsgs = new Set([...username.errMsgs, issue.message]);
       }
       isValidating = false;
+      username.isValid = false;
       return false;
     }
 
+    // Username is valid if it matches the [usernameSchema]
+    isValidating = false;
+    username.isValid = true;
+    username.errMsgs.clear();
+    return true;
+  }
+
+  /** Checks if the username already exists in the database. */
+  async function validateUsernameServerSide() {
+    isValidating = true;
+
     // Validate the username in the server
-    if (validationResult.success && username.value.length > 0) {
+    if (username.isValid && username.value.length > 0) {
       const user = await getUserByUsername(username.value);
+
+      // Error if username exists
       if (user) {
-        username.errMsgs = [...username.errMsgs, 'Username already exists!'];
+        username.errMsgs = new Set([
+          ...username.errMsgs,
+          'Username already exists!',
+        ]);
         isValidating = false;
+        username.isValid = false;
         return false;
-      } else {
-        return true;
       }
+
+      // Username is valid if it doesnt exist in the database
+      isValidating = false;
+      username.isValid = true;
+      username.errMsgs.clear();
+      return true;
     }
 
     isValidating = false;
+    username.isValid = false;
     return false;
   }
 
   /** Validates the password. */
   async function validatePassword() {
     isValidating = true;
+    password.errMsgs.clear();
 
     // Validate the schema
     const validationResult = passwordSchema.safeParse(password.value);
     if (!validationResult.success) {
       for (const issue of validationResult.error.issues) {
-        password.errMsgs = [...password.errMsgs, issue.message];
+        password.errMsgs = new Set([...password.errMsgs, issue.message]);
       }
+      password = { ...password };
+      password.isValid = false;
       isValidating = false;
       return false;
     }
 
     isValidating = false;
+    password.isValid = true;
+    password.errMsgs.clear();
     return validationResult.success;
   }
 
   /** Validates the confirm-password. */
   async function validateConfirmPassword() {
     isValidating = true;
-    let matches = confirmPassword.value === password.value;
+    if (confirmPassword.value === password.value) {
+      isValidating = false;
+      confirmPassword.isValid = true;
+      return true;
+    }
+
+    // Passwords dont match
     isValidating = false;
-    return matches;
+    confirmPassword.isValid = false;
+    return false;
   }
 
   /** Validates the login (username and password). */
   async function validateAndLogin() {
     isValidating = true;
-    const usernameIsValid = await validateUsername();
+    const usernameIsValid =
+      (await validateUsernameClientSide()) &&
+      (await validateUsernameServerSide());
     const passwordIsValid = await validatePassword();
     const confirmPasswordIsValid = await validateConfirmPassword();
     if (usernameIsValid && passwordIsValid && confirmPasswordIsValid) {
@@ -150,16 +203,22 @@
         username.firstRender = false;
       }
     }}
-    oninput={validateUsername}
+    oninput={validateUsernameClientSide}
   >
     {#snippet helperText()}
-      <Text style="color: {palette.error.main};">
-        {#if username.errMsgs.length > 0}
-          {username.errMsgs[-1]}
-        {:else}
-          Username is required!
-        {/if}
-      </Text>
+      {#if username.errMsgs.size > 0}
+        <ul class="helper-text-list">
+          {#each username.errMsgs as msg}
+            <li>
+              <Text style="color: {palette.error.main};">
+                {msg}
+              </Text>
+            </li>
+          {/each}
+        </ul>
+      {:else}
+        <Text style="color: {palette.error.main};">Username is required!</Text>
+      {/if}
     {/snippet}
   </TextField>
   <TextField
@@ -168,17 +227,27 @@
     bind:value={password.value}
     invalid={!password.isValid}
     required
-    onfocus={() =>
-      password.firstRender ? (password.firstRender = false) : null}
+    onfocus={() => {
+      if (password.firstRender) {
+        password.firstRender = false;
+      }
+    }}
+    oninput={validatePassword}
   >
     {#snippet helperText()}
-      <Text style="color: {palette.error.main};">
-        {#if password.errMsgs.length > 0}
-          {password.errMsgs[-1]}
-        {:else}
-          Password is required!
-        {/if}
-      </Text>
+      {#if password.errMsgs.size > 0}
+        <ul class="helper-text-list">
+          {#each password.errMsgs as msg}
+            <li>
+              <Text style="color: {palette.error.main};">
+                {msg}
+              </Text>
+            </li>
+          {/each}
+        </ul>
+      {:else}
+        <Text style="color: {palette.error.main};">Password is required!</Text>
+      {/if}
     {/snippet}
   </TextField>
   <TextField
@@ -191,13 +260,10 @@
       confirmPassword.firstRender
         ? (confirmPassword.firstRender = false)
         : null}
+    oninput={validateConfirmPassword}
   >
     {#snippet helperText()}
-      {#if confirmPassword.errMsgs.length > 0}
-        {confirmPassword.errMsgs[-1]}
-      {:else}
-        Passwords must match!
-      {/if}
+      <Text style="color: {palette.error.main};">Passwords must match!</Text>
     {/snippet}
   </TextField>
   <Button
@@ -221,5 +287,12 @@
     margin-bottom: 3em;
     margin-top: -1em;
     padding-top: 0;
+  }
+
+  .helper-text-list {
+    padding: 0;
+    padding-left: 0.7em;
+    margin: 0;
+    list-style-type: disc;
   }
 </style>
