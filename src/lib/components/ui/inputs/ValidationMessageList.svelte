@@ -4,12 +4,24 @@
   import { getContext } from 'svelte';
   import { themeContextKey } from '@/theme/themeContextKey';
 
-  let { messages, fallback }: { messages: string[]; fallback?: any } = $props();
+  let { messages, fallback }: { messages: string[]; fallback?: string } =
+    $props();
 
   const { currentPalette } = getContext<ThemeContext>(themeContextKey);
   const palette = $derived(currentPalette());
 </script>
 
+<!-- 
+@component
+
+# ValidationMessageList
+A list of validation error messages.
+
+## Props
+* messages: string[]  - The list of messages to display. 
+* fallback?: string   - The message to display if [messages] is empty
+
+-->
 {#if messages.length === 1}
   {#each messages as msg}
     <Text style="color: {palette.error.main}">{msg}</Text>
@@ -23,7 +35,7 @@
     {/each}
   </ul>
 {:else if messages.length === 0 && fallback}
-  {@render fallback()}
+  <Text style="color: {palette.error.main}">{fallback}</Text>
 {/if}
 
 <style>

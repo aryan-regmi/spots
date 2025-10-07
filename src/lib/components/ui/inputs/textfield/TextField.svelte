@@ -103,6 +103,22 @@
   );
 </script>
 
+<!--
+@component
+
+# TextField
+A text input field.
+
+## Props
+* class?: string  - The CSS classes of the component.
+* style?: string  - The CSS styles of the component.
+* value: string   - The value of the input (**bindable**).
+* label?: string  - The input lable.
+* required?: boolean  - Whether or not the the input is a required one.
+* invalid?: boolean   - Whether or not the value is valid.
+* helperText?: any  - Text to display when the input is invalid.
+* helperTextStyle?: string  - The CSS styles of the [helperText] container.
+-->
 <Column style={containerStyle} spacing="0">
   <!-- The text input -->
   <input
@@ -169,5 +185,6 @@
     transform: translateX(0.5em);
     justify-content: left;
     text-align: left;
+    padding-top: 0.2em;
   }
 </style>

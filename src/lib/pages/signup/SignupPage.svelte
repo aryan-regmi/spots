@@ -14,6 +14,7 @@
   import { toCssString } from '@/utils/cssHelpers';
   import { type AuthContext } from '@/auth/types';
   import { type NavContext } from '@/router/types';
+  import ValidationMessageList from '@/components/ui/inputs/ValidationMessageList.svelte';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);
@@ -216,19 +217,10 @@
     oninput={validateUsernameClientSide}
   >
     {#snippet helperText()}
-      {#if username.errMsgs.size > 0}
-        <ul class="helper-text-list">
-          {#each username.errMsgs as msg}
-            <li>
-              <Text style="color: {palette.error.main};">
-                {msg}
-              </Text>
-            </li>
-          {/each}
-        </ul>
-      {:else}
-        <Text style="color: {palette.error.main};">Username is required!</Text>
-      {/if}
+      <ValidationMessageList
+        messages={username.errMsgs.values().toArray()}
+        fallback={'Username is required!'}
+      />
     {/snippet}
   </TextField>
 
@@ -247,19 +239,10 @@
     oninput={validatePassword}
   >
     {#snippet helperText()}
-      {#if password.errMsgs.size > 0}
-        <ul class="helper-text-list">
-          {#each password.errMsgs as msg}
-            <li>
-              <Text style="color: {palette.error.main};">
-                {msg}
-              </Text>
-            </li>
-          {/each}
-        </ul>
-      {:else}
-        <Text style="color: {palette.error.main};">Password is required!</Text>
-      {/if}
+      <ValidationMessageList
+        messages={password.errMsgs.values().toArray()}
+        fallback={'Password is required!'}
+      />
     {/snippet}
   </TextField>
 
