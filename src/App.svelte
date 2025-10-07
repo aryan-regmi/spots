@@ -12,6 +12,8 @@
 
 <!-- FIXME: Make default background color from palette! -->
 
+<!-- TODO: Add doc comments for all components -->
+
 <main>
   <ThemeProvider>
     <AuthProvider>

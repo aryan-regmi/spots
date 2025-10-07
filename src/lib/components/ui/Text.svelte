@@ -23,6 +23,17 @@
   );
 </script>
 
+<!--
+@component
+
+# Text
+Represents a piece of text.
+
+## Props
+* children - Child components.
+* style? - CSS style string.
+
+-->
 <div style="{textStyle} {style}" {...restProps}>
   {@render children()}
 </div>
