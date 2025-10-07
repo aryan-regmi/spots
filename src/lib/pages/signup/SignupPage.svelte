@@ -60,8 +60,11 @@
   let signupDisabled = $derived.by(() => {
     return (
       !username.isValid ||
+      username.value.length === 0 ||
       !password.isValid ||
+      password.value.length === 0 ||
       !confirmPassword.isValid ||
+      confirmPassword.value.length === 0 ||
       isValidating
     );
   });
@@ -188,16 +191,23 @@
     justifyContent: 'center',
     alignItems: 'center',
   });
+
+  const helperTextStyle = toCssString({
+    width: '15em',
+  });
 </script>
 
 <Column spacing="1em" style={formStyle}>
   <h1 class="app-title">Spots</h1>
+
+  <!-- TODO: No bullet point when only one error message! -->
 
   <TextField
     label="Username"
     bind:value={username.value}
     invalid={!username.isValid}
     required
+    {helperTextStyle}
     onfocus={() => {
       if (username.firstRender) {
         username.firstRender = false;
@@ -221,12 +231,14 @@
       {/if}
     {/snippet}
   </TextField>
+
   <TextField
     label="Password"
     type="password"
     bind:value={password.value}
     invalid={!password.isValid}
     required
+    {helperTextStyle}
     onfocus={() => {
       if (password.firstRender) {
         password.firstRender = false;
@@ -250,12 +262,14 @@
       {/if}
     {/snippet}
   </TextField>
+
   <TextField
     label="Confirm password"
     type="password"
     bind:value={confirmPassword.value}
     invalid={!confirmPassword.isValid}
     required
+    {helperTextStyle}
     onfocus={() =>
       confirmPassword.firstRender
         ? (confirmPassword.firstRender = false)
@@ -266,6 +280,7 @@
       <Text style="color: {palette.error.main};">Passwords must match!</Text>
     {/snippet}
   </TextField>
+
   <Button
     type="submit"
     onclick={async (e) => {

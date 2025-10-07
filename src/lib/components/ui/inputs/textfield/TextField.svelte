@@ -7,7 +7,7 @@
   import type { ThemeContext } from '@/theme/types';
   import { TextFieldState } from './TextFieldState.svelte';
 
-  // TODO: Add prop for helperText style
+  // FIXME: Add prop for helperText style
   type Props = {
     class?: string;
     style?: string;
@@ -16,6 +16,7 @@
     required?: boolean;
     invalid?: boolean;
     helperText?: any;
+    helperTextStyle?: string;
     oninput?: () => void;
     onfocus?: () => void;
     onblur?: () => void;
@@ -30,6 +31,7 @@
     required,
     invalid,
     helperText,
+    helperTextStyle,
     oninput,
     onfocus,
     onblur,
@@ -95,6 +97,10 @@
           : palette.text.primary,
     })
   );
+
+  const helperTextContainerStyle = $derived(
+    `color: {palette.error.main}; ${helperTextStyle}`
+  );
 </script>
 
 <Column style={containerStyle} spacing="0">
@@ -123,7 +129,7 @@
 
   <!-- The helper text -->
   {#if displayHelperText}
-    <div class="helper-text" style="color: {palette.error.main};">
+    <div class="helper-text" style={helperTextContainerStyle}>
       {@render helperText()}
     </div>
   {/if}
@@ -160,7 +166,6 @@
   }
 
   .helper-text {
-    width: 15em;
     transform: translateX(0.5em);
     justify-content: left;
     text-align: left;
