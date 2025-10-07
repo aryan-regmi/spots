@@ -65,10 +65,10 @@
 A button component.
 
 # Props
-* children - Child components.
-* onclick - On-click handler.
-* disabled - hether the button is disabled or not.
-* style - Styles for the component.
+* children?: () => any  - Child components.
+* disabled?: boolean  - Whether the button is disabled or not.
+* style?: string  - Styles for the component.
+* restProps   - The remaining props not explicitly destructured by the button.
 -->
 <button
   id="btn"

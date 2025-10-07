@@ -75,7 +75,8 @@
     --row-align-items={'center'}
     --row-vertical-align={'middle'}
   >
-    <WarningCircle style="font-size: 2em; min-height: 1em; min-width: 1em;" />
+    <!-- <WarningCircle style="font-size: 2em; min-height: 1em; min-width: 1em;" /> -->
+    <WarningCircle style="font-size: 2em;" />
     {@render children()}
   </Row>
 </Card>

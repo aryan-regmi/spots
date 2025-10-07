@@ -17,11 +17,11 @@
   import ValidationMessageList from '@/components/ui/inputs/ValidationMessageList.svelte';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
-  const { navigateTo } = getContext<NavContext>(navContextKey);
+  const { navigateTo, navigateBack } = getContext<NavContext>(navContextKey);
   const { currentPalette } = getContext<ThemeContext>(themeContextKey);
   const palette = $derived(currentPalette());
 
-  // FIXME: Separate server and client validations
+  // FIXME: Add `Back` button!
 
   type Input = {
     value: string;
@@ -196,9 +196,17 @@
   const helperTextStyle = toCssString({
     width: '15em',
   });
+
+  const backButtonStyle = toCssString({
+    margin: 0,
+    translate: '-7em -5em',
+  });
 </script>
 
 <Column spacing="1em" style={formStyle}>
+  <!-- FIXME: Make an icon button! -->
+  <Button style={backButtonStyle} onclick={() => navigateBack()}>Back</Button>
+
   <h1 class="app-title">Spots</h1>
 
   <!-- TODO: No bullet point when only one error message! -->
@@ -283,14 +291,6 @@
 <style>
   .app-title {
     margin-bottom: 3em;
-    margin-top: -1em;
     padding-top: 0;
-  }
-
-  .helper-text-list {
-    padding: 0;
-    padding-left: 0.7em;
-    margin: 0;
-    list-style-type: disc;
   }
 </style>

@@ -30,8 +30,8 @@
 Represents a piece of text.
 
 ## Props
-* children - Child components.
-* style? - CSS style string.
+* children: any   - Child components.
+* style?: string  - CSS style string.
 
 -->
 <div style="{textStyle} {style}" {...restProps}>
