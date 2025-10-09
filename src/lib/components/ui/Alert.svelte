@@ -2,6 +2,7 @@
   import { getContext } from 'svelte';
   import Card from './Card.svelte';
   import Row from './Row.svelte';
+  import Text from './Text.svelte';
   import WarningCircle from 'phosphor-svelte/lib/WarningCircle';
   import type { ThemeContext } from '@/theme/types';
   import { themeContextKey } from '@/theme/themeContextKey';
@@ -75,8 +76,7 @@
     --row-align-items={'center'}
     --row-vertical-align={'middle'}
   >
-    <!-- <WarningCircle style="font-size: 2em; min-height: 1em; min-width: 1em;" /> -->
-    <WarningCircle style="font-size: 2em;" />
+    <WarningCircle size="2em" />
     {@render children()}
   </Row>
 </Card>

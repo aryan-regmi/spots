@@ -15,6 +15,7 @@
   import { type AuthContext } from '@/auth/types';
   import { type NavContext } from '@/router/types';
   import ValidationMessageList from '@/components/ui/inputs/ValidationMessageList.svelte';
+  import Row from '@/components/ui/Row.svelte';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo, navigateBack } = getContext<NavContext>(navContextKey);
@@ -198,8 +199,7 @@
   });
 
   const backButtonStyle = toCssString({
-    margin: 0,
-    translate: '-7em -5em',
+    translate: '-7em -10em',
   });
 </script>
 
@@ -208,8 +208,6 @@
   <Button style={backButtonStyle} onclick={() => navigateBack()}>Back</Button>
 
   <h1 class="app-title">Spots</h1>
-
-  <!-- TODO: No bullet point when only one error message! -->
 
   <TextField
     label="Username"
@@ -291,6 +289,7 @@
 <style>
   .app-title {
     margin-bottom: 3em;
+    margin-top: -1.5em;
     padding-top: 0;
   }
 </style>

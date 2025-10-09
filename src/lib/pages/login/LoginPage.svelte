@@ -3,18 +3,23 @@
   import Button from '@/components/ui/Button.svelte';
   import Column from '@/components/ui/Column.svelte';
   import Link from '@/components/ui/Link.svelte';
+  import Text from '@/components/ui/Text.svelte';
   import TextField from '@/components/ui/inputs/textfield/TextField.svelte';
+  import type { ThemeContext } from '@/theme/types';
   import { authContextKey } from '@/auth/authContextKey';
   import { getContext } from 'svelte';
   import { getUserByUsername, verifyPassword } from '@/api/users';
   import { loadEndpoint } from '@/api/network';
   import { navContextKey } from '@/router/navContextKey';
+  import { themeContextKey } from '@/theme/themeContextKey';
   import { toCssString } from '@/utils/cssHelpers';
   import { type AuthContext } from '@/auth/types';
   import { type NavContext } from '@/router/types';
 
   const { authorize } = getContext<AuthContext>(authContextKey);
   const { navigateTo } = getContext<NavContext>(navContextKey);
+  const { currentPalette } = getContext<ThemeContext>(themeContextKey);
+  const palette = $derived(currentPalette());
 
   /** State of the username input. */
   let usernameState = $state({
@@ -106,7 +111,7 @@
     }}
   >
     {#snippet helperText()}
-      Username is required!
+      <Text style="color: {palette.error.main}">Username is required!</Text>
     {/snippet}
   </TextField>
   <TextField
@@ -123,7 +128,7 @@
     }}
   >
     {#snippet helperText()}
-      Password is required!
+      <Text style="color: {palette.error.main}">Password is required!</Text>
     {/snippet}
   </TextField>
   <Button

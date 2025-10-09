@@ -27,5 +27,12 @@
     display: flex;
     flex-direction: row;
     box-sizing: border-box;
+
+    /* Custom properties */
+    margin: var(--row-margin);
+    padding: var(--row-padding);
+    justify-content: var(--row-justify-content);
+    align-items: var(--row-align-items);
+    vertical-align: var(--row-vertical-align);
   }
 </style>

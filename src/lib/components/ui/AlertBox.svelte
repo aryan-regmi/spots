@@ -2,6 +2,7 @@
   import { slide } from 'svelte/transition';
   import Alert from './Alert.svelte';
   import Column from './Column.svelte';
+  import Text from './Text.svelte';
 
   export type AlertValue = {
     level?: 'basic' | 'warning' | 'error';
@@ -22,7 +23,9 @@
   <Column spacing="1em" style="margin-bottom: 5em">
     {#each alerts as alert (alert.text)}
       <div transition:slide>
-        <Alert level={alert.level} style={alertStyle}>{alert.text}</Alert>
+        <Alert level={alert.level} style={alertStyle}>
+          <Text style="color: inherit;">{alert.text}</Text>
+        </Alert>
       </div>
     {/each}
   </Column>
