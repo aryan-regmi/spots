@@ -1,7 +1,8 @@
 import './App.css';
+import { AuthProvider } from '@/auth/AuthProvider';
+import { DashboardPage } from '@/pages/DashboardPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { Route, Router } from '@solidjs/router';
-import { AuthProvider } from './auth/AuthProvider';
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
       <AuthProvider>
         <Router>
           <Route path={'/'} component={LoginPage} />
+          <Route path={'/dashboard'} component={DashboardPage} />
         </Router>
       </AuthProvider>
     </main>

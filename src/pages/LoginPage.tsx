@@ -1,8 +1,11 @@
 import { authenticateUser } from '@/mockApi/User';
+import { useNavigate } from '@solidjs/router';
 import { createSignal, JSX } from 'solid-js';
 
 /** The login page for the app. */
 export function LoginPage() {
+  const navigate = useNavigate();
+
   /** Determines if the login is invalid. */
   const [invalidLogin, setInvalidLogin] = createSignal(false);
 
@@ -25,8 +28,9 @@ export function LoginPage() {
         (authUser) => {
           if (authUser) {
             setInvalidLogin(false);
-            e.currentTarget.reset();
             setLoading(false);
+            navigate('/dashboard', { replace: true });
+            return;
           } else {
             setInvalidLogin(true);
             setLoading(false);
@@ -88,7 +92,7 @@ export function LoginPage() {
           disabled={submitDisabled()}
           style={submitDisabled() ? DisableBtnStyle : {}}
         >
-          Submit
+          {loading() ? 'Logging in...' : 'Submit'}
         </button>
       </form>
     );
