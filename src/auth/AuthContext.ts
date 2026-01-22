@@ -1,9 +1,10 @@
+import { User } from '@/mockApi/User';
 import { createContext } from 'solid-js';
 
 type AuthContextType = {
-  token: string;
+  authUser: () => User | null;
   authenticate: (username: string, password: string) => Promise<void>;
-  unauthenticate: (username: string, password: string) => void;
+  unauthenticate: (username: string) => void;
 };
 
 /** The authentication context. */

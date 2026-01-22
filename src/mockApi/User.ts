@@ -7,7 +7,7 @@ export type User = {
 export async function authenticateUser(
   username: string,
   password: string
-): Promise<User | undefined> {
+): Promise<User | null> {
   await new Promise((resolve) => setTimeout(resolve, 2000)); // NOTE: Artificial delay
 
   if (username === 'user' && password === '1') {
@@ -19,4 +19,6 @@ export async function authenticateUser(
     sessionStorage.setItem('auth-token', user.authToken);
     return user;
   }
+
+  return null;
 }

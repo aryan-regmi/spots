@@ -12,7 +12,7 @@ export function AuthProvider(props: { children: any }) {
     if (user) {
       setAuthUser(user);
     } else {
-      throw 'Login not found';
+      throw 'Username and password not found';
     }
   }
 
@@ -27,7 +27,7 @@ export function AuthProvider(props: { children: any }) {
   return (
     <AuthContext.Provider
       value={{
-        token: authUser()?.authToken || '',
+        authUser,
         authenticate,
         unauthenticate,
       }}

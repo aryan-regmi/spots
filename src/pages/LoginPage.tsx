@@ -1,10 +1,11 @@
-import { authenticateUser } from '@/mockApi/User';
-import { useNavigate } from '@solidjs/router';
+import useAuth from '@/auth/useAuth';
 import { createSignal, JSX } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 
 /** The login page for the app. */
 export function LoginPage() {
   const navigate = useNavigate();
+  const { authenticate } = useAuth();
 
   /** Determines if the login is invalid. */
   const [invalidLogin, setInvalidLogin] = createSignal(false);
@@ -12,8 +13,13 @@ export function LoginPage() {
   /** Determines if the page is in a loading state. */
   const [loading, setLoading] = createSignal(false);
 
+  /** The error message to display. */
+  const [errorMsg, setErrorMsg] = createSignal<string | null>(null);
+
   /** Validates the login provided in the form. */
-  const validateLogin: JSX.EventHandler<HTMLFormElement, SubmitEvent> = (e) => {
+  const validateLogin: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (
+    e
+  ) => {
     e.preventDefault();
     setLoading(true);
 
@@ -22,21 +28,39 @@ export function LoginPage() {
     const username = formData.get('username');
     const password = formData.get('password');
 
+    function setLoginErrors(error: string) {
+      setInvalidLogin(true);
+      setLoading(false);
+      setErrorMsg(error);
+    }
+
+    // FIXME: Add real username and password validation
+    let usernameStr = '';
+    let passwordStr = '';
+    if (username) {
+      usernameStr = username.toString();
+    } else if (!username || usernameStr.length <= 0) {
+      setLoginErrors('username must be non-empty');
+      return;
+    }
+
+    if (password) {
+      passwordStr = password.toString();
+    } else if (!password || passwordStr.length <= 0) {
+      setLoginErrors('password must be non-empty');
+      return;
+    }
+
     // Authenticate the login
-    if (username && password) {
-      authenticateUser(username.toString(), password.toString()).then(
-        (authUser) => {
-          if (authUser) {
-            setInvalidLogin(false);
-            setLoading(false);
-            navigate('/dashboard', { replace: true });
-            return;
-          } else {
-            setInvalidLogin(true);
-            setLoading(false);
-          }
-        }
-      );
+    try {
+      await authenticate(usernameStr, passwordStr);
+      setInvalidLogin(false);
+      setLoading(false);
+      navigate('/dashboard', { replace: true });
+    } catch (error: any) {
+      setInvalidLogin(true);
+      setLoading(false);
+      setErrorMsg(error);
     }
   };
 
@@ -56,6 +80,11 @@ export function LoginPage() {
       cursor: 'not-allowed',
     };
 
+    function resetInput() {
+      setInvalidLogin(false);
+      setErrorMsg(null);
+    }
+
     return (
       <form onsubmit={validateLogin}>
         {/* Username input */}
@@ -67,7 +96,7 @@ export function LoginPage() {
           type="text"
           name="username"
           placeholder="Enter username..."
-          oninput={() => setInvalidLogin(false)}
+          oninput={resetInput}
         />
         <br />
         <br />
@@ -81,7 +110,7 @@ export function LoginPage() {
           type="password"
           name="password"
           placeholder="Enter password..."
-          oninput={() => setInvalidLogin(false)}
+          oninput={resetInput}
         />
         <br />
         <br />
@@ -104,7 +133,7 @@ export function LoginPage() {
       <br />
       <br />
       <LoginForm />
-      {invalidLogin() ? <p>Invalid Login!</p> : <></>}
+      {errorMsg() ? <p>Invalid login: {errorMsg()}</p> : <></>}
     </div>
   );
 }
