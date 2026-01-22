@@ -1,13 +1,16 @@
-import { authenticateUser, User } from '@/mockApi/User';
+import { authenticateUser } from '@/mockApi/User';
 import { createSignal, JSX } from 'solid-js';
 
+/** The login page for the app. */
 export function LoginPage() {
+  /** Determines if the login is invalid. */
   const [invalidLogin, setInvalidLogin] = createSignal(false);
+
+  /** Determines if the page is in a loading state. */
   const [loading, setLoading] = createSignal(false);
 
+  /** Validates the login provided in the form. */
   const validateLogin: JSX.EventHandler<HTMLFormElement, SubmitEvent> = (e) => {
-    console.log('Clicked!');
-
     e.preventDefault();
     setLoading(true);
 
@@ -33,12 +36,25 @@ export function LoginPage() {
     }
   };
 
-  /* The form part of the login page. */
+  /** The form part of the login page. */
   function LoginForm() {
+    /** Determines if the submit button is disabled.
+     *
+     * It will be disabled during loading and if the login is invalid.
+     * */
     const submitDisabled = () => loading() === true || invalidLogin() === true;
+
+    /** Style for the disabled button. */
+    const DisableBtnStyle = {
+      outline: 'none',
+      'border-color': 'gray',
+      'background-color': 'gray',
+      cursor: 'not-allowed',
+    };
 
     return (
       <form onsubmit={validateLogin}>
+        {/* Username input */}
         <label for="username">
           <strong>Username</strong>
         </label>
@@ -52,6 +68,7 @@ export function LoginPage() {
         <br />
         <br />
 
+        {/* Password input */}
         <label for="password">
           <strong>Password</strong>
         </label>
@@ -65,6 +82,7 @@ export function LoginPage() {
         <br />
         <br />
 
+        {/* Submit button */}
         <button
           type="submit"
           disabled={submitDisabled()}
@@ -75,13 +93,6 @@ export function LoginPage() {
       </form>
     );
   }
-
-  const DisableBtnStyle = {
-    outline: 'none',
-    'border-color': 'gray',
-    'background-color': 'gray',
-    cursor: 'not-allowed',
-  };
 
   return (
     <div>
