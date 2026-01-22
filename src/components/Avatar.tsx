@@ -6,6 +6,7 @@ type AvatarProps = {
   name: string;
   size?: 'small' | 'medium' | 'large';
   onClick?: () => void;
+  popoverTargetId?: string;
 };
 
 /** An avatar component. */
@@ -37,9 +38,6 @@ export function Avatar(props: AvatarProps) {
 
   /** The background color of the avatar (determined by the 1st letter). */
   const backgroundColor = `hsl(${Math.abs(props.name.charCodeAt(0)) % 360}, 70%, 50%)`;
-
-  /** Determines if the avatar is currently being hovered. */
-  const [isHovered, setIsHovered] = createSignal(false);
 
   /** Tranform for the avatar; changes when hovered. */
   const [transform, setTransform] = createSignal('scale(1)');
@@ -73,14 +71,12 @@ export function Avatar(props: AvatarProps) {
 
   /** Handles when avatar is hovered. */
   function handleMouseEnter() {
-    setIsHovered(true);
     setTransform('scale(1.05)');
     setBoxShadow('0 4px 12px rgba(0, 0, 0, 0.15)');
   }
 
   /** Handles when avatar is no longer hovered. */
   function handleMouseLeave() {
-    setIsHovered(false);
     setTransform('scale(1)');
     setBoxShadow('none');
   }
@@ -93,15 +89,16 @@ export function Avatar(props: AvatarProps) {
   }
 
   return (
-    <div
+    <button
       style={AvatarContainerStyle()}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleOnClick}
       role="img"
       aria-label={`Avatar for ${props.name}`}
+      popovertarget={props.popoverTargetId}
     >
       <span style={AvatarStyle}>{firstLetter}</span>
-    </div>
+    </button>
   );
 }
