@@ -1,25 +1,27 @@
 {
   "name": "spots",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "",
   "type": "module",
   "scripts": {
+    "start": "vite",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "serve": "vite preview",
+    "tauri": "tauri"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@solidjs/router": "^0.15.4",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "solid-js": "^1.9.3"
   },
   "devDependencies": {
-    "@svelte-put/qr": "^2.1.0",
-    "@sveltejs/vite-plugin-svelte": "^6.1.1",
-    "@types/page": "^1.11.9",
-    "phosphor-svelte": "^3.0.1",
-    "svelte": "^5.38.1",
-    "vite": "^7.1.2"
-  },
-  "dependencies": {
-    "@tauri-apps/api": "^2.8.0",
-    "bits-ui": "^2.9.8",
-    "svelte-spa-router": "^4.0.1",
-    "zod": "^4.1.11"
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^25.0.9",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.3",
+    "vite-plugin-solid": "^2.11.0"
   }
 }

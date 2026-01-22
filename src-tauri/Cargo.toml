@@ -1,35 +1,25 @@
 [package]
-name = "app"
+name = "spots"
 version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
-license = ""
-repository = ""
 edition = "2021"
-rust-version = "1.77.2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-name = "app_lib"
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "spots_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.3.1", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
-aes-gcm = "0.10.3"
-anyhow = "1.0.99"
-argon2 = "0.5.3"
-bincode = { version = "2.0.1", features = ["serde"] }
-iroh = { version = "0.91.2", features = ["discovery-local-network"] }
-iroh-gossip = "0.91.0"
-log = "0.4"
-rand = "0.8.2"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
-tauri = { version = "2.7.0", features = [] }
-tauri-plugin-fs = "2"
-tauri-plugin-log = "2"
-tokio = "1.47.1"
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
