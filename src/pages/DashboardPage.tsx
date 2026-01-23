@@ -3,8 +3,7 @@ import { Avatar } from '@/components/Avatar';
 import { Column } from '@/components/Column';
 import { Row } from '@/components/Row';
 import { A, useNavigate } from '@solidjs/router';
-import { createSignal, onMount } from 'solid-js';
-import { JSX } from 'solid-js/h/jsx-runtime';
+import { JSX, createEffect, createSignal, onMount } from 'solid-js';
 
 /** The user's dashboard page. */
 export function DashboardPage() {
@@ -14,10 +13,20 @@ export function DashboardPage() {
   /** Determines if the page is in a loading state. */
   const [loading, setLoading] = createSignal(false);
 
+  /** Username for the currently logged in user. */
+  const [username, setUsername] = createSignal('unknown');
+
   /** Redirects to login page if no user is logged in. */
   onMount(() => {
-    if (auth.authUser() === null) {
+    if (auth.authUser() === null && auth.loading() === false) {
       navigate('/', { replace: true });
+    }
+  });
+
+  /** Sets the username once user has been authenticated. */
+  createEffect(() => {
+    if (auth.authUser()) {
+      setUsername(auth.authUser()?.username!);
     }
   });
 
@@ -40,14 +49,11 @@ export function DashboardPage() {
         navigate={navigate}
         loading={loading}
         setLoading={setLoading}
+        username={username}
       />
 
       <div style={dashboardContainerStyle}>
-        <Avatar
-          name={auth.authUser()?.username || ''}
-          popoverTargetId={popoverId}
-          animate
-        />
+        <Avatar name={username()} popoverTargetId={popoverId} animate />
       </div>
     </>
   );
@@ -60,6 +66,7 @@ function PopoverMenu(props: {
   navigate: any;
   loading: any;
   setLoading: any;
+  username: () => string;
 }) {
   /** The background color of the menu header.  */
   const [headerBgColor, setHeaderBgColor] = createSignal('rgba(0, 0, 0, 0.0)');
@@ -126,7 +133,7 @@ function PopoverMenu(props: {
               }}
             >
               <Row style={{ gap: '0.5em', 'align-items': 'center' }}>
-                <Avatar name={props.auth.authUser()?.username || ''} />
+                <Avatar name={props.username()} />
                 <span style={{ color: 'white' }}>
                   {props.auth.authUser()?.username}
                 </span>

@@ -1,11 +1,18 @@
 import useAuth from '@/auth/useAuth';
-import { createSignal, JSX } from 'solid-js';
+import { createSignal, JSX, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 
 /** The login page for the app. */
 export function LoginPage() {
   const navigate = useNavigate();
-  const { authenticate } = useAuth();
+  const { authUser, authenticate } = useAuth();
+
+  /** Redirects to dashboard if user is already logged in. */
+  onMount(() => {
+    if (authUser()) {
+      navigate('/dashboard', { replace: true });
+    }
+  });
 
   /** Determines if the login is invalid. */
   const [invalidLogin, setInvalidLogin] = createSignal(false);
