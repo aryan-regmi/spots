@@ -44,7 +44,7 @@ export function DashboardPage() {
     position: 'fixed',
     top: '0',
     left: '0',
-    width: '45vw',
+    width: '50vw',
     height: '100vh',
     padding: 0,
     'margin-left': '0',
@@ -56,24 +56,52 @@ export function DashboardPage() {
     'backdrop-filter': 'blur(10px)',
   };
 
-  /** Styles for the popover contents. */
-  const PopoverInnerStyle: JSX.CSSProperties = {
-    display: 'flex',
-    'flex-direction': 'column',
-    padding: '4em 2em 2em 2.25em',
-  };
-
   return (
     <>
       {/* <div id="popover-menu" style={PopoverStyle} popover> */}
       <div id="popover-menu" style={PopoverStyle}>
-        <div style={PopoverInnerStyle}>
-          <Avatar name={auth.authUser()?.username || ''} />
+        <Column style={{ padding: '4em 2em 2em 2.4em' }}>
+          {/* TODO: Add styles for when this column is hovered */}
+          <span>
+            <Column
+              style={{
+                gap: '0',
+              }}
+            >
+              <Row style={{ gap: '0.5em', 'align-items': 'center' }}>
+                <Avatar name={auth.authUser()?.username || ''} />
+                <span style={{ color: 'white' }}>
+                  {auth.authUser()?.username}
+                </span>
+              </Row>
+
+              <span
+                style={{
+                  'font-size': '0.8em',
+                  color: 'gray',
+                  margin: 0,
+                  'align-self': 'flex-start',
+                  'padding-left': '4.25em',
+                  'margin-top': '-1em',
+                }}
+              >
+                View Profile
+              </span>
+
+              <hr
+                style={{
+                  width: '100%',
+                  'margin-top': '-0.1em',
+                  color: 'rgba(30,35,45,0.8)',
+                }}
+              />
+            </Column>
+          </span>
 
           <A href="/" replace onClick={logout}>
             {loading() ? 'Logging out...' : 'Log out'}
           </A>
-        </div>
+        </Column>
       </div>
 
       <div style={ContainerStyle}>
@@ -84,4 +112,24 @@ export function DashboardPage() {
       </div>
     </>
   );
+}
+
+function Column(props: { children?: any; style?: JSX.CSSProperties }) {
+  const { children, style } = props;
+  const baseStyle: JSX.CSSProperties = {
+    display: 'flex',
+    'flex-direction': 'column',
+    gap: '2em',
+  };
+  return <div style={{ ...baseStyle, ...style }}>{children}</div>;
+}
+
+function Row(props: { children?: any; style?: JSX.CSSProperties }) {
+  const { children, style } = props;
+  const baseStyle: JSX.CSSProperties = {
+    display: 'flex',
+    'flex-direction': 'row',
+    gap: '2em',
+  };
+  return <div style={{ ...baseStyle, ...style }}>{children}</div>;
 }
