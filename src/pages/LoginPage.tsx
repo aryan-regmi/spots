@@ -85,6 +85,7 @@ export function LoginPage() {
       setErrorMsg(null);
     }
 
+    // TODO: Replace hard coded spaces with `Row` and `Column` components!
     return (
       <form onsubmit={validateLogin}>
         {/* Username input */}

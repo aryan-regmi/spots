@@ -90,7 +90,7 @@ function PopoverMenu(props: {
     'box-sizing': 'border-box',
     'z-index': 1000,
     'border-radius': '0 1em 1em 0',
-    'backdrop-filter': 'blur(10px)',
+    'backdrop-filter': 'blur(50px)',
     'border-width': '0.01em',
     'border-color': 'rgba(30, 30, 30, 0.8)',
   };
@@ -144,16 +144,15 @@ function PopoverMenu(props: {
               >
                 View Profile
               </span>
-
-              <hr
-                style={{
-                  width: '100%',
-                  'margin-top': '-0.1em',
-                  color: 'rgba(30,35,45,0.8)',
-                }}
-              />
             </Column>
           </span>
+          <hr
+            style={{
+              width: '100%',
+              'margin-top': '-2em',
+              color: 'rgba(30,35,45,0.8)',
+            }}
+          />
 
           {/* Menu content/list */}
           <span>
