@@ -58,8 +58,8 @@ export function DashboardPage() {
 
   return (
     <>
-      {/* <div id="popover-menu" style={PopoverStyle} popover> */}
-      <div id="popover-menu" style={PopoverStyle}>
+      <div id="popover-menu" style={PopoverStyle} popover>
+        {/* <div id="popover-menu" style={PopoverStyle}> */}
         <Column style={{ padding: '4em 2em 2em 2.4em' }}>
           {/* TODO: Add styles for when this column is hovered */}
           <span>
@@ -108,6 +108,7 @@ export function DashboardPage() {
         <Avatar
           name={auth.authUser()?.username || ''}
           popoverTargetId="popover-menu"
+          animate
         />
       </div>
     </>

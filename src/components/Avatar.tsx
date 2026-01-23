@@ -1,4 +1,4 @@
-import { createEffect, createSignal } from 'solid-js';
+import { createSignal } from 'solid-js';
 import { JSX } from 'solid-js/h/jsx-runtime';
 
 /** Props for the [Avatar] component. */
@@ -7,6 +7,7 @@ type AvatarProps = {
   size?: 'small' | 'medium' | 'large';
   onClick?: () => void;
   popoverTargetId?: string;
+  animate?: boolean;
 };
 
 /** An avatar component. */
@@ -47,21 +48,32 @@ export function Avatar(props: AvatarProps) {
 
   /** Style for the avatar container. */
   const AvatarContainerStyle: () => JSX.CSSProperties = () => {
-    return {
+    const baseStyle: JSX.CSSProperties = {
       display: 'flex',
       'align-items': 'center',
       'justify-content': 'center',
       'border-radius': '50%',
       cursor: 'pointer',
-      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       color: 'white',
       'font-weight': 'bold',
       'user-select': 'none',
       'background-color': backgroundColor,
       ...sizeClasses[size],
-      transform: transform(),
-      'box-shadow': boxShadow(),
+      border: 'none',
+      outline: 'none',
+      padding: '0',
     };
+
+    if (props.animate) {
+      return {
+        ...baseStyle,
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        transform: transform(),
+        'box-shadow': boxShadow(),
+      };
+    } else {
+      return baseStyle;
+    }
   };
 
   /** Style for the avatar itself. */
@@ -71,14 +83,18 @@ export function Avatar(props: AvatarProps) {
 
   /** Handles when avatar is hovered. */
   function handleMouseEnter() {
-    setTransform('scale(1.05)');
-    setBoxShadow('0 4px 12px rgba(0, 0, 0, 0.15)');
+    if (props.animate) {
+      setTransform('scale(1.05)');
+      setBoxShadow('0 4px 12px rgba(0, 0, 0, 0.15)');
+    }
   }
 
   /** Handles when avatar is no longer hovered. */
   function handleMouseLeave() {
-    setTransform('scale(1)');
-    setBoxShadow('none');
+    if (props.animate) {
+      setTransform('scale(1)');
+      setBoxShadow('none');
+    }
   }
 
   /** Handles avatar click by calling the given `onClick` function. */
