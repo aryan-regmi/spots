@@ -1,7 +1,9 @@
 import useAuth from '@/auth/useAuth';
 import { Avatar } from '@/components/Avatar';
 import { Column } from '@/components/Column';
+import { PinnedPlaylists } from '@/components/Playlist';
 import { Row } from '@/components/Row';
+import { mockPlaylists } from '@/mockApi/MockPlaylists';
 import { A, useNavigate } from '@solidjs/router';
 import { JSX, createEffect, createSignal, onMount } from 'solid-js';
 
@@ -54,6 +56,11 @@ export function DashboardPage() {
 
       <div style={dashboardContainerStyle}>
         <Avatar name={username()} popoverTargetId={popoverId} animate />
+        <br />
+        <PinnedPlaylists playlists={mockPlaylists} />
+        <br />
+
+        <h2 style={{ 'align-self': 'start' }}>Recently Played</h2>
       </div>
     </>
   );
@@ -92,7 +99,8 @@ function PopoverMenu(props: {
     width: '50vw',
     height: '100vh',
     padding: 0,
-    'margin-left': '0',
+    'margin-left': '-1px',
+    'margin-top': '-1px',
     'background-color': 'rgba(0, 0, 0, 0.5)',
     'box-sizing': 'border-box',
     'z-index': 1000,
@@ -103,72 +111,70 @@ function PopoverMenu(props: {
   };
 
   return (
-    <>
-      <div id={props.popoverId} style={style} popover>
-        <Column style={{ padding: '4em 2em 2em 2.4em' }}>
-          {/* Menu header */}
-          <span
-            id="menu-header"
-            onMouseEnter={() => {
-              setHeaderBgColor('rgba(0, 0, 0, 0.1)');
-            }}
-            onMouseLeave={() => {
-              setHeaderBgColor('rgba(0, 0, 0, 0)');
-            }}
-            onClick={() => {}}
+    <div id={props.popoverId} style={style} popover>
+      <Column style={{ padding: '4em 2em 2em 2.4em' }}>
+        {/* Menu header */}
+        <span
+          id="menu-header"
+          onMouseEnter={() => {
+            setHeaderBgColor('rgba(0, 0, 0, 0.1)');
+          }}
+          onMouseLeave={() => {
+            setHeaderBgColor('rgba(0, 0, 0, 0)');
+          }}
+          onClick={() => {}}
+          style={{
+            'background-color': headerBgColor(),
+            'border-radius': '1em',
+            padding: '2em',
+            'padding-bottom': 0,
+            'margin-top': '-2em',
+            'margin-left': '-2em',
+            'margin-right': '-1.5em',
+          }}
+        >
+          <Column
             style={{
-              'background-color': headerBgColor(),
-              'border-radius': '1em',
-              padding: '2em',
-              'padding-bottom': 0,
-              'margin-top': '-2em',
-              'margin-left': '-2em',
-              'margin-right': '-1.5em',
+              gap: '0',
+              cursor: 'pointer',
             }}
           >
-            <Column
+            <Row style={{ gap: '0.5em', 'align-items': 'center' }}>
+              <Avatar name={props.username()} />
+              <span style={{ color: 'white' }}>
+                {props.auth.authUser()?.username}
+              </span>
+            </Row>
+
+            <span
               style={{
-                gap: '0',
-                cursor: 'pointer',
+                'font-size': '0.8em',
+                color: 'gray',
+                margin: 0,
+                'align-self': 'flex-start',
+                'padding-left': '4.25em',
+                'margin-top': '-1em',
               }}
             >
-              <Row style={{ gap: '0.5em', 'align-items': 'center' }}>
-                <Avatar name={props.username()} />
-                <span style={{ color: 'white' }}>
-                  {props.auth.authUser()?.username}
-                </span>
-              </Row>
+              View Profile
+            </span>
+          </Column>
+        </span>
+        <hr
+          style={{
+            width: '100%',
+            'margin-top': '-2em',
+            color: 'rgba(30,35,45,0.8)',
+          }}
+        />
 
-              <span
-                style={{
-                  'font-size': '0.8em',
-                  color: 'gray',
-                  margin: 0,
-                  'align-self': 'flex-start',
-                  'padding-left': '4.25em',
-                  'margin-top': '-1em',
-                }}
-              >
-                View Profile
-              </span>
-            </Column>
-          </span>
-          <hr
-            style={{
-              width: '100%',
-              'margin-top': '-2em',
-              color: 'rgba(30,35,45,0.8)',
-            }}
-          />
-
-          {/* Menu content/list */}
-          <span>
-            <A href="/" replace onClick={logout}>
-              {props.loading() ? 'Logging out...' : 'Log out'}
-            </A>
-          </span>
-        </Column>
-      </div>
-    </>
+        {/* Menu content/list */}
+        <span>
+          <A href="/" replace onClick={logout}>
+            {props.loading() ? 'Logging out...' : 'Log out'}
+          </A>
+        </span>
+      </Column>
+    </div>
   );
 }
