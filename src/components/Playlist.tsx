@@ -74,7 +74,6 @@ export function PlaylistCard(props: { playlist: Playlist }) {
           style={{
             width: '4em',
             height: '4em',
-            'margin-left': '0',
             'border-radius': '0.5em',
             opacity: imgAlpha(),
           }}
@@ -84,3 +83,5 @@ export function PlaylistCard(props: { playlist: Playlist }) {
     </span>
   );
 }
+
+// TODO: Create `LargePlaylistCard` for `Recently Played`

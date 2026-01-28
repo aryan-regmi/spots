@@ -4,6 +4,9 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { Route, Router } from '@solidjs/router';
 
+// TODO: Add bottom navbar
+// TODO: Add `Create user/Sign up` page
+
 function App() {
   return (
     <main class="container">
