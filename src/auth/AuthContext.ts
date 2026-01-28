@@ -1,11 +1,16 @@
 import { AuthUser } from '@/mockApi/User';
+import { AuthenticationError } from '@/auth/AuthProvider';
+import { Effect } from 'effect';
 import { createContext } from 'solid-js';
 
-type AuthContextType = {
+export type AuthContextType = {
   authUser: () => AuthUser | null;
-  authenticate: (username: string, password: string) => Promise<void>;
-  unauthenticate: (username: string) => void;
-  loading: () => boolean;
+  authenticate: (
+    username: string,
+    password: string
+  ) => Effect.Effect<void, AuthenticationError, never>;
+  unauthenticate: (username: string) => Effect.Effect<void, never, never>;
+  isLoading: () => boolean;
 };
 
 /** The authentication context. */

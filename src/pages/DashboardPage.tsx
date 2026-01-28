@@ -5,11 +5,13 @@ import { PinnedPlaylists } from '@/components/Playlist';
 import { Row } from '@/components/Row';
 import { mockPlaylists } from '@/mockApi/MockPlaylists';
 import { A, useNavigate } from '@solidjs/router';
+import { Effect } from 'effect';
 import { JSX, createEffect, createSignal, onMount } from 'solid-js';
 
 /** The user's dashboard page. */
 export function DashboardPage() {
-  const auth = useAuth();
+  const authEffect = useAuth();
+  const auth = Effect.runSync(authEffect);
   const navigate = useNavigate();
 
   /** Determines if the page is in a loading state. */
@@ -20,7 +22,7 @@ export function DashboardPage() {
 
   /** Redirects to login page if no user is logged in. */
   onMount(() => {
-    if (auth.authUser() === null && auth.loading() === false) {
+    if (auth.authUser() === null && auth.isLoading() === false) {
       navigate('/', { replace: true });
     }
   });

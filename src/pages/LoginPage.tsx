@@ -1,11 +1,22 @@
 import useAuth from '@/auth/useAuth';
 import { createSignal, JSX, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
+import { Console, Effect } from 'effect';
+import { AuthContextType } from '@/auth/AuthContext';
+import { AuthenticationError } from '@/auth/AuthProvider';
 
 /** The login page for the app. */
 export function LoginPage() {
   const navigate = useNavigate();
-  const { authUser, authenticate } = useAuth();
+  const auth = useAuth();
+
+  // Invalid authentication
+  if (auth.isError) {
+    const error = auth.context as AuthenticationError;
+    return <div>{error.message}</div>; // TODO: Replace with `Error` component!
+  }
+
+  const { authUser, authenticate } = auth.context as AuthContextType;
 
   /** Redirects to dashboard if user is already logged in. */
   onMount(() => {
