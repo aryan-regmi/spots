@@ -1,21 +1,26 @@
+import { Effect } from 'effect';
+
 export type AuthUser = {
   username: string;
 };
 
-export async function authenticateUser(
-  username: string,
-  password: string
-): Promise<AuthUser | null> {
-  await new Promise((resolve) => setTimeout(resolve, 2000)); // NOTE: Artificial delay
+/** Authenticates the given user. */
+export const authenticateUser = (username: string, password: string) => {
+  const effect: Effect.Effect<AuthUser | null> = Effect.gen(function* () {
+    yield* Effect.promise(
+      () => new Promise((resolve) => setTimeout(resolve, 2000))
+    );
 
-  if (username === 'user' && password === '1') {
-    let user = {
-      username: username,
-      hashedPassword: password,
-    };
-    localStorage.setItem('auth-token', user.username);
-    return user;
-  }
+    if (username === 'user' && password === '1') {
+      let user = {
+        username: username,
+        hashedPassword: password,
+      };
+      localStorage.setItem('auth-token', user.username);
+      return user;
+    }
 
-  return null;
-}
+    return null;
+  });
+  return effect;
+};

@@ -4,8 +4,8 @@ import { Avatar } from '@/components/Avatar';
 import { Column } from '@/components/Column';
 import { PinnedPlaylists } from '@/components/Playlist';
 import { Row } from '@/components/Row';
-import { mockPlaylists } from '@/mockApi/MockPlaylists';
-import { A, Navigator, useNavigate } from '@solidjs/router';
+import { mockPlaylists } from '@/mockApi/playlists';
+import { Navigator, useNavigate } from '@solidjs/router';
 import { Effect } from 'effect';
 import {
   Accessor,
@@ -92,7 +92,7 @@ function PopoverMenu(props: {
   /** Logs the user out and redirects to the login page. */
   const logout = Effect.gen(function* () {
     props.setLoading(true);
-    yield* props.auth.unauthenticate(props.username());
+    yield* props.auth.unauthenticate;
     props.navigate('/', { replace: true });
     props.setLoading(false);
   });
@@ -187,7 +187,7 @@ function PopoverMenu(props: {
           <button
             disabled={props.loading()}
             style={props.loading() ? DisableBtnStyle : {}}
-            onClick={() => Effect.runPromise(logout)}
+            onClick={() => Effect.runFork(logout)}
           >
             {props.loading() ? 'Logging out...' : 'Log out'}
           </button>

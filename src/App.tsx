@@ -7,7 +7,6 @@ import { Route, Router } from '@solidjs/router';
 // TODO: Add bottom navbar
 // TODO: Add `Create user/Sign up` page
 // TODO: Add Error boundaries
-// TODO: CONVERT ALL COMPONENTS AND API TO EFFECT!!!
 
 function App() {
   return (

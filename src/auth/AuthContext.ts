@@ -9,7 +9,7 @@ export type AuthContextType = {
     username: string,
     password: string
   ) => Effect.Effect<void, AuthenticationError, never>;
-  unauthenticate: (username: string) => Effect.Effect<void, never, never>;
+  unauthenticate: Effect.Effect<void, never, never>;
   isLoading: () => boolean;
 };
 
