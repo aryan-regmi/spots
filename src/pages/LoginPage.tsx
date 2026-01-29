@@ -42,7 +42,14 @@ export function LoginPage() {
         setInvalidLogin={setInvalidLogin}
         setErrorMsg={setErrorMsg}
       />
-      {errorMsg() ? <p>Invalid login: {errorMsg()}</p> : <></>}
+
+      {errorMsg() ? (
+        <p style={{ color: 'red' }}>
+          <strong>Invalid login:</strong> {errorMsg()}
+        </p>
+      ) : (
+        <></>
+      )}
     </div>
   );
 }
@@ -64,53 +71,65 @@ function LoginForm(props: {
   const validateLogin: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (
     e
   ) => {
-    e.preventDefault();
-    props.setLoading(true);
-
-    // Extract form data
-    const formData = new FormData(e.currentTarget);
-    const username = formData.get('username');
-    const password = formData.get('password');
-
-    function setLoginErrors(error: string) {
-      props.setInvalidLogin(true);
-      props.setLoading(false);
-      props.setErrorMsg(error);
-    }
-
-    // FIXME: Add real username and password validation
-    let usernameStr = '';
-    let passwordStr = '';
-    if (username) {
-      usernameStr = username.toString();
-    } else if (!username || usernameStr.length <= 0) {
-      setLoginErrors('username must be non-empty');
-      return;
-    }
-
-    if (password) {
-      passwordStr = password.toString();
-    } else if (!password || passwordStr.length <= 0) {
-      setLoginErrors('password must be non-empty');
-      return;
-    }
-
-    // Authenticate the login
-    const authenticateLogin = Effect.gen(function* () {
-      const authenticatedResult = yield* Effect.either(
-        props.authenticate(usernameStr, passwordStr)
-      );
-      if (Either.isRight(authenticatedResult)) {
-        props.setInvalidLogin(false);
-        props.setLoading(false);
-        props.navigate('/dashboard', { replace: true });
-      } else {
+    /** Updates the error string. */
+    const setLoginErrors = (error: string) =>
+      Effect.gen(function* () {
         props.setInvalidLogin(true);
         props.setLoading(false);
-        props.setErrorMsg(authenticatedResult.left.message);
+        props.setErrorMsg(error);
+      });
+
+    /** Authenticates the login. */
+    const authenticateLogin = (usernameStr: string, passwordStr: string) =>
+      Effect.gen(function* () {
+        const authenticatedResult = yield* Effect.either(
+          props.authenticate(usernameStr, passwordStr)
+        );
+        if (Either.isRight(authenticatedResult)) {
+          props.setInvalidLogin(false);
+          props.setLoading(false);
+          props.navigate('/dashboard', { replace: true });
+        } else {
+          props.setInvalidLogin(true);
+          props.setLoading(false);
+          props.setErrorMsg(authenticatedResult.left.message);
+        }
+      });
+
+    /** Validates the username and password, then authenticates the login. */
+    const validateAndAuthenticate = Effect.gen(function* () {
+      e.preventDefault();
+      props.setLoading(true);
+
+      // Extract form data
+      const formData = new FormData(e.currentTarget);
+      const username = formData.get('username');
+      const password = formData.get('password');
+
+      // FIXME: Add real username and password validation
+      let usernameStr = '';
+      let passwordStr = '';
+
+      // Username validation
+      if (username) {
+        usernameStr = username.toString();
+      } else if (!username || usernameStr.length <= 0) {
+        yield* setLoginErrors('Username must be non-empty');
+        return;
       }
+
+      // Password validation
+      if (password) {
+        passwordStr = password.toString();
+      } else if (!password || passwordStr.length <= 0) {
+        yield* setLoginErrors('Password must be non-empty');
+        return;
+      }
+
+      yield* authenticateLogin(usernameStr, passwordStr);
     });
-    Effect.runFork(authenticateLogin);
+
+    Effect.runFork(validateAndAuthenticate);
   };
 
   /** Determines if the submit button is disabled.
