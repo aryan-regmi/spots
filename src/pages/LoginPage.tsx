@@ -1,25 +1,20 @@
 import useAuth from '@/auth/useAuth';
-import { createSignal, JSX, onMount } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
-import { AuthContextType } from '@/auth/AuthContext';
+import { Accessor, createSignal, JSX, onMount, Setter } from 'solid-js';
+import { Navigator, useNavigate } from '@solidjs/router';
 import { AuthenticationError } from '@/auth/AuthProvider';
+import { Effect, Either } from 'effect';
 
 /** The login page for the app. */
 export function LoginPage() {
   const navigate = useNavigate();
   const auth = useAuth();
-
-  // Display
   if (!auth) {
-    console.error('Invalid auth');
     return;
   }
 
-  const { authUser, authenticate } = auth;
-
   /** Redirects to dashboard if user is already logged in. */
   onMount(() => {
-    if (authUser()) {
+    if (auth.authUser()) {
       navigate('/dashboard', { replace: true });
     }
   });
@@ -33,12 +28,44 @@ export function LoginPage() {
   /** The error message to display. */
   const [errorMsg, setErrorMsg] = createSignal<string | null>(null);
 
+  return (
+    <div>
+      <h1>Spots</h1>
+      <br />
+      <br />
+      <LoginForm
+        authenticate={auth.authenticate}
+        navigate={navigate}
+        loading={loading}
+        setLoading={setLoading}
+        invalidLogin={invalidLogin}
+        setInvalidLogin={setInvalidLogin}
+        setErrorMsg={setErrorMsg}
+      />
+      {errorMsg() ? <p>Invalid login: {errorMsg()}</p> : <></>}
+    </div>
+  );
+}
+
+/** The form part of the login page. */
+function LoginForm(props: {
+  authenticate: (
+    username: string,
+    password: string
+  ) => Effect.Effect<void, AuthenticationError, never>;
+  navigate: Navigator;
+  loading: Accessor<boolean>;
+  setLoading: Setter<boolean>;
+  invalidLogin: Accessor<boolean>;
+  setInvalidLogin: Setter<boolean>;
+  setErrorMsg: Setter<string | null>;
+}) {
   /** Validates the login provided in the form. */
   const validateLogin: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (
     e
   ) => {
     e.preventDefault();
-    setLoading(true);
+    props.setLoading(true);
 
     // Extract form data
     const formData = new FormData(e.currentTarget);
@@ -46,9 +73,9 @@ export function LoginPage() {
     const password = formData.get('password');
 
     function setLoginErrors(error: string) {
-      setInvalidLogin(true);
-      setLoading(false);
-      setErrorMsg(error);
+      props.setInvalidLogin(true);
+      props.setLoading(false);
+      props.setErrorMsg(error);
     }
 
     // FIXME: Add real username and password validation
@@ -69,89 +96,82 @@ export function LoginPage() {
     }
 
     // Authenticate the login
-    try {
-      await authenticate(usernameStr, passwordStr);
-      setInvalidLogin(false);
-      setLoading(false);
-      navigate('/dashboard', { replace: true });
-    } catch (error: any) {
-      setInvalidLogin(true);
-      setLoading(false);
-      setErrorMsg(error);
-    }
+    const authenticateLogin = Effect.gen(function* () {
+      const authenticatedResult = yield* Effect.either(
+        props.authenticate(usernameStr, passwordStr)
+      );
+      if (Either.isRight(authenticatedResult)) {
+        props.setInvalidLogin(false);
+        props.setLoading(false);
+        props.navigate('/dashboard', { replace: true });
+      } else {
+        props.setInvalidLogin(true);
+        props.setLoading(false);
+        props.setErrorMsg(authenticatedResult.left.message);
+      }
+    });
+    Effect.runFork(authenticateLogin);
   };
 
-  /** The form part of the login page. */
-  function LoginForm() {
-    /** Determines if the submit button is disabled.
-     *
-     * It will be disabled during loading and if the login is invalid.
-     * */
-    const submitDisabled = () => loading() === true || invalidLogin() === true;
+  /** Determines if the submit button is disabled.
+   *
+   * It will be disabled during loading and if the login is invalid.
+   * */
+  const submitDisabled = () =>
+    props.loading() === true || props.invalidLogin() === true;
 
-    /** Style for the disabled button. */
-    const DisableBtnStyle = {
-      outline: 'none',
-      'border-color': 'gray',
-      'background-color': 'gray',
-      cursor: 'not-allowed',
-    };
+  /** Style for the disabled button. */
+  const DisableBtnStyle = {
+    outline: 'none',
+    'border-color': 'gray',
+    'background-color': 'gray',
+    cursor: 'not-allowed',
+  };
 
-    function resetInput() {
-      setInvalidLogin(false);
-      setErrorMsg(null);
-    }
+  const resetInput = Effect.gen(function* () {
+    props.setInvalidLogin(false);
+    props.setErrorMsg(null);
+  });
 
-    // TODO: Replace hard coded spaces with `Row` and `Column` components!
-    return (
-      <form onsubmit={validateLogin}>
-        {/* Username input */}
-        <label for="username">
-          <strong>Username</strong>
-        </label>
-        <br />
-        <input
-          type="text"
-          name="username"
-          placeholder="Enter username..."
-          oninput={resetInput}
-        />
-        <br />
-        <br />
-
-        {/* Password input */}
-        <label for="password">
-          <strong>Password</strong>
-        </label>
-        <br />
-        <input
-          type="password"
-          name="password"
-          placeholder="Enter password..."
-          oninput={resetInput}
-        />
-        <br />
-        <br />
-
-        {/* Submit button */}
-        <button
-          type="submit"
-          disabled={submitDisabled()}
-          style={submitDisabled() ? DisableBtnStyle : {}}
-        >
-          {loading() ? 'Logging in...' : 'Submit'}
-        </button>
-      </form>
-    );
-  }
-
+  // TODO: Replace hard coded spaces with `Row` and `Column` components!
   return (
-    <div>
-      <h1>Spots</h1>
+    <form onsubmit={validateLogin}>
+      {/* Username input */}
+      <label for="username">
+        <strong>Username</strong>
+      </label>
+      <br />
+      <input
+        type="text"
+        name="username"
+        placeholder="Enter username..."
+        oninput={() => Effect.runFork(resetInput)}
+      />
       <br />
       <br />
-      <LoginForm />
-      {errorMsg() ? <p>Invalid login: {errorMsg()}</p> : <></>}
-    </div>
+
+      {/* Password input */}
+      <label for="password">
+        <strong>Password</strong>
+      </label>
+      <br />
+      <input
+        type="password"
+        name="password"
+        placeholder="Enter password..."
+        oninput={() => Effect.runFork(resetInput)}
+      />
+      <br />
+      <br />
+
+      {/* Submit button */}
+      <button
+        type="submit"
+        disabled={submitDisabled()}
+        style={submitDisabled() ? DisableBtnStyle : {}}
+      >
+        {props.loading() ? 'Logging in...' : 'Submit'}
+      </button>
+    </form>
   );
 }

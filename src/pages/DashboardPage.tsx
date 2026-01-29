@@ -1,18 +1,28 @@
+import { AuthContextType } from '@/auth/AuthContext';
 import useAuth from '@/auth/useAuth';
 import { Avatar } from '@/components/Avatar';
 import { Column } from '@/components/Column';
 import { PinnedPlaylists } from '@/components/Playlist';
 import { Row } from '@/components/Row';
 import { mockPlaylists } from '@/mockApi/MockPlaylists';
-import { A, useNavigate } from '@solidjs/router';
+import { A, Navigator, useNavigate } from '@solidjs/router';
 import { Effect } from 'effect';
-import { JSX, createEffect, createSignal, onMount } from 'solid-js';
+import {
+  Accessor,
+  JSX,
+  Setter,
+  createEffect,
+  createSignal,
+  onMount,
+} from 'solid-js';
 
 /** The user's dashboard page. */
 export function DashboardPage() {
-  const authEffect = useAuth();
-  const auth = Effect.runSync(authEffect);
   const navigate = useNavigate();
+  const auth = useAuth();
+  if (!auth) {
+    return;
+  }
 
   /** Determines if the page is in a loading state. */
   const [loading, setLoading] = createSignal(false);
@@ -68,30 +78,24 @@ export function DashboardPage() {
   );
 }
 
-/** The component for the popover menu in the dashboard. */
 function PopoverMenu(props: {
   popoverId: string;
-  auth: any;
-  navigate: any;
-  loading: any;
-  setLoading: any;
-  username: () => string;
+  auth: AuthContextType;
+  navigate: Navigator;
+  loading: Accessor<boolean>;
+  setLoading: Setter<boolean>;
+  username: Accessor<string>;
 }) {
   /** The background color of the menu header.  */
   const [headerBgColor, setHeaderBgColor] = createSignal('rgba(0, 0, 0, 0.0)');
 
   /** Logs the user out and redirects to the login page. */
-  function logout() {
+  const logout = Effect.gen(function* () {
     props.setLoading(true);
-    try {
-      props.auth.unauthenticate(props.auth.authUser()?.username!);
-      props.navigate('/', { replace: true });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      props.setLoading(false);
-    }
-  }
+    yield* props.auth.unauthenticate(props.username());
+    props.navigate('/', { replace: true });
+    props.setLoading(false);
+  });
 
   /** Style for the popover menu. */
   const style: JSX.CSSProperties = {
@@ -172,7 +176,7 @@ function PopoverMenu(props: {
 
         {/* Menu content/list */}
         <span>
-          <A href="/" replace onClick={logout}>
+          <A href="/" replace onClick={() => Effect.runPromise(logout)}>
             {props.loading() ? 'Logging out...' : 'Log out'}
           </A>
         </span>
