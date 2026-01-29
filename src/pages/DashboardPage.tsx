@@ -116,6 +116,14 @@ function PopoverMenu(props: {
     'border-color': 'rgba(30, 30, 30, 0.8)',
   };
 
+  /** Style for the disabled button. */
+  const DisableBtnStyle = {
+    outline: 'none',
+    'border-color': 'gray',
+    'background-color': 'gray',
+    cursor: 'not-allowed',
+  };
+
   return (
     <div id={props.popoverId} style={style} popover>
       <Column style={{ padding: '4em 2em 2em 2.4em' }}>
@@ -176,9 +184,13 @@ function PopoverMenu(props: {
 
         {/* Menu content/list */}
         <span>
-          <A href="/" replace onClick={() => Effect.runPromise(logout)}>
+          <button
+            disabled={props.loading()}
+            style={props.loading() ? DisableBtnStyle : {}}
+            onClick={() => Effect.runPromise(logout)}
+          >
             {props.loading() ? 'Logging out...' : 'Log out'}
-          </A>
+          </button>
         </span>
       </Column>
     </div>
