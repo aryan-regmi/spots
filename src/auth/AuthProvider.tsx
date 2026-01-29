@@ -29,38 +29,30 @@ export function AuthProvider(props: { children: any }) {
   onMount(() => Effect.runFork(loadAuthUser));
 
   /** Authenticates the specified user. */
-  function authenticate(username: string, password: string) {
-    return Effect.tryPromise({
-      try: async () => {
-        setIsLoading(true);
-        const user = await authenticateUser(username, password);
-
-        if (user) {
-          setAuthUser(user);
-          setIsLoading(false);
-        } else {
-          setIsLoading(false);
-          throw new AuthenticationError({
-            message: 'Username and password not found',
-          });
-        }
-      },
-      catch: (error: any) => {
+  const authenticate = (username: string, password: string) =>
+    Effect.gen(function* () {
+      setIsLoading(true);
+      const user = yield* authenticateUser(username, password);
+      if (user) {
+        setAuthUser(user);
         setIsLoading(false);
-        return new AuthenticationError({ message: error.message });
-      },
-    });
-  }
-
-  /** Unauthenticates the currently authenticated user. */
-  function unauthenticate() {
-    return Effect.sync(() => {
-      if (authUser() !== null) {
-        setAuthUser(null);
-        localStorage.removeItem('auth-token');
+      } else {
+        setIsLoading(false);
+        yield* Effect.fail<AuthenticationError>(
+          new AuthenticationError({
+            message: 'Username and password not found',
+          })
+        );
       }
     });
-  }
+
+  /** Unauthenticates the currently authenticated user. */
+  const unauthenticate = Effect.gen(function* () {
+    if (authUser() !== null) {
+      setAuthUser(null);
+      localStorage.removeItem('auth-token');
+    }
+  });
 
   return (
     <AuthContext.Provider

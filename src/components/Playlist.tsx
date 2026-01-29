@@ -53,6 +53,7 @@ export function PlaylistCard(props: { playlist: Playlist }) {
       style={{
         'background-color': bgColor(),
         'border-radius': '0.5em',
+        cursor: 'pointer',
       }}
       onMouseEnter={() => {
         setBgColor('rgba(20, 20, 20, 0.8)');

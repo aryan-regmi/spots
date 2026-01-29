@@ -1,3 +1,4 @@
+import { Effect } from 'effect';
 import { createSignal } from 'solid-js';
 import { JSX } from 'solid-js/h/jsx-runtime';
 
@@ -82,34 +83,34 @@ export function Avatar(props: AvatarProps) {
   };
 
   /** Handles when avatar is hovered. */
-  function handleMouseEnter() {
+  const handleMouseEnter = Effect.gen(function* () {
     if (props.animate) {
       setTransform('scale(1.05)');
       setBoxShadow('0 4px 12px rgba(0, 0, 0, 0.15)');
     }
-  }
+  });
 
   /** Handles when avatar is no longer hovered. */
-  function handleMouseLeave() {
+  const handleMouseLeave = Effect.gen(function* () {
     if (props.animate) {
       setTransform('scale(1)');
       setBoxShadow('none');
     }
-  }
+  });
 
   /** Handles avatar click by calling the given `onClick` function. */
-  function handleOnClick() {
+  const handleOnClick = Effect.gen(function* () {
     if (props.onClick) {
       props.onClick();
     }
-  }
+  });
 
   return (
     <button
       style={AvatarContainerStyle()}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleOnClick}
+      onMouseEnter={() => Effect.runFork(handleMouseEnter)}
+      onMouseLeave={() => Effect.runFork(handleMouseLeave)}
+      onClick={() => Effect.runFork(handleOnClick)}
       role="img"
       aria-label={`Avatar for ${props.name}`}
       popovertarget={props.popoverTargetId}

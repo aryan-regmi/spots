@@ -4,8 +4,8 @@ import { Avatar } from '@/components/Avatar';
 import { Column } from '@/components/Column';
 import { PinnedPlaylists } from '@/components/Playlist';
 import { Row } from '@/components/Row';
-import { mockPlaylists } from '@/mockApi/MockPlaylists';
-import { A, Navigator, useNavigate } from '@solidjs/router';
+import { mockPlaylists } from '@/mockApi/playlists';
+import { Navigator, useNavigate } from '@solidjs/router';
 import { Effect } from 'effect';
 import {
   Accessor,
@@ -92,7 +92,7 @@ function PopoverMenu(props: {
   /** Logs the user out and redirects to the login page. */
   const logout = Effect.gen(function* () {
     props.setLoading(true);
-    yield* props.auth.unauthenticate(props.username());
+    yield* props.auth.unauthenticate;
     props.navigate('/', { replace: true });
     props.setLoading(false);
   });
@@ -114,6 +114,14 @@ function PopoverMenu(props: {
     'backdrop-filter': 'blur(50px)',
     'border-width': '0.01em',
     'border-color': 'rgba(30, 30, 30, 0.8)',
+  };
+
+  /** Style for the disabled button. */
+  const DisableBtnStyle = {
+    outline: 'none',
+    'border-color': 'gray',
+    'background-color': 'gray',
+    cursor: 'not-allowed',
   };
 
   return (
@@ -176,9 +184,13 @@ function PopoverMenu(props: {
 
         {/* Menu content/list */}
         <span>
-          <A href="/" replace onClick={() => Effect.runPromise(logout)}>
+          <button
+            disabled={props.loading()}
+            style={props.loading() ? DisableBtnStyle : {}}
+            onClick={() => Effect.runFork(logout)}
+          >
             {props.loading() ? 'Logging out...' : 'Log out'}
-          </A>
+          </button>
         </span>
       </Column>
     </div>
