@@ -1,36 +1,36 @@
 import { AuthContext, AuthContextType } from '@/auth/AuthContext';
 import { AuthenticationError } from '@/auth/AuthProvider';
-import { Effect } from 'effect';
+import { Console, Effect, Either } from 'effect';
 import { useContext } from 'solid-js';
 
-/** Represents the result of the `getAuthContext` effect. */
-type AuthContextResult = {
-  isError: boolean;
-  context: AuthContextType | AuthenticationError;
-};
-
 /** Hook to use the authentication context. */
-export default function useAuth(): AuthContextResult {
-  let authContext: any;
-  Effect.runPromise(getAuthContext).then((ctx) => {
-    authContext = ctx;
+export default function useAuth() {
+  const resolveAuthEffect = Effect.gen(function* () {
+    const authContextResult = yield* Effect.either(getAuthContext());
+    if (Either.isLeft(authContextResult)) {
+      Console.error(
+        `${authContextResult.left._tag}: ${authContextResult.left.message}`
+      );
+    } else {
+      return authContextResult.right;
+    }
   });
-  return authContext;
+  return Effect.runSync(resolveAuthEffect);
 }
 
 /** Retrieves the auth context. */
-export const getAuthContext: Effect.Effect<AuthContextResult> = Effect.gen(
-  function* () {
-    const authContext = useContext(AuthContext);
-    if (authContext) {
-      return { isError: false, context: authContext };
-    } else {
-      return {
-        isError: true,
-        context: new AuthenticationError({
-          message: '`useAuth` must be used within an `AuthProvider`',
-        }),
-      };
-    }
+export function getAuthContext(): Effect.Effect<
+  AuthContextType,
+  AuthenticationError
+> {
+  const authContext = useContext(AuthContext);
+  if (authContext) {
+    return Effect.succeed(authContext);
+  } else {
+    return Effect.fail(
+      new AuthenticationError({
+        message: '`useAuth` must be used within an `AuthProvider`',
+      })
+    );
   }
-);
+}
