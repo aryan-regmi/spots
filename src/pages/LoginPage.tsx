@@ -44,7 +44,7 @@ export function LoginPage() {
         <LoginForm navigate={navigate} setErrorMsg={setErrorMsg} />
       </span>
 
-      <span style={{ 'margin-top': '-1rem' }}>
+      <span style={{ 'margin-top': '-2rem', 'margin-bottom': '1rem' }}>
         <ErrorMessage errorMsg={errorMsg} />
       </span>
 
@@ -69,9 +69,7 @@ function LoginForm(props: {
   const [loading, setLoading] = createSignal(false);
 
   /** Validates the login provided in the form. */
-  const validateLogin: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (
-    e
-  ) => {
+  const validateLogin: JSX.EventHandler<HTMLFormElement, SubmitEvent> = (e) => {
     /** Updates the error string. */
     const setLoginErrors = (error: string) =>
       Effect.gen(function* () {
@@ -144,14 +142,14 @@ function LoginForm(props: {
   });
 
   /** Style for the input columns. */
-  const InnerColumnStyle: JSX.CSSProperties = {
+  const innerColumnStyle: JSX.CSSProperties = {
     'align-self': 'center',
     width: '15rem',
     gap: '0rem',
   };
 
   /** Style for the submit button. */
-  const BtnStyle: JSX.CSSProperties = {
+  const btnStyle: JSX.CSSProperties = {
     'margin-top': '1.75rem',
     'border-radius': '2rem',
     'align-self': 'center',
@@ -161,22 +159,22 @@ function LoginForm(props: {
   };
 
   // FIXME:  Change button style when hovered!
-  const HoveredBtnStyle = {
-    ...BtnStyle,
+  const hoveredBtnStyle = {
+    ...btnStyle,
     background:
       'linear-gradient(deg, rgba(50, 150, 50, 1) 0%, rgba(50, 200, 50, 1) 50%)',
   };
 
   /** Style for the disabled button. */
-  const DisableBtnStyle = {
-    ...BtnStyle,
+  const disableBtnStyle = {
+    ...btnStyle,
     outline: 'none',
-    'border-color': 'gray',
-    'background-color': 'gray',
+    background: 'none',
+    'background-color': 'rgba(20, 30, 20, 0.5)',
     cursor: 'not-allowed',
   };
 
-  const InputStyle: JSX.CSSProperties = {
+  const inputStyle: JSX.CSSProperties = {
     'align-self': 'center',
     'border-radius': '2rem',
     'padding-top': '1rem',
@@ -190,24 +188,24 @@ function LoginForm(props: {
     <form onSubmit={validateLogin}>
       <Column style={{ gap: '1.5rem' }}>
         {/* Username input */}
-        <Column style={InnerColumnStyle}>
+        <Column style={innerColumnStyle}>
           <input
             type="text"
             name="username"
             placeholder="Username"
             oninput={() => Effect.runFork(resetInput)}
-            style={InputStyle}
+            style={inputStyle}
           />
         </Column>
 
         {/* Password input */}
-        <Column style={InnerColumnStyle}>
+        <Column style={innerColumnStyle}>
           <input
             type="password"
             name="password"
             placeholder="Password"
             oninput={() => Effect.runFork(resetInput)}
-            style={InputStyle}
+            style={inputStyle}
           />
         </Column>
 
@@ -215,7 +213,7 @@ function LoginForm(props: {
         <button
           type="submit"
           disabled={submitDisabled()}
-          style={submitDisabled() ? DisableBtnStyle : BtnStyle}
+          style={submitDisabled() ? disableBtnStyle : btnStyle}
         >
           {loading() ? 'Logging in...' : 'Log In'}
         </button>
