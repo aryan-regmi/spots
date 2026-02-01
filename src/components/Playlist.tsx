@@ -43,9 +43,10 @@ export function PinnedPlaylists(props: { playlists: PlaylistList }) {
 export function PlaylistCard(props: { playlist: Playlist }) {
   const playlist = props.playlist;
 
-  // Background color of the card.
-  // Needed to change the color on hover.
+  /** Background color of the card. */
   const [bgColor, setBgColor] = createSignal('rgba(20, 20, 20, 1)');
+
+  /** Opacity of the image. */
   const [imgAlpha, setImgAlpha] = createSignal(1);
 
   return (
