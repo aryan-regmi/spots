@@ -1,23 +1,27 @@
-import { Console, Effect } from 'effect';
+import { Effect } from 'effect';
 import {
   createResource,
   createSignal,
   JSX,
   onMount,
   Resource,
-  Suspense,
+  Show,
 } from 'solid-js';
-import { useAuth } from '@/auth/mockAuthServiceProvider';
+import { useAuthService } from '@/auth/mockAuthServiceProvider';
 import { Navigator, useNavigate } from '@solidjs/router';
 import { Avatar } from '@/components/Avatar';
 import { Column } from '@/components/Column';
 import { Row } from '@/components/Row';
 import { Loading } from '@/components/Loading';
+import { PinnedPlaylists } from '@/components/Playlist';
+import { BottomNavbar } from '@/components/BottomNavBar';
+import { usePlaylistService } from '@/backendApi/mockPlaylistServiceProvider';
 
 /** The user's dashboard page. */
 export function DashboardPage() {
   const navigate = useNavigate();
-  const auth = useAuth();
+  const auth = useAuthService();
+  const playlistService = usePlaylistService();
 
   /** Redirects to home (login page) if there is no authenticated user. */
   const redirectToHome = Effect.gen(function* () {
@@ -38,12 +42,24 @@ export function DashboardPage() {
     }).pipe(Effect.runPromise);
   });
 
+  /** The 6 pinned playlists. */
+  const [pinnedPlaylists] = createResource(
+    username,
+    async (username) => {
+      const playlists = await Effect.runPromise(
+        playlistService.getPinnedPlaylists(username)
+      ).catch(console.error);
+
+      return playlists ? playlists.slice(0, 6) : [];
+    },
+    { initialValue: [] }
+  );
+
   /** Style for the entire page/container div. */
   const dashboardContainerStyle: JSX.CSSProperties = {
-    display: 'flex',
-    'flex-direction': 'column',
-    padding: '2rem',
-    'margin-top': '-3rem',
+    padding: '0 2em 0 2em',
+    margin: 0,
+    gap: 0,
   };
 
   /** The `id` attribute for the popover menu. */
@@ -58,15 +74,21 @@ export function DashboardPage() {
         unauthenticate={auth.unauthenticate}
       ></PopoverMenu>
 
-      <div style={dashboardContainerStyle}>
-        <Suspense fallback={<Loading />}>
-          <Avatar
-            name={username() || 'Unknown'}
-            popoverTargetId={POPOVER_ID}
-            animate
-          />
-        </Suspense>
-      </div>
+      <Column style={dashboardContainerStyle}>
+        <Show when={username()} fallback={<Loading />}>
+          <Avatar name={username()!} popoverTargetId={POPOVER_ID} animate />
+          <br />
+
+          <span style={{}}>
+            <PinnedPlaylists playlists={pinnedPlaylists()} />
+          </span>
+          <br />
+
+          <h2 style={{ 'align-self': 'start' }}>Recently Played</h2>
+        </Show>
+      </Column>
+
+      <BottomNavbar currentPath="/dashboard" />
     </>
   );
 }
@@ -85,12 +107,10 @@ function PopoverMenu(props: {
 
   /** Logs the user out and redirects to the login page. */
   const logout = Effect.gen(function* () {
-    Console.log('Logging out...');
     setLoading(true);
     yield* props.unauthenticate;
     props.navigate('/', { replace: true });
     setLoading(false);
-    Console.log(props.username);
   });
 
   /** Style for the popover menu. */
@@ -107,9 +127,8 @@ function PopoverMenu(props: {
     'box-sizing': 'border-box',
     'z-index': 1000,
     'border-radius': '0 1rem 1rem 0',
-    'backdrop-filter': 'blur(50px)',
-    'border-width': '0.01rem',
-    'border-color': 'rgba(30, 30, 30, 0.8)',
+    'pointer-events': 'auto',
+    'backdrop-filter': 'blur(20px)',
   };
 
   /** Style for the disabled button. */
@@ -172,17 +191,24 @@ function PopoverMenu(props: {
   return (
     <>
       <style>{btnHoverStyle}</style>
-      <div id={props.popoverId} style={style} popover>
-        <Column style={{ padding: '4rem 2rem 2rem 2.4rem' }}>
+
+      {/* Popover menu */}
+      <div
+        id={props.popoverId}
+        style={{
+          ...style,
+          'background-color': 'transparent',
+        }}
+        popover
+      >
+        <Column style={{ padding: '5rem 2rem 2rem 2.4rem' }}>
           {/* Menu header */}
           <span
             id="menu-header"
             style={menuHeaderStyle()}
             onMouseEnter={() => setHeaderBgColor(menuHeaderColors.hover)}
             onMouseLeave={() => setHeaderBgColor(menuHeaderColors.normal)}
-            onClick={() =>
-              console.warn('Menu header `onClick` not implemented!')
-            }
+            onClick={() => props.navigate('/dashboard/view-profile')}
           >
             <Column
               style={{
@@ -191,8 +217,8 @@ function PopoverMenu(props: {
               }}
             >
               <Row>
-                <Suspense fallback={<Loading />}>
-                  <Avatar name={props.username() || 'Unknown'}></Avatar>
+                <Show when={props.username()} fallback={<Loading />}>
+                  <Avatar name={props.username()!}></Avatar>
                   <span
                     style={{
                       color: 'white',
@@ -203,7 +229,7 @@ function PopoverMenu(props: {
                   >
                     {props.username()}
                   </span>
-                </Suspense>
+                </Show>
               </Row>
               <span style={viewProfileStyle()}>View Profile</span>
             </Column>

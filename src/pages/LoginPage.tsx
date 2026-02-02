@@ -3,7 +3,7 @@ import { Column } from '@/components/Column';
 import { Effect, Either } from 'effect';
 import { JSX } from 'solid-js/h/jsx-runtime';
 import { A, Navigator, useNavigate } from '@solidjs/router';
-import { getAuthUser, useAuth } from '@/auth/mockAuthServiceProvider';
+import { getAuthUser, useAuthService } from '@/auth/mockAuthServiceProvider';
 
 const BG_COLOR = 'rgba(50, 100, 50, 1)';
 
@@ -55,12 +55,14 @@ export function LoginPage() {
   );
 }
 
+// FIXME: Use solidjs-router `action` to replace validation etc
+
 /** The form part of the login page. */
 function LoginForm(props: {
   navigate: Navigator;
   setErrorMsg: Setter<string | null>;
 }) {
-  const { authenticate } = useAuth();
+  const { authenticate } = useAuthService();
 
   /** Determines if the login is invalid. */
   const [invalidLogin, setInvalidLogin] = createSignal(false);

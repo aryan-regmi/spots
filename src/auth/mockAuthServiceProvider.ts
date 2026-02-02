@@ -69,12 +69,12 @@ const mockAuthServiceProvider = Effect.provideService(
   }
 );
 
-/** Hook to use authentication service. */
-export function useAuth() {
+/** Hook to use the mock authentication service. */
+export function useAuthService() {
   return Effect.runSync(mockAuthServiceProvider);
 }
 
 /** Gets the current authentication data. */
 export const getAuthUser = Effect.gen(function* () {
-  return yield* useAuth().data;
+  return yield* useAuthService().data;
 });
