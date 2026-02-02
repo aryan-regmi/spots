@@ -1,10 +1,11 @@
-import { createSignal, JSX } from 'solid-js';
+import { Column } from '@/components/Column';
+import { Playlist } from '@/backendApi/musicLibraryService';
 import { Row } from '@/components/Row';
+import { createSignal, JSX } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { Playlist } from '@/backendApi/playlistService';
 
-/** Displays up to six pinned playlists. */
-export function PinnedPlaylists(props: { playlists: Playlist[] }) {
+/** Displays a grid of playlists. */
+export function PlaylistGrid(props: { playlists: Playlist[] }) {
   const containerStyle: JSX.CSSProperties = {
     display: 'grid',
     'grid-template-columns': 'repeat(2, 1fr)',
@@ -77,3 +78,25 @@ export function PlaylistCard(props: { playlist: Playlist }) {
 }
 
 // TODO: Create `LargePlaylistCard` for `Recently Played`
+export function LargePlaylistCard(props: { playlist: Playlist }) {
+  return (
+    <Column
+      style={{
+        'justify-content': 'center',
+        'align-items': 'center',
+        padding: '0.5rem',
+        gap: '1em',
+      }}
+    >
+      <img
+        src={props.playlist.imgSrc || '/public/unknown-track.png'}
+        style={{
+          width: '10rem',
+          height: '10rem',
+        }}
+      />
+      <span>{props.playlist.name}</span>
+      <span>{props.playlist.createdBy}</span>
+    </Column>
+  );
+}

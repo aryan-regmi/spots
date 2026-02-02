@@ -13,15 +13,15 @@ import { Avatar } from '@/components/Avatar';
 import { Column } from '@/components/Column';
 import { Row } from '@/components/Row';
 import { Loading } from '@/components/Loading';
-import { PinnedPlaylists } from '@/components/Playlist';
+import { PlaylistGrid } from '@/components/Playlist';
 import { BottomNavbar } from '@/components/BottomNavBar';
-import { usePlaylistService } from '@/backendApi/mockPlaylistServiceProvider';
+import { useMusicLibraryService } from '@/backendApi/mockMusicLibraryServiceProvider';
 
 /** The user's dashboard page. */
 export function DashboardPage() {
   const navigate = useNavigate();
   const auth = useAuthService();
-  const playlistService = usePlaylistService();
+  const musicLibService = useMusicLibraryService();
 
   /** Redirects to home (login page) if there is no authenticated user. */
   const redirectToHome = Effect.gen(function* () {
@@ -47,10 +47,22 @@ export function DashboardPage() {
     username,
     async (username) => {
       const playlists = await Effect.runPromise(
-        playlistService.getPinnedPlaylists(username)
+        musicLibService.getPinnedPlaylists(username)
       ).catch(console.error);
 
       return playlists ? playlists.slice(0, 6) : [];
+    },
+    { initialValue: [] }
+  );
+
+  /** The 12 most recently listented to playlists. */
+  const [recentPlaylists] = createResource(
+    username,
+    async (username) => {
+      const playlists = await Effect.runPromise(
+        musicLibService.getRecentPlaylists(username)
+      ).catch(console.error);
+      return playlists ? playlists.slice(0, 12) : [];
     },
     { initialValue: [] }
   );
@@ -79,12 +91,11 @@ export function DashboardPage() {
           <Avatar name={username()!} popoverTargetId={POPOVER_ID} animate />
           <br />
 
-          <span style={{}}>
-            <PinnedPlaylists playlists={pinnedPlaylists()} />
-          </span>
+          <PlaylistGrid playlists={pinnedPlaylists()} />
           <br />
 
           <h2 style={{ 'align-self': 'start' }}>Recently Played</h2>
+          {/* TODO: Add carousel for recent playlists! */}
         </Show>
       </Column>
 
@@ -93,6 +104,7 @@ export function DashboardPage() {
   );
 }
 
+/** The popover menu. */
 function PopoverMenu(props: {
   popoverId: string;
   navigate: Navigator;
