@@ -1,100 +1,116 @@
-import { AuthContextType } from '@/auth/AuthContext';
-import useAuth from '@/auth/useAuth';
-import { Avatar } from '@/components/Avatar';
-import { Column } from '@/components/Column';
-import { PinnedPlaylists } from '@/components/Playlist';
-import { Row } from '@/components/Row';
-import { mockPlaylists } from '@/mockApi/playlists';
-import { Navigator, useNavigate } from '@solidjs/router';
 import { Effect } from 'effect';
 import {
-  Accessor,
-  JSX,
-  Setter,
-  createEffect,
+  createResource,
   createSignal,
+  JSX,
   onMount,
+  Resource,
+  Show,
 } from 'solid-js';
+import { useAuthService } from '@/auth/mockAuthServiceProvider';
+import { Navigator, useNavigate } from '@solidjs/router';
+import { Avatar } from '@/components/Avatar';
+import { Column } from '@/components/Column';
+import { Row } from '@/components/Row';
+import { Loading } from '@/components/Loading';
+import { PinnedPlaylists } from '@/components/Playlist';
+import { BottomNavbar } from '@/components/BottomNavBar';
+import { usePlaylistService } from '@/backendApi/mockPlaylistServiceProvider';
 
 /** The user's dashboard page. */
 export function DashboardPage() {
   const navigate = useNavigate();
-  const auth = useAuth();
-  if (!auth) {
-    return;
-  }
+  const auth = useAuthService();
+  const playlistService = usePlaylistService();
 
-  /** Determines if the page is in a loading state. */
-  const [loading, setLoading] = createSignal(false);
-
-  /** Username for the currently logged in user. */
-  const [username, setUsername] = createSignal('unknown');
-
-  /** Redirects to login page if no user is logged in. */
-  onMount(() => {
-    if (auth.authUser() === null && auth.isLoading() === false) {
+  /** Redirects to home (login page) if there is no authenticated user. */
+  const redirectToHome = Effect.gen(function* () {
+    const authInfo = yield* auth.data;
+    const authLoading = yield* auth.isLoading;
+    if (authInfo.username === null && authLoading === false) {
       navigate('/', { replace: true });
     }
   });
 
-  /** Sets the username once user has been authenticated. */
-  createEffect(() => {
-    if (auth.authUser()) {
-      setUsername(auth.authUser()?.username!);
-    }
+  /** Run `redirectToDashboard` when component is mounted. */
+  onMount(() => Effect.runFork(redirectToHome));
+
+  /** The currently authenticated user's username. */
+  const [username] = createResource(async () => {
+    return await Effect.gen(function* () {
+      return (yield* auth.data).username;
+    }).pipe(Effect.runPromise);
   });
+
+  /** The 6 pinned playlists. */
+  const [pinnedPlaylists] = createResource(
+    username,
+    async (username) => {
+      const playlists = await Effect.runPromise(
+        playlistService.getPinnedPlaylists(username)
+      ).catch(console.error);
+
+      return playlists ? playlists.slice(0, 6) : [];
+    },
+    { initialValue: [] }
+  );
 
   /** Style for the entire page/container div. */
   const dashboardContainerStyle: JSX.CSSProperties = {
-    display: 'flex',
-    'flex-direction': 'column',
-    padding: '0em 2em 2em',
-    'margin-top': '-3em',
+    padding: '0 2em 0 2em',
+    margin: 0,
+    gap: 0,
   };
 
   /** The `id` attribute for the popover menu. */
-  const popoverId = 'popover-menu';
+  const POPOVER_ID = 'popover-menu';
 
   return (
     <>
       <PopoverMenu
-        popoverId={popoverId}
-        auth={auth}
+        popoverId={POPOVER_ID}
         navigate={navigate}
-        loading={loading}
-        setLoading={setLoading}
         username={username}
-      />
+        unauthenticate={auth.unauthenticate}
+      ></PopoverMenu>
 
-      <div style={dashboardContainerStyle}>
-        <Avatar name={username()} popoverTargetId={popoverId} animate />
-        <br />
-        <PinnedPlaylists playlists={mockPlaylists} />
-        <br />
+      <Column style={dashboardContainerStyle}>
+        <Show when={username()} fallback={<Loading />}>
+          <Avatar name={username()!} popoverTargetId={POPOVER_ID} animate />
+          <br />
 
-        <h2 style={{ 'align-self': 'start' }}>Recently Played</h2>
-      </div>
+          <span style={{}}>
+            <PinnedPlaylists playlists={pinnedPlaylists()} />
+          </span>
+          <br />
+
+          <h2 style={{ 'align-self': 'start' }}>Recently Played</h2>
+        </Show>
+      </Column>
+
+      <BottomNavbar currentPath="/dashboard" />
     </>
   );
 }
 
 function PopoverMenu(props: {
   popoverId: string;
-  auth: AuthContextType;
   navigate: Navigator;
-  loading: Accessor<boolean>;
-  setLoading: Setter<boolean>;
-  username: Accessor<string>;
+  username: Resource<string | null>;
+  unauthenticate: Effect.Effect<void, never, never>;
 }) {
   /** The background color of the menu header.  */
-  const [headerBgColor, setHeaderBgColor] = createSignal('rgba(0, 0, 0, 0.0)');
+  const [headerBgColor, setHeaderBgColor] = createSignal('rgba(0, 0, 0, 0)');
+
+  /** Determines if the page is in a loading state. */
+  const [loading, setLoading] = createSignal(false);
 
   /** Logs the user out and redirects to the login page. */
   const logout = Effect.gen(function* () {
-    props.setLoading(true);
-    yield* props.auth.unauthenticate;
+    setLoading(true);
+    yield* props.unauthenticate;
     props.navigate('/', { replace: true });
-    props.setLoading(false);
+    setLoading(false);
   });
 
   /** Style for the popover menu. */
@@ -110,89 +126,136 @@ function PopoverMenu(props: {
     'background-color': 'rgba(0, 0, 0, 0.5)',
     'box-sizing': 'border-box',
     'z-index': 1000,
-    'border-radius': '0 1em 1em 0',
-    'backdrop-filter': 'blur(50px)',
-    'border-width': '0.01em',
-    'border-color': 'rgba(30, 30, 30, 0.8)',
+    'border-radius': '0 1rem 1rem 0',
+    'pointer-events': 'auto',
+    'backdrop-filter': 'blur(20px)',
   };
 
   /** Style for the disabled button. */
-  const DisableBtnStyle = {
+  const disableBtnStyle = {
     outline: 'none',
     'border-color': 'gray',
     'background-color': 'gray',
     cursor: 'not-allowed',
   };
 
-  return (
-    <div id={props.popoverId} style={style} popover>
-      <Column style={{ padding: '4em 2em 2em 2.4em' }}>
-        {/* Menu header */}
-        <span
-          id="menu-header"
-          onMouseEnter={() => {
-            setHeaderBgColor('rgba(0, 0, 0, 0.1)');
-          }}
-          onMouseLeave={() => {
-            setHeaderBgColor('rgba(0, 0, 0, 0)');
-          }}
-          onClick={() => {}}
-          style={{
-            'background-color': headerBgColor(),
-            'border-radius': '1em',
-            padding: '2em',
-            'padding-bottom': 0,
-            'margin-top': '-2em',
-            'margin-left': '-2em',
-            'margin-right': '-1.5em',
-          }}
-        >
-          <Column
-            style={{
-              gap: '0',
-              cursor: 'pointer',
-            }}
-          >
-            <Row style={{ gap: '0.5em', 'align-items': 'center' }}>
-              <Avatar name={props.username()} />
-              <span style={{ color: 'white' }}>
-                {props.auth.authUser()?.username}
-              </span>
-            </Row>
+  /** Colors for the menu header. */
+  const menuHeaderColors = {
+    normal: 'rgba(0, 0, 0, 0)',
+    hover: 'rgba(10, 10, 10, 0.2)',
+  };
 
-            <span
+  /** Style for the menu header. */
+  const menuHeaderStyle: () => JSX.CSSProperties = () => ({
+    'background-color': headerBgColor(),
+    'border-radius': '1rem',
+    padding: '2rem',
+    'padding-bottom': 0,
+    'margin-top': '-2rem',
+    'margin-left': '-2rem',
+    'margin-right': '-1.5rem',
+  });
+
+  /** Style for the `View Profile` text in the menu header. */
+  const viewProfileStyle: () => JSX.CSSProperties = () => ({
+    'font-size': '0.8em',
+    color:
+      headerBgColor() === menuHeaderColors.normal
+        ? 'gray'
+        : 'rgba(255, 255, 255, 0.6)',
+    margin: 0,
+    'align-self': 'flex-start',
+    'padding-left': '4.25em',
+    'margin-top': '-1em',
+  });
+
+  /** Style for the submit button. */
+  const btnStyle: JSX.CSSProperties = {
+    'margin-top': '1.75rem',
+    'border-radius': '2rem',
+    'align-self': 'center',
+    width: '10rem',
+  };
+
+  /** Style for overed buttons. */
+  const btnHoverStyle = `
+    button {
+      background-color: rgba(10, 10, 10, 1);
+    }
+    button:hover {
+      background-color: rgba(15, 20, 15, 0.7);
+      border-color: rgba(25, 25, 25, 1);
+    }
+    `;
+
+  return (
+    <>
+      <style>{btnHoverStyle}</style>
+
+      {/* Popover menu */}
+      <div
+        id={props.popoverId}
+        style={{
+          ...style,
+          'background-color': 'transparent',
+        }}
+        popover
+      >
+        <Column style={{ padding: '5rem 2rem 2rem 2.4rem' }}>
+          {/* Menu header */}
+          <span
+            id="menu-header"
+            style={menuHeaderStyle()}
+            onMouseEnter={() => setHeaderBgColor(menuHeaderColors.hover)}
+            onMouseLeave={() => setHeaderBgColor(menuHeaderColors.normal)}
+            onClick={() => props.navigate('/dashboard/view-profile')}
+          >
+            <Column
               style={{
-                'font-size': '0.8em',
-                color: 'gray',
-                margin: 0,
-                'align-self': 'flex-start',
-                'padding-left': '4.25em',
-                'margin-top': '-1em',
+                gap: 0,
+                cursor: 'pointer',
               }}
             >
-              View Profile
-            </span>
-          </Column>
-        </span>
-        <hr
-          style={{
-            width: '100%',
-            'margin-top': '-2em',
-            color: 'rgba(30,35,45,0.8)',
-          }}
-        />
+              <Row>
+                <Show when={props.username()} fallback={<Loading />}>
+                  <Avatar name={props.username()!}></Avatar>
+                  <span
+                    style={{
+                      color: 'white',
+                      padding: 0,
+                      'margin-left': '-1.5rem',
+                      'margin-top': '0.7rem',
+                    }}
+                  >
+                    {props.username()}
+                  </span>
+                </Show>
+              </Row>
+              <span style={viewProfileStyle()}>View Profile</span>
+            </Column>
+          </span>
 
-        {/* Menu content/list */}
-        <span>
-          <button
-            disabled={props.loading()}
-            style={props.loading() ? DisableBtnStyle : {}}
-            onClick={() => Effect.runFork(logout)}
-          >
-            {props.loading() ? 'Logging out...' : 'Log out'}
-          </button>
-        </span>
-      </Column>
-    </div>
+          <hr
+            style={{
+              width: '100%',
+              'margin-top': '-2em',
+              color: 'rgba(30,35,45,0.8)',
+            }}
+          />
+
+          {/* Menu content */}
+          <span>
+            {/* Logout button */}
+            <button
+              disabled={loading()}
+              style={loading() ? disableBtnStyle : btnStyle}
+              onClick={() => Effect.runFork(logout)}
+            >
+              {loading() ? 'Logging out...' : 'Log out'}
+            </button>
+          </span>
+        </Column>
+      </div>
+    </>
   );
 }

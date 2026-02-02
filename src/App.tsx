@@ -1,7 +1,7 @@
 import './App.css';
-import { AuthProvider } from '@/auth/AuthProvider';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { LoginPage } from '@/pages/LoginPage';
+import { PlaylistPage } from '@/pages/PlaylistPage';
 import { Route, Router } from '@solidjs/router';
 
 // TODO: Add bottom navbar
@@ -11,12 +11,11 @@ import { Route, Router } from '@solidjs/router';
 function App() {
   return (
     <main class="container">
-      <AuthProvider>
-        <Router>
-          <Route path={'/'} component={LoginPage} />
-          <Route path={'/dashboard'} component={DashboardPage} />
-        </Router>
-      </AuthProvider>
+      <Router>
+        <Route path={'/'} component={LoginPage} />
+        <Route path={'/dashboard'} component={DashboardPage} />
+        <Route path={'/library/playlist/:id'} component={PlaylistPage} />
+      </Router>
     </main>
   );
 }

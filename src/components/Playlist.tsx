@@ -1,24 +1,10 @@
 import { createSignal, JSX } from 'solid-js';
 import { Row } from '@/components/Row';
-
-export type Playlist = {
-  id: string;
-  name: string;
-  imgSrc?: string;
-};
-
-/** Type for recent playlists (max of 6). */
-export type PlaylistList = [
-  Playlist?,
-  Playlist?,
-  Playlist?,
-  Playlist?,
-  Playlist?,
-  Playlist?,
-];
+import { useNavigate } from '@solidjs/router';
+import { Playlist } from '@/backendApi/playlistService';
 
 /** Displays up to six pinned playlists. */
-export function PinnedPlaylists(props: { playlists: PlaylistList }) {
+export function PinnedPlaylists(props: { playlists: Playlist[] }) {
   const containerStyle: JSX.CSSProperties = {
     display: 'grid',
     'grid-template-columns': 'repeat(2, 1fr)',
@@ -30,9 +16,7 @@ export function PinnedPlaylists(props: { playlists: PlaylistList }) {
     <>
       <div style={containerStyle}>
         {props.playlists.map((playlist) => {
-          if (playlist) {
-            return <PlaylistCard playlist={playlist} />;
-          }
+          return <PlaylistCard playlist={playlist} />;
         })}
       </div>
     </>
@@ -42,10 +26,12 @@ export function PinnedPlaylists(props: { playlists: PlaylistList }) {
 /** A card for a playlist. */
 export function PlaylistCard(props: { playlist: Playlist }) {
   const playlist = props.playlist;
+  const navigate = useNavigate();
 
-  // Background color of the card.
-  // Needed to change the color on hover.
+  /** Background color of the card. */
   const [bgColor, setBgColor] = createSignal('rgba(20, 20, 20, 1)');
+
+  /** Opacity of the image. */
   const [imgAlpha, setImgAlpha] = createSignal(1);
 
   return (
@@ -55,13 +41,18 @@ export function PlaylistCard(props: { playlist: Playlist }) {
         'border-radius': '0.5em',
         cursor: 'pointer',
       }}
-      onMouseEnter={() => {
+      onMouseEnter={(e) => {
         setBgColor('rgba(20, 20, 20, 0.8)');
         setImgAlpha(0.8);
+        e.currentTarget.style.transform = 'scale(1.01)';
       }}
-      onMouseLeave={() => {
+      onMouseLeave={(e) => {
         setBgColor('rgba(20, 20, 20, 1)');
         setImgAlpha(1);
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+      onClick={() => {
+        navigate(`/library/playlist/${playlist.id}`);
       }}
     >
       <Row
