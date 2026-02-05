@@ -151,14 +151,12 @@ export function DashboardPage() {
   );
 }
 
-/** A button that initiates a filer picker. */
-function ImportTracksButton(props: {
-  musicLibService: MusicLibraryService['Type'];
-}) {
-  const musicLibService = props.musicLibService;
-
-  let fileInputRef!: HTMLInputElement;
-
+/** Returns an handler that adds selected files to the music library.
+ *
+ * # Note
+ * This must be attached to an <input type="file" /> element.
+ * */
+function TrackImporter(musicLibService: MusicLibraryService['Type']) {
   /** Parses the given file as an audio file. */
   const parseAudioFile = (file: File) =>
     Effect.tryPromise({
@@ -208,6 +206,20 @@ function ImportTracksButton(props: {
     Effect.runFork(program);
   };
 
+  return {
+    parseAudioFile,
+    extractTrackImg,
+    addTracksToMusicLibrary,
+  };
+}
+
+/** A button that initiates a filer picker. */
+function ImportTracksButton(props: {
+  musicLibService: MusicLibraryService['Type'];
+}) {
+  let fileInputRef!: HTMLInputElement;
+  const trackImporter = TrackImporter(props.musicLibService);
+
   /** Style for the button. */
   const buttonStyle: JSX.CSSProperties = {
     'background-color': 'rgba(50, 150, 50, 1)',
@@ -226,7 +238,7 @@ function ImportTracksButton(props: {
         multiple
         accept="audio/*"
         style={{ display: 'none' }}
-        onChange={addTracksToMusicLibrary}
+        onChange={trackImporter.addTracksToMusicLibrary}
       />
     </div>
   );
