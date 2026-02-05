@@ -1,5 +1,6 @@
 import { Effect, Either } from 'effect';
 import {
+  createEffect,
   createResource,
   createSignal,
   JSX,
@@ -17,7 +18,12 @@ import { Row } from '@/components/Row';
 import { Loading } from '@/components/Loading';
 import { PlaylistGrid } from '@/components/Playlist';
 import { BottomNavbar } from '@/components/BottomNavBar';
-import { useMusicLibraryService } from '@/backendApi/mockMusicLibraryServiceProvider';
+import {
+  ALL_TRACKS,
+  useMusicLibraryService,
+} from '@/backendApi/mockMusicLibraryServiceProvider';
+import { MusicLibraryService } from '@/backendApi/musicLibraryService';
+import { IAudioMetadata, ICommonTagsResult, parseBlob } from 'music-metadata';
 
 /** The user's dashboard page. */
 export function DashboardPage() {
@@ -40,13 +46,13 @@ export function DashboardPage() {
   /** Adds an `All Tracks` playlist if no playlist exists. */
   const createAllTracksPlaylist = Effect.gen(function* () {
     const allTracksExists = yield* musicLibService
-      .getPlaylist('0')
+      .getPlaylist(ALL_TRACKS.id)
       .pipe(Effect.either, Effect.map(Either.isRight));
 
     if (!allTracksExists) {
       yield* musicLibService.createPlaylist({
-        name: 'All Tracks',
-        createdBy: '__SYSTEM__',
+        name: ALL_TRACKS.name,
+        createdBy: ALL_TRACKS.createdBy,
       });
     }
   });
@@ -119,23 +125,8 @@ export function DashboardPage() {
             {/* Initial dashboard view */}
             <Match when={allTracksIsEmpty}>
               <Column style={{ 'margin-top': '10rem' }}>
-                <button
-                  style={{
-                    'background-color': 'rgba(50, 150, 50, 1)',
-                    'vertical-align': 'middle',
-                    'align-self': 'center',
-                  }}
-                >
-                  Import Tracks
-                </button>
-
                 {/* TODO: Add file picker! */}
-                <input
-                  type="file"
-                  multiple
-                  accept="audio/*"
-                  style={{ display: 'none' }}
-                />
+                <ImportTracksButton musicLibService={musicLibService} />
               </Column>
             </Match>
 
@@ -157,6 +148,87 @@ export function DashboardPage() {
 
       <BottomNavbar currentPath="/dashboard" />
     </>
+  );
+}
+
+/** A button that initiates a filer picker. */
+function ImportTracksButton(props: {
+  musicLibService: MusicLibraryService['Type'];
+}) {
+  const musicLibService = props.musicLibService;
+
+  let fileInputRef!: HTMLInputElement;
+
+  /** Parses the given file as an audio file. */
+  const parseAudioFile = (file: File) =>
+    Effect.tryPromise({
+      try: () => parseBlob(file),
+      catch: (e) => console.error(e),
+    });
+
+  /** Extracts the track image from the audio blob.*/
+  const extractTrackImg = (audioBlob: ICommonTagsResult) =>
+    Effect.gen(function* () {
+      if (audioBlob.picture && audioBlob.picture.length > 0) {
+        const picture = audioBlob.picture[0];
+        const base64String = btoa(
+          String.fromCharCode(...new Uint8Array(picture.data))
+        );
+        const imgSrc = `data:${picture.format};base64,${base64String}`;
+        return imgSrc;
+      }
+    });
+
+  /** Adds the selected files to the music library. */
+  const addTracksToMusicLibrary: JSX.EventHandler<HTMLInputElement, Event> = (
+    e
+  ) => {
+    const program = Effect.gen(function* () {
+      const event = e.target as HTMLInputElement;
+      const files = Array.from(event.files || []);
+
+      files.forEach((file) =>
+        Effect.gen(function* () {
+          // Add track to library
+          const audioBlob = yield* parseAudioFile(file);
+          const imgSrc = yield* extractTrackImg(audioBlob.common);
+          const trackID = yield* musicLibService.addTrack({
+            src: file,
+            imgSrc,
+            title: audioBlob.common.title,
+            artist: audioBlob.common.artist,
+            album: audioBlob.common.album,
+          });
+
+          // Add track to `All Songs` playlist
+          yield* musicLibService.addTrackToPlaylist(trackID, ALL_TRACKS.id);
+        }).pipe(Effect.runFork)
+      );
+    });
+    Effect.runFork(program);
+  };
+
+  /** Style for the button. */
+  const buttonStyle: JSX.CSSProperties = {
+    'background-color': 'rgba(50, 150, 50, 1)',
+    'vertical-align': 'middle',
+    'align-self': 'center',
+  };
+
+  return (
+    <div>
+      <button style={buttonStyle} onClick={() => fileInputRef.click()}>
+        Import Tracks
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="audio/*"
+        style={{ display: 'none' }}
+        onChange={addTracksToMusicLibrary}
+      />
+    </div>
   );
 }
 

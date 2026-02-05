@@ -3,7 +3,7 @@ import { Context, Data, Effect } from 'effect';
 /** Represents a track in a playlist. */
 export type Track = {
   id: string;
-  src: string;
+  src: File;
   imgSrc?: string;
   title?: string;
   artist?: string;
@@ -60,12 +60,12 @@ export class MusicLibraryService extends Context.Tag('MusicLibraryService')<
     /** Creates a new playlist. */
     createPlaylist: (
       playlist: Partial<Playlist>
-    ) => Effect.Effect<void, MusicLibraryServiceError>;
+    ) => Effect.Effect<string, MusicLibraryServiceError>;
 
     /** Adds a track to the music library. */
     addTrack: (
       track: Partial<Track>
-    ) => Effect.Effect<void, MusicLibraryServiceError>;
+    ) => Effect.Effect<string, MusicLibraryServiceError>;
 
     /** Adds the track to the specified playlist. */
     addTrackToPlaylist: (

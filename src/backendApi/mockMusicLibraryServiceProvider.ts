@@ -131,14 +131,14 @@ const createPlaylist = (playlist: Partial<Playlist>) =>
     if (!playlistExists) {
       // Handles `All Tracks` playlist creation
       let playlistId = '';
+      const playlistName =
+        playlist.name || `Playlist #${musicLibrary.playlists.length}`;
       if (
         playlist.name === 'All Tracks' &&
         playlist.createdBy === '__SYSTEM__'
       ) {
         playlistId = '0';
       } else {
-        const playlistName =
-          playlist.name || `Playlist #${musicLibrary.playlists.length}`;
         playlistId = `${playlistName}-${playlist.createdBy}`;
       }
 
@@ -159,8 +159,9 @@ const createPlaylist = (playlist: Partial<Playlist>) =>
         tracks: musicLibrary.tracks,
       };
       yield* Ref.set(musicLibraryState, updatedMusicLibrary);
+      return yield* Effect.succeed(playlistId);
     } else {
-      yield* Effect.fail(
+      return yield* Effect.fail(
         new MusicLibraryServiceError({
           message: 'Playlist already exists',
         })
@@ -205,8 +206,9 @@ const addTrack = (track: Partial<Track>) =>
         tracks: updatedTrackArray,
       };
       yield* Ref.set(musicLibraryState, updatedMusicLibrary);
+      return yield* Effect.succeed(trackId);
     } else {
-      yield* Effect.fail(
+      return yield* Effect.fail(
         new MusicLibraryServiceError({
           message: 'Track already exists in library',
         })
@@ -266,3 +268,10 @@ const mockMusicLibraryServiceProvider = Effect.provideService(
 export function useMusicLibraryService() {
   return Effect.runSync(mockMusicLibraryServiceProvider);
 }
+
+/** Info for `All Tracks` playlist created by default. */
+export const ALL_TRACKS = {
+  id: '0',
+  name: 'All Tracks',
+  createdBy: '__SYSTEM__',
+};
