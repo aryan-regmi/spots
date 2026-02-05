@@ -1,80 +1,69 @@
-import {
-  AuthInfo,
-  AuthService,
-  AuthenticationError,
-  getAuthContext,
-} from '@/auth/authService';
-import { Effect, Ref } from 'effect';
+import { AuthService, AuthenticationError } from '@/auth/authService';
+import { errAsync, fromPromise, okAsync } from 'neverthrow';
+import { createStore } from 'solid-js/store';
 
-/** Initalizes the auth data state. */
-const createAuthDataState = () => {
-  let authInfo: AuthInfo = { username: null };
-  const storedAuthToken = localStorage.getItem('auth-token');
-  if (storedAuthToken) {
-    authInfo.username = storedAuthToken;
-  }
-  return Ref.make(authInfo).pipe(Effect.runSync);
-};
-
-/** The authentication state. */
-const authDataState = createAuthDataState();
-
-/** The loading state. */
-const isLoadingState = Effect.runSync(Ref.make<boolean>(false));
-
-/** Authenticates the specified user. */
-const authenticate = (username: string, password: string) =>
-  Effect.gen(function* () {
-    // Set loading state
-    yield* Ref.update(isLoadingState, () => true);
-
-    // Simulate delay
-    yield* Effect.promise(
-      () => new Promise((resolve) => setTimeout(resolve, 2000))
-    );
-
-    // Mock backend calls
-    if (username === 'user' && password === '1') {
-      localStorage.setItem('auth-token', username);
-      yield* Ref.update(authDataState, () => ({ username: username }));
-      yield* Ref.update(isLoadingState, () => false);
-    } else {
-      yield* Ref.update(isLoadingState, () => false);
-      yield* Effect.fail(
-        new AuthenticationError({
-          message: 'Login does not exist',
-        })
-      );
-    }
-  });
-
-/** Unauthenticates the currently authenticated user. */
-const unauthenticate = Effect.gen(function* () {
-  const authUser = (yield* authDataState).username;
-  if (authUser !== null) {
-    yield* Ref.update(authDataState, () => ({ username: null }));
-    localStorage.removeItem('auth-token');
-  }
-});
-
-/** Provides mock implementation of the `AuthService`. */
-const mockAuthServiceProvider = Effect.provideService(
-  getAuthContext,
-  AuthService,
-  {
-    data: authDataState,
-    authenticate,
-    unauthenticate,
-    isLoading: isLoadingState,
-  }
-);
-
-/** Hook to use the mock authentication service. */
+/** Provides the `AuthService`. */
 export function useAuthService() {
-  return Effect.runSync(mockAuthServiceProvider);
+  return authState;
 }
 
-/** Gets the current authentication data. */
-export const getAuthUser = Effect.gen(function* () {
-  return yield* useAuthService().data;
+const AUTH_KEY = 'auth-user';
+
+/** The authentication state. */
+const [authState, setAuthState] = createStore<AuthService>({
+  authUser: null,
+  authenticate,
+  unauthenticate,
+  isLoading: false,
 });
+
+/** The types of errors. */
+type ErrorKind = 'InvalidLogin' | 'NoAuthUser';
+
+/** The actual error type returned by the auth service. */
+class AuthServiceError implements AuthenticationError {
+  constructor(kind: ErrorKind) {
+    switch (kind) {
+      case 'InvalidLogin':
+        this.message = 'Login does not exist';
+        break;
+      case 'NoAuthUser':
+        this.message = 'NoAuthUser';
+        break;
+    }
+  }
+
+  message: string;
+}
+
+/** Authenticates the specified user. */
+function authenticate(username: string, password: string) {
+  setAuthState('isLoading', true);
+
+  // Simulate delay
+  let delay = new Promise((resolve) => setTimeout(resolve, 2000));
+  fromPromise(delay, console.error);
+
+  // Simulate backend calls
+  if (username === 'user' && password === '1') {
+    setAuthState('authUser', username);
+    setAuthState('isLoading', false);
+    localStorage.setItem(AUTH_KEY, username);
+    return okAsync();
+  } else {
+    setAuthState('isLoading', false);
+    return errAsync(new AuthServiceError('InvalidLogin'));
+  }
+}
+
+/** Unauthenticates the currently authenticated user. */
+function unauthenticate() {
+  setAuthState('isLoading', true);
+  if (authState.authUser) {
+    setAuthState('authUser', null);
+    localStorage.removeItem(AUTH_KEY);
+    return errAsync(new AuthServiceError('NoAuthUser'));
+  }
+  setAuthState('isLoading', false);
+  return okAsync();
+}

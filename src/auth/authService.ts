@@ -1,34 +1,24 @@
-import { Effect, Context, Data, Ref } from 'effect';
-
-/** Authentication information. */
-export type AuthInfo = {
-  /** The currently authenticated user. */
-  username: string | null;
-};
+import { ResultAsync } from 'neverthrow';
 
 /** Error for authentication failure */
-export class AuthenticationError extends Data.TaggedError(
-  'AuthenticationError'
-)<{
+export interface AuthenticationError {
   message: string;
-}> {}
+}
 
 /** Service responsible for all authentication states and operations. */
-export class AuthService extends Context.Tag('AuthService')<
-  AuthService,
-  {
-    data: Ref.Ref<AuthInfo>;
-    authenticate: (
-      username: string,
-      password: string
-    ) => Effect.Effect<void, AuthenticationError>;
-    unauthenticate: Effect.Effect<void, never, never>;
-    isLoading: Ref.Ref<boolean>;
-  }
->() {}
+export type AuthService = {
+  /** The currently authenticated user. */
+  authUser: string | null;
 
-/** Gets the authentication context. */
-export const getAuthContext = Effect.gen(function* () {
-  const auth = yield* AuthService;
-  return auth;
-});
+  /** Authenticates the specified login. */
+  authenticate: (
+    username: string,
+    password: string
+  ) => ResultAsync<void, AuthenticationError>;
+
+  /** Unauthenticate the currently authenticated user. */
+  unauthenticate: () => ResultAsync<void, AuthenticationError>;
+
+  /** Determines if the authentication service is currently in a loading state. */
+  isLoading: boolean;
+};
