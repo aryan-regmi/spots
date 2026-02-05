@@ -7,89 +7,11 @@ import {
   playlistServiceProgram,
 } from '@/backendApi/musicLibraryService';
 
-const mockPlaylists: Playlist[] = [
-  {
-    id: '0',
-    name: 'Playlist 1',
-    followers: [],
-    tracks: [],
-  },
-  {
-    id: '1',
-    name: 'Playlist 2',
-    followers: [],
-    tracks: [],
-  },
-  {
-    id: '2',
-    name: 'Playlist 3',
-    followers: [],
-    tracks: [],
-  },
-  {
-    id: '3',
-    name: 'Playlist 4',
-    followers: [],
-    tracks: [],
-  },
-  {
-    id: '4',
-    name: 'Playlist 5',
-    followers: [],
-    tracks: [],
-  },
-  {
-    id: '5',
-    name: 'Playlist 6',
-    followers: [],
-    tracks: [],
-  },
-];
-
-const mockTracks: Track[] = [
-  {
-    id: '0',
-    title: 'Track 0',
-  },
-  {
-    id: '1',
-    title: 'Track 1',
-  },
-  {
-    id: '2',
-    title: 'Track 2',
-  },
-  {
-    id: '3',
-    title: 'Track 3',
-  },
-  {
-    id: '4',
-    title: 'Track 4',
-  },
-  {
-    id: '5',
-    title: 'Track 5',
-  },
-  {
-    id: '6',
-    title: 'Track 6',
-  },
-  {
-    id: '7',
-    title: 'Track 7',
-  },
-  {
-    id: '8',
-    title: 'Track 8',
-  },
-];
-
 /** Initalizes the music library. */
 const createMusicLibraryState = () => {
-  let state = {
-    playlists: mockPlaylists,
-    tracks: mockTracks,
+  let state: { playlists: Playlist[]; tracks: Track[] } = {
+    playlists: [],
+    tracks: [],
   };
   const storedState = localStorage.getItem('music-lib-state');
   if (storedState) {
@@ -136,17 +58,13 @@ const getTrack = (trackId: string) =>
 /** Gets the (up to) 12 most recently played playlists. */
 const getRecentPlaylists = () =>
   Effect.gen(function* () {
-    return yield* Effect.succeed(
-      [...mockPlaylists, ...mockPlaylists].filter((e) => e !== undefined)
-    );
+    return yield* Effect.succeed([]);
   });
 
 /** Gets the (up to) 6 pinned playlists. */
 const getPinnedPlaylists = () =>
   Effect.gen(function* () {
-    return yield* Effect.succeed(
-      [...mockPlaylists].filter((e) => e !== undefined)
-    );
+    return yield* Effect.succeed([]);
   });
 
 /** Follows/un-follows the specified playlist.
@@ -201,6 +119,133 @@ const toggleFollowPlaylist = (username: string, playlistId: string) =>
     }
   });
 
+/** Creates a new playlist. */
+const createPlaylist = (playlist: Partial<Playlist>) =>
+  Effect.gen(function* () {
+    const musicLibrary = yield* musicLibraryState;
+    const playlistExists = !!musicLibrary.playlists.find(
+      (p) => p.name === playlist.name && p.createdBy === playlist.createdBy
+    );
+
+    // Update state to add new playlist
+    if (!playlistExists) {
+      // Handles `All Tracks` playlist creation
+      let playlistId = '';
+      if (
+        playlist.name === 'All Tracks' &&
+        playlist.createdBy === '__SYSTEM__'
+      ) {
+        playlistId = '0';
+      } else {
+        const playlistName =
+          playlist.name || `Playlist #${musicLibrary.playlists.length}`;
+        playlistId = `${playlistName}-${playlist.createdBy}`;
+      }
+
+      // Create new playlist array with the new playlist
+      let updatedPlaylistArray = musicLibrary.playlists;
+      updatedPlaylistArray.push({
+        id: playlistId,
+        name: playlistName,
+        imgSrc: playlist.imgSrc,
+        createdBy: playlist.createdBy || 'Unknown',
+        tracks: playlist.tracks || [],
+        followers: playlist.followers || [],
+      });
+
+      // Update the music library to use the new playlist array
+      const updatedMusicLibrary = {
+        playlists: updatedPlaylistArray,
+        tracks: musicLibrary.tracks,
+      };
+      yield* Ref.set(musicLibraryState, updatedMusicLibrary);
+    } else {
+      yield* Effect.fail(
+        new MusicLibraryServiceError({
+          message: 'Playlist already exists',
+        })
+      );
+    }
+  });
+
+/** Adds the track to the music library. */
+const addTrack = (track: Partial<Track>) =>
+  Effect.gen(function* () {
+    const musicLibrary = yield* musicLibraryState;
+    const trackExists = !!musicLibrary.tracks.find(
+      (t) => t.src === track.src && t.title === track.title
+    );
+
+    // Update state to add new track
+    if (!trackExists) {
+      if (!track.src) {
+        yield* Effect.fail(
+          new MusicLibraryServiceError({
+            message: 'Track must have a source',
+          })
+        );
+      }
+
+      // Create new track array with the new track
+      const trackTitle = track.title || `Track #${musicLibrary.tracks.length}`;
+      const trackId = track.title || trackTitle;
+      let updatedTrackArray = musicLibrary.tracks;
+      updatedTrackArray.push({
+        id: trackId,
+        src: track.src!,
+        imgSrc: track.imgSrc,
+        title: track.title,
+        artist: track.artist,
+        album: track.album,
+      });
+
+      // Update the music library to use the new playlist array
+      const updatedMusicLibrary = {
+        playlists: musicLibrary.playlists,
+        tracks: updatedTrackArray,
+      };
+      yield* Ref.set(musicLibraryState, updatedMusicLibrary);
+    } else {
+      yield* Effect.fail(
+        new MusicLibraryServiceError({
+          message: 'Track already exists in library',
+        })
+      );
+    }
+  });
+
+/** Adds the track to the specified playlist. */
+const addTrackToPlaylist = (trackId: string, playlistId: string) =>
+  Effect.gen(function* () {
+    const musicLibrary = yield* musicLibraryState;
+    const playlist = yield* getPlaylist(playlistId);
+    const trackInPlaylist = !!playlist.tracks.find((tid) => tid === trackId);
+
+    // Update state to add track to playlist
+    if (!trackInPlaylist) {
+      // Create new `tracks` array with the track to add
+      let updatedPlaylistArray = musicLibrary.playlists;
+      updatedPlaylistArray.map((p) => {
+        if (p.id === playlistId) {
+          p.tracks.push(trackId);
+        }
+      });
+
+      // Update the music library to use the new playlist array
+      const updatedMusicLibrary = {
+        playlists: updatedPlaylistArray,
+        tracks: musicLibrary.tracks,
+      };
+      yield* Ref.set(musicLibraryState, updatedMusicLibrary);
+    } else {
+      yield* Effect.fail(
+        new MusicLibraryServiceError({
+          message: 'Track is already in playlist',
+        })
+      );
+    }
+  });
+
 /** The (mock) service provider. */
 const mockMusicLibraryServiceProvider = Effect.provideService(
   playlistServiceProgram,
@@ -211,6 +256,9 @@ const mockMusicLibraryServiceProvider = Effect.provideService(
     getRecentPlaylists,
     getPinnedPlaylists,
     toggleFollowPlaylist,
+    createPlaylist,
+    addTrack,
+    addTrackToPlaylist,
   }
 );
 

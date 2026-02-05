@@ -1,11 +1,13 @@
-import { Effect } from 'effect';
+import { Effect, Either } from 'effect';
 import {
   createResource,
   createSignal,
   JSX,
+  Match,
   onMount,
   Resource,
   Show,
+  Switch,
 } from 'solid-js';
 import { useAuthService } from '@/auth/mockAuthServiceProvider';
 import { Navigator, useNavigate } from '@solidjs/router';
@@ -23,6 +25,9 @@ export function DashboardPage() {
   const auth = useAuthService();
   const musicLibService = useMusicLibraryService();
 
+  /** The `id` attribute for the popover menu. */
+  const POPOVER_ID = 'popover-menu';
+
   /** Redirects to home (login page) if there is no authenticated user. */
   const redirectToHome = Effect.gen(function* () {
     const authInfo = yield* auth.data;
@@ -32,8 +37,30 @@ export function DashboardPage() {
     }
   });
 
-  /** Run `redirectToDashboard` when component is mounted. */
-  onMount(() => Effect.runFork(redirectToHome));
+  /** Adds an `All Tracks` playlist if no playlist exists. */
+  const createAllTracksPlaylist = Effect.gen(function* () {
+    const allTracksExists = yield* musicLibService
+      .getPlaylist('0')
+      .pipe(Effect.either, Effect.map(Either.isRight));
+
+    if (!allTracksExists) {
+      yield* musicLibService.createPlaylist({
+        name: 'All Tracks',
+        createdBy: '__SYSTEM__',
+      });
+    }
+  });
+
+  /** Determines if the `All Tracks` playlist is empty. */
+  let allTracksIsEmpty = false;
+
+  onMount(() => {
+    Effect.runFork(redirectToHome);
+    Effect.runFork(createAllTracksPlaylist);
+    Effect.runPromise(musicLibService.getPlaylist('0')).then(
+      (playlist) => (allTracksIsEmpty = playlist.tracks.length == 0)
+    );
+  });
 
   /** The currently authenticated user's username. */
   const [username] = createResource(async () => {
@@ -74,9 +101,6 @@ export function DashboardPage() {
     gap: 0,
   };
 
-  /** The `id` attribute for the popover menu. */
-  const POPOVER_ID = 'popover-menu';
-
   return (
     <>
       <PopoverMenu
@@ -91,13 +115,45 @@ export function DashboardPage() {
           <Avatar name={username()!} popoverTargetId={POPOVER_ID} animate />
           <br />
 
-          <PlaylistGrid playlists={pinnedPlaylists()} />
+          <Switch>
+            {/* Initial dashboard view */}
+            <Match when={allTracksIsEmpty}>
+              <Column style={{ 'margin-top': '10rem' }}>
+                <button
+                  style={{
+                    'background-color': 'rgba(50, 150, 50, 1)',
+                    'vertical-align': 'middle',
+                    'align-self': 'center',
+                  }}
+                >
+                  Import Tracks
+                </button>
+
+                {/* TODO: Add file picker! */}
+                <input
+                  type="file"
+                  multiple
+                  accept="audio/*"
+                  style={{ display: 'none' }}
+                />
+              </Column>
+            </Match>
+
+            {/* Populated dashboard view */}
+            <Match when={pinnedPlaylists().length > 0}>
+              <PlaylistGrid playlists={pinnedPlaylists()} />
+            </Match>
+          </Switch>
           <br />
 
-          <h2 style={{ 'align-self': 'start' }}>Recently Played</h2>
-          {/* TODO: Add carousel for recent playlists! */}
+          <Show when={recentPlaylists().length > 0}>
+            <h2 style={{ 'align-self': 'start' }}>Recently Played</h2>
+            {/* TODO: Add carousel for recent playlists! */}
+          </Show>
         </Show>
       </Column>
+
+      {/* TODO: Add player */}
 
       <BottomNavbar currentPath="/dashboard" />
     </>
