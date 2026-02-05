@@ -1,7 +1,7 @@
 import {
-  AuthenticationError,
   AuthInfo,
   AuthService,
+  AuthenticationError,
   getAuthContext,
 } from '@/auth/authService';
 import { Effect, Ref } from 'effect';

@@ -1,13 +1,13 @@
-import { Console, Effect, Ref } from 'effect';
+import { Effect, Ref } from 'effect';
 import {
   MusicLibraryService,
   MusicLibraryServiceError,
   Playlist,
-  playlistServiceProgram,
   Track,
+  playlistServiceProgram,
 } from '@/backendApi/musicLibraryService';
 
-export const mockPlaylists: Playlist[] = [
+const mockPlaylists: Playlist[] = [
   {
     id: '0',
     name: 'Playlist 1',
@@ -46,7 +46,7 @@ export const mockPlaylists: Playlist[] = [
   },
 ];
 
-export const mockTracks: Track[] = [
+const mockTracks: Track[] = [
   {
     id: '0',
     title: 'Track 0',
@@ -85,45 +85,7 @@ export const mockTracks: Track[] = [
   },
 ];
 
-export const mockPlaylistFollowers: { id: string; followers: string[] }[] = [
-  {
-    id: '0',
-    followers: [],
-  },
-  {
-    id: '1',
-    followers: [],
-  },
-  {
-    id: '2',
-    followers: [],
-  },
-  {
-    id: '3',
-    followers: [],
-  },
-  {
-    id: '4',
-    followers: [],
-  },
-  {
-    id: '5',
-    followers: [],
-  },
-  {
-    id: '6',
-    followers: [],
-  },
-  {
-    id: '7',
-    followers: [],
-  },
-  {
-    id: '8',
-    followers: [],
-  },
-];
-
+/** Initalizes the music library. */
 const createMusicLibraryState = () => {
   let state = {
     playlists: mockPlaylists,

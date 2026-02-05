@@ -1,19 +1,13 @@
 import { AuthenticationError } from '@/auth/authService';
+import { Column } from '@/components/Column';
+import { Effect } from 'effect';
+import { LargePlaylistCard } from '@/components/Playlist';
+import { Loading } from '@/components/Loading';
+import { Row } from '@/components/Row';
+import { createSignal, onMount, Show } from 'solid-js';
 import { useAuthService } from '@/auth/mockAuthServiceProvider';
 import { useMusicLibraryService } from '@/backendApi/mockMusicLibraryServiceProvider';
-import { Column } from '@/components/Column';
-import { Loading } from '@/components/Loading';
-import { LargePlaylistCard } from '@/components/Playlist';
-import { Row } from '@/components/Row';
 import { useNavigate, useParams } from '@solidjs/router';
-import { Console, Duration, Effect, Schedule } from 'effect';
-import {
-  createEffect,
-  createResource,
-  createSignal,
-  onMount,
-  Show,
-} from 'solid-js';
 
 export function PlaylistPage() {
   const params = useParams();
@@ -34,6 +28,7 @@ export function PlaylistPage() {
   /** Determines if the logged in user follows this playlist. */
   const [isFollowing, setIsFollowing] = createSignal(false);
 
+  /** Determines whether or not the playlist is followed by the current user. */
   const loadFollowState = () =>
     Effect.gen(function* () {
       const authUser = yield* authService.data;

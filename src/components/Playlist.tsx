@@ -97,6 +97,8 @@ export function LargePlaylistCard(props: { playlist: Playlist }) {
       />
       <span>{props.playlist.name}</span>
       <span>{props.playlist.createdBy}</span>
+
+      {/* TODO: Add table of tracks (TrackCard) */}
     </Column>
   );
 }
