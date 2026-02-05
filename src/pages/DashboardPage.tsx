@@ -20,6 +20,7 @@ import { PlaylistGrid } from '@/components/Playlist';
 import { BottomNavbar } from '@/components/BottomNavBar';
 import {
   ALL_TRACKS,
+  TrackImporter,
   useMusicLibraryService,
 } from '@/backendApi/mockMusicLibraryServiceProvider';
 import { MusicLibraryService } from '@/backendApi/musicLibraryService';
@@ -57,16 +58,18 @@ export function DashboardPage() {
     }
   });
 
-  /** Determines if the `All Tracks` playlist is empty. */
-  let allTracksIsEmpty = false;
-
   onMount(() => {
     Effect.runFork(redirectToHome);
     Effect.runFork(createAllTracksPlaylist);
-    Effect.runPromise(musicLibService.getPlaylist('0')).then(
-      (playlist) => (allTracksIsEmpty = playlist.tracks.length == 0)
-    );
   });
+
+  /** Determines if the `All Tracks` playlist is empty. */
+  let allTracksIsEmpty = false;
+  createEffect(() =>
+    Effect.runPromise(musicLibService.getPlaylist(ALL_TRACKS.id)).then(
+      (playlist) => (allTracksIsEmpty = playlist.tracks.length === 0)
+    )
+  );
 
   /** The currently authenticated user's username. */
   const [username] = createResource(async () => {
@@ -126,7 +129,7 @@ export function DashboardPage() {
             <Match when={allTracksIsEmpty}>
               <Column style={{ 'margin-top': '10rem' }}>
                 {/* TODO: Add file picker! */}
-                <ImportTracksButton musicLibService={musicLibService} />
+                <ImportTracksButton />
               </Column>
             </Match>
 
@@ -151,74 +154,10 @@ export function DashboardPage() {
   );
 }
 
-/** Returns an handler that adds selected files to the music library.
- *
- * # Note
- * This must be attached to an <input type="file" /> element.
- * */
-function TrackImporter(musicLibService: MusicLibraryService['Type']) {
-  /** Parses the given file as an audio file. */
-  const parseAudioFile = (file: File) =>
-    Effect.tryPromise({
-      try: () => parseBlob(file),
-      catch: (e) => console.error(e),
-    });
-
-  /** Extracts the track image from the audio blob.*/
-  const extractTrackImg = (audioBlob: ICommonTagsResult) =>
-    Effect.gen(function* () {
-      if (audioBlob.picture && audioBlob.picture.length > 0) {
-        const picture = audioBlob.picture[0];
-        const base64String = btoa(
-          String.fromCharCode(...new Uint8Array(picture.data))
-        );
-        const imgSrc = `data:${picture.format};base64,${base64String}`;
-        return imgSrc;
-      }
-    });
-
-  /** Adds the selected files to the music library. */
-  const addTracksToMusicLibrary: JSX.EventHandler<HTMLInputElement, Event> = (
-    e
-  ) => {
-    const program = Effect.gen(function* () {
-      const event = e.target as HTMLInputElement;
-      const files = Array.from(event.files || []);
-
-      files.forEach((file) =>
-        Effect.gen(function* () {
-          // Add track to library
-          const audioBlob = yield* parseAudioFile(file);
-          const imgSrc = yield* extractTrackImg(audioBlob.common);
-          const trackID = yield* musicLibService.addTrack({
-            src: file,
-            imgSrc,
-            title: audioBlob.common.title,
-            artist: audioBlob.common.artist,
-            album: audioBlob.common.album,
-          });
-
-          // Add track to `All Songs` playlist
-          yield* musicLibService.addTrackToPlaylist(trackID, ALL_TRACKS.id);
-        }).pipe(Effect.runFork)
-      );
-    });
-    Effect.runFork(program);
-  };
-
-  return {
-    parseAudioFile,
-    extractTrackImg,
-    addTracksToMusicLibrary,
-  };
-}
-
 /** A button that initiates a filer picker. */
-function ImportTracksButton(props: {
-  musicLibService: MusicLibraryService['Type'];
-}) {
+function ImportTracksButton() {
   let fileInputRef!: HTMLInputElement;
-  const trackImporter = TrackImporter(props.musicLibService);
+  const trackImporter = TrackImporter();
 
   /** Style for the button. */
   const buttonStyle: JSX.CSSProperties = {

@@ -6,6 +6,11 @@ import {
   Track,
   playlistServiceProgram,
 } from '@/backendApi/musicLibraryService';
+import { ICommonTagsResult, parseBlob } from 'music-metadata';
+import { JSX } from 'solid-js';
+import { base64String } from 'effect/FastCheck';
+
+const MUSIC_LIB_STATE_KEY = 'music-lib-state';
 
 /** Initalizes the music library. */
 const createMusicLibraryState = () => {
@@ -13,7 +18,7 @@ const createMusicLibraryState = () => {
     playlists: [],
     tracks: [],
   };
-  const storedState = localStorage.getItem('music-lib-state');
+  const storedState = localStorage.getItem(MUSIC_LIB_STATE_KEY);
   if (storedState) {
     state = JSON.parse(storedState);
   } else {
@@ -23,7 +28,7 @@ const createMusicLibraryState = () => {
 };
 
 /** State of the music library. */
-export const musicLibraryState = createMusicLibraryState();
+const musicLibraryState = createMusicLibraryState();
 
 /** Gets the specified playlist. */
 const getPlaylist = (playlistId: string) =>
@@ -139,7 +144,7 @@ const createPlaylist = (playlist: Partial<Playlist>) =>
       ) {
         playlistId = '0';
       } else {
-        playlistId = `${playlistName}-${playlist.createdBy}`;
+        playlistId = `${playlistName}-${playlist.createdBy}`.replace(/\s/g, '');
       }
 
       // Create new playlist array with the new playlist
@@ -159,6 +164,13 @@ const createPlaylist = (playlist: Partial<Playlist>) =>
         tracks: musicLibrary.tracks,
       };
       yield* Ref.set(musicLibraryState, updatedMusicLibrary);
+
+      // Update localStorage
+      localStorage.setItem(
+        MUSIC_LIB_STATE_KEY,
+        JSON.stringify(updatedMusicLibrary)
+      );
+
       return yield* Effect.succeed(playlistId);
     } else {
       return yield* Effect.fail(
@@ -189,7 +201,11 @@ const addTrack = (track: Partial<Track>) =>
 
       // Create new track array with the new track
       const trackTitle = track.title || `Track #${musicLibrary.tracks.length}`;
-      const trackId = track.title || trackTitle;
+      const trackId =
+        `${trackTitle}-${Effect.runSync(musicLibraryState.get).tracks.length}`.replace(
+          /\s/g,
+          ''
+        );
       let updatedTrackArray = musicLibrary.tracks;
       updatedTrackArray.push({
         id: trackId,
@@ -206,6 +222,13 @@ const addTrack = (track: Partial<Track>) =>
         tracks: updatedTrackArray,
       };
       yield* Ref.set(musicLibraryState, updatedMusicLibrary);
+
+      // Update localStorage
+      localStorage.setItem(
+        MUSIC_LIB_STATE_KEY,
+        JSON.stringify(updatedMusicLibrary)
+      );
+
       return yield* Effect.succeed(trackId);
     } else {
       return yield* Effect.fail(
@@ -239,6 +262,12 @@ const addTrackToPlaylist = (trackId: string, playlistId: string) =>
         tracks: musicLibrary.tracks,
       };
       yield* Ref.set(musicLibraryState, updatedMusicLibrary);
+
+      // Update localStorage
+      localStorage.setItem(
+        MUSIC_LIB_STATE_KEY,
+        JSON.stringify(updatedMusicLibrary)
+      );
     } else {
       yield* Effect.fail(
         new MusicLibraryServiceError({
@@ -275,3 +304,72 @@ export const ALL_TRACKS = {
   name: 'All Tracks',
   createdBy: '__SYSTEM__',
 };
+
+/** Returns an handler that adds selected files to the music library.
+ *
+ * # Note
+ * This must be attached to an <input type="file" /> element.
+ * */
+export function TrackImporter() {
+  const musicLibService = useMusicLibraryService();
+
+  /** Parses the given file as an audio file. */
+  const parseAudioFile = (file: File) =>
+    Effect.tryPromise({
+      try: () => parseBlob(file),
+      catch: (e) => console.error(e),
+    });
+
+  /** Extracts the track image from the audio blob.*/
+  const extractTrackImg = (audioBlob: ICommonTagsResult) =>
+    Effect.gen(function* () {
+      if (audioBlob.picture && audioBlob.picture.length > 0) {
+        const picture = audioBlob.picture[0];
+        const base64String = btoa(
+          String.fromCharCode(...new Uint8Array(picture.data))
+        );
+        const imgSrc = `data:${picture.format};base64,${base64String}`;
+        return imgSrc;
+      }
+    });
+
+  /** Adds the selected files to the music library. */
+  const addTracksToMusicLibrary: JSX.EventHandler<HTMLInputElement, Event> = (
+    e
+  ) => {
+    const program = Effect.gen(function* () {
+      const event = e.target as HTMLInputElement;
+      const files = Array.from(event.files || []);
+
+      files.forEach((file) =>
+        Effect.gen(function* () {
+          // Add track to library
+          const audioBlob = yield* parseAudioFile(file);
+          const imgSrc = yield* extractTrackImg(audioBlob.common);
+          const fileBuffer = yield* Effect.tryPromise({
+            try: () => file.arrayBuffer(),
+            catch: console.error,
+          });
+          const trackSrc = arrayBufferToBase64(fileBuffer);
+          const trackID = yield* musicLibService.addTrack({
+            src: trackSrc,
+            imgSrc,
+            title: audioBlob.common.title || file.name,
+            artist: audioBlob.common.artist,
+            album: audioBlob.common.album,
+          });
+
+          // Add track to `All Songs` playlist
+          yield* musicLibService.addTrackToPlaylist(trackID, ALL_TRACKS.id);
+        }).pipe(Effect.runFork)
+      );
+    });
+    Effect.runFork(program);
+  };
+
+  return {
+    parseAudioFile,
+    extractTrackImg,
+    addTracksToMusicLibrary,
+  };
+}

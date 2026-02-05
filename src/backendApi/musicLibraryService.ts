@@ -3,7 +3,7 @@ import { Context, Data, Effect } from 'effect';
 /** Represents a track in a playlist. */
 export type Track = {
   id: string;
-  src: File;
+  src: string;
   imgSrc?: string;
   title?: string;
   artist?: string;
