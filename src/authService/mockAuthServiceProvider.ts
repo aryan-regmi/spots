@@ -48,7 +48,7 @@ async function loadAuthState() {
 /** Authenticates the given login. */
 function authenticate(username: string, password: string) {
   setAuthStore('isReady', false);
-  return getUser(username)
+  return getUserRecord(username)
     .andThen((record) => {
       // If passwords match, authenticate
       if (record && password === record.password) {
@@ -94,7 +94,7 @@ function unauthenticate() {
   }
 
   // Update DB (remove auth from user)
-  return getUser(authStore.authUser)
+  return getUserRecord(authStore.authUser)
     .andThen((user) => {
       if (user) {
         return db.putRecord<UserRecord>(
@@ -134,8 +134,8 @@ export function useAuthProvider(): AuthService {
   return authStore;
 }
 
-/** Gets the user from the username. */
-export function getUser(username: string) {
+/** Gets the user record from the username. */
+export function getUserRecord(username: string) {
   return db.getRecord<UserRecord>(USERS_STORE_NAME, username);
 }
 

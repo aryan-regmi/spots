@@ -1,10 +1,8 @@
 import {
   JSX,
   Match,
-  Resource,
   Show,
   Switch,
-  createEffect,
   createResource,
   createSignal,
   onMount,
@@ -16,14 +14,19 @@ import { Loading } from '@/components/Loading';
 import { Navigator, useNavigate } from '@solidjs/router';
 import { PlaylistGrid } from '@/components/Playlist';
 import { Row } from '@/components/Row';
-import { useAuthProvider } from '@/authService/mockAuthServiceProvider';
+import {
+  getUserRecord,
+  useAuthProvider,
+} from '@/authService/mockAuthServiceProvider';
 import { useMusicLibraryProvider } from '@/musicLibraryService/mockMusicLibraryServiceProvider';
-import { NIL as uuidNil, v1 as uuidV1 } from 'uuid';
+import { NIL as uuidNil } from 'uuid';
 import { Playlist } from '@/musicLibraryService/musicLibraryService';
 import {
-  USERS_STORE_NAME,
+  PLAYLISTS_STORE_NAME,
   useDBProvider,
 } from '@/dbService/mockDBServiceProvider';
+import { okAsync } from 'neverthrow';
+import { AuthService } from '@/authService/authService';
 
 /** The user's dashboard page. */
 export function DashboardPage() {
@@ -32,12 +35,12 @@ export function DashboardPage() {
   const authService = useAuthProvider();
   const musicService = useMusicLibraryProvider();
 
-  if (!authService.isReady || !musicService.isReady) {
-    return <Loading />;
-  }
-
   /** The `id` attribute for the popover menu. */
   const POPOVER_ID = 'popover-menu';
+
+  if (!dbService.isReady || !authService.isReady || !musicService.isReady) {
+    return <Loading />;
+  }
 
   /** Redirects to home (login page) if there is no authenticated user. */
   function redirectToHome() {
@@ -48,66 +51,85 @@ export function DashboardPage() {
 
   /** Adds an `All Tracks` playlist if no playlist exists. */
   function createAllTracksPlaylist() {
-    const playlist: Playlist = {
-      id: uuidNil,
-      name: 'All Tracks',
-      createdBy: uuidNil,
-      tracks: [],
-      followers: [],
-    };
-  }
-  const createAllTracksPlaylist = Effect.gen(function* () {
-    const allTracksExists = yield* musicService
-      .getPlaylist(ALL_TRACKS.id)
-      .pipe(Effect.either, Effect.map(Either.isRight));
+    return dbService
+      .getAllRecords<Playlist>(PLAYLISTS_STORE_NAME)
+      .andThen((playlists) => {
+        // If no playlists exist, or the `All Tracks` playlist doesn't exist, create a new one
+        if (
+          playlists.length == 0 ||
+          !!!playlists.find((p) => p.id === uuidNil)
+        ) {
+          const allTracksPlaylist: Playlist = {
+            id: uuidNil,
+            name: 'All Tracks',
+            createdBy: uuidNil,
+            tracks: [],
+            followers: [],
+            pinned: [],
+          };
 
-    if (!allTracksExists) {
-      yield* musicService.createPlaylist({
-        name: ALL_TRACKS.name,
-        createdBy: ALL_TRACKS.createdBy,
-      });
+          return okAsync(allTracksPlaylist);
+        }
+
+        return okAsync();
+      })
+      .andThen((allTracksPlaylist) => {
+        return allTracksPlaylist
+          ? dbService.putRecord<Playlist>(
+              PLAYLISTS_STORE_NAME,
+              allTracksPlaylist
+            )
+          : okAsync();
+      })
+      .orTee((e) => console.log('DBError', e.message, e.info))
+      .mapErr(() => new Error(`Failed to create 'All Tracks' playlist`));
+  }
+
+  onMount(async () => {
+    redirectToHome();
+
+    let result = await createAllTracksPlaylist();
+    result.match(
+      (_ok) => console.debug('All Tracks playlist created'),
+      (err) => console.debug(err)
+    );
+  });
+
+  /** A resource pointing to the user's pinned playlists. */
+  const [pinnedPlaylists] = createResource(async () => {
+    const userId = await getUserRecord(authService.authUser!).map((u) => u?.id);
+    if (userId.isOk() && userId.value !== undefined) {
+      const result = await musicService.getPinnedPlaylists(userId.value);
+      if (result.isOk()) {
+        return result.value;
+      }
+      console.debug('ResourceError', result.error.message);
+    }
+  });
+
+  /** A resource pointing to the user's recent playlists. */
+  const [recentPlaylists] = createResource(async () => {
+    const userId = await getUserRecord(authService.authUser!).map((u) => u?.id);
+    if (userId.isOk() && userId.value !== undefined) {
+      const result = await musicService.getRecentPlaylists(userId.value);
+      if (result.isOk()) {
+        return result.value;
+      }
+      console.debug('ResourceError', result.error.message);
     }
   });
 
   /** Determines if the `All Tracks` playlist is empty. */
-  let allTracksIsEmpty = false;
-  createEffect(() =>
-    Effect.runPromise(musicService.getPlaylist(ALL_TRACKS.id)).then(
-      (playlist) => (allTracksIsEmpty = playlist.tracks.length === 0)
-    )
-  );
-
-  /** The currently authenticated user's username. */
-  const [username] = createResource(async () => {
-    return await Effect.gen(function* () {
-      return (yield* authService.data).username;
-    }).pipe(Effect.runPromise);
-  });
-
-  /** The 6 pinned playlists. */
-  const [pinnedPlaylists] = createResource(
-    username,
-    async (username) => {
-      const playlists = await Effect.runPromise(
-        musicService.getPinnedPlaylists(username)
-      ).catch(console.error);
-
-      return playlists ? playlists.slice(0, 6) : [];
-    },
-    { initialValue: [] }
-  );
-
-  /** The 12 most recently listented to playlists. */
-  const [recentPlaylists] = createResource(
-    username,
-    async (username) => {
-      const playlists = await Effect.runPromise(
-        musicService.getRecentPlaylists(username)
-      ).catch(console.error);
-      return playlists ? playlists.slice(0, 12) : [];
-    },
-    { initialValue: [] }
-  );
+  async function allTracksIsEmpty() {
+    const res = await musicService
+      .getPlaylist(uuidNil)
+      .map((p) => (p ? (p.tracks.length === 0 ? true : false) : true));
+    if (res.isOk()) {
+      return res.value;
+    }
+    console.debug('MusicLibraryError', res.error.message);
+    return true;
+  }
 
   /** Style for the entire page/container div. */
   const dashboardContainerStyle: JSX.CSSProperties = {
@@ -121,41 +143,44 @@ export function DashboardPage() {
       <PopoverMenu
         popoverId={POPOVER_ID}
         navigate={navigate}
-        username={username}
+        username={authService.authUser}
         unauthenticate={authService.unauthenticate}
       ></PopoverMenu>
 
-      <Column style={dashboardContainerStyle}>
-        <Show when={username()} fallback={<Loading />}>
-          <Avatar name={username()!} popoverTargetId={POPOVER_ID} animate />
+      <Show when={authService.isReady && authService.authUser !== null}>
+        <Column style={dashboardContainerStyle}>
+          <Avatar
+            name={authService.authUser!}
+            popoverTargetId={POPOVER_ID}
+            animate
+          />
           <br />
 
           <Switch>
             {/* Initial dashboard view */}
             <Match when={allTracksIsEmpty}>
               <Column style={{ 'margin-top': '10rem' }}>
-                {/* TODO: Add file picker! */}
                 <ImportTracksButton />
               </Column>
             </Match>
 
             {/* Populated dashboard view */}
-            <Match when={pinnedPlaylists().length > 0}>
-              <PlaylistGrid playlists={pinnedPlaylists()} />
+            <Match when={pinnedPlaylists() && pinnedPlaylists()!.length > 0}>
+              <PlaylistGrid playlists={pinnedPlaylists()!} />
             </Match>
           </Switch>
           <br />
 
-          <Show when={recentPlaylists().length > 0}>
+          <Show when={recentPlaylists() && recentPlaylists()!.length > 0}>
             <h2 style={{ 'align-self': 'start' }}>Recently Played</h2>
             {/* TODO: Add carousel for recent playlists! */}
           </Show>
-        </Show>
-      </Column>
+        </Column>
 
-      {/* TODO: Add player */}
+        {/* TODO: Add player */}
 
-      <BottomNavbar currentPath="/dashboard" />
+        <BottomNavbar currentPath="/dashboard" />
+      </Show>
     </>
   );
 }
@@ -193,8 +218,8 @@ function ImportTracksButton() {
 function PopoverMenu(props: {
   popoverId: string;
   navigate: Navigator;
-  username: Resource<string | null>;
-  unauthenticate: Effect.Effect<void, never, never>;
+  username: string;
+  unauthenticate: AuthService['unauthenticate'];
 }) {
   /** The background color of the menu header.  */
   const [headerBgColor, setHeaderBgColor] = createSignal('rgba(0, 0, 0, 0)');
@@ -203,12 +228,14 @@ function PopoverMenu(props: {
   const [loading, setLoading] = createSignal(false);
 
   /** Logs the user out and redirects to the login page. */
-  const logout = Effect.gen(function* () {
+  async function logout() {
     setLoading(true);
-    yield* props.unauthenticate;
-    props.navigate('/', { replace: true });
+    const res = await props.unauthenticate();
+    if (res.isErr()) {
+      console.debug(res.error.name, res.error.message);
+    }
     setLoading(false);
-  });
+  }
 
   /** Style for the popover menu. */
   const style: JSX.CSSProperties = {
@@ -314,19 +341,17 @@ function PopoverMenu(props: {
               }}
             >
               <Row>
-                <Show when={props.username()} fallback={<Loading />}>
-                  <Avatar name={props.username()!}></Avatar>
-                  <span
-                    style={{
-                      color: 'white',
-                      padding: 0,
-                      'margin-left': '-1.5rem',
-                      'margin-top': '0.7rem',
-                    }}
-                  >
-                    {props.username()}
-                  </span>
-                </Show>
+                <Avatar name={props.username}></Avatar>
+                <span
+                  style={{
+                    color: 'white',
+                    padding: 0,
+                    'margin-left': '-1.5rem',
+                    'margin-top': '0.7rem',
+                  }}
+                >
+                  {props.username}
+                </span>
               </Row>
               <span style={viewProfileStyle()}>View Profile</span>
             </Column>
@@ -346,7 +371,7 @@ function PopoverMenu(props: {
             <button
               disabled={loading()}
               style={loading() ? disableBtnStyle : btnStyle}
-              onClick={() => Effect.runFork(logout)}
+              onClick={logout}
             >
               {loading() ? 'Logging out...' : 'Log out'}
             </button>

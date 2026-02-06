@@ -19,7 +19,7 @@ export type Playlist = {
   tracks: string[];
   followers: string[];
   pinned: string[];
-  lastPlayed: number;
+  lastPlayed?: number;
 };
 
 /** Represents an error in the music library service. */
@@ -27,6 +27,8 @@ export class MusicLibraryServiceError extends Error {}
 export interface MusicLibraryServiceError {
   message: string;
 }
+
+// TODO: Add functions to getAllPlaylists + getAllTracks
 
 /** Service that handles all playlist operations. */
 export type MusicLibraryService = {
