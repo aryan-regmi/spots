@@ -1,6 +1,7 @@
 import { ResultAsync } from 'neverthrow';
 
 /** Error for authentication failure */
+export class AuthenticationError extends Error {}
 export interface AuthenticationError {
   message: string;
 }
@@ -19,6 +20,6 @@ export type AuthService = {
   /** Unauthenticate the currently authenticated user. */
   unauthenticate: () => ResultAsync<void, AuthenticationError>;
 
-  /** Determines if the authentication service is currently in a loading state. */
-  isLoading: boolean;
+  /** Determines if the authentication service is ready. */
+  isReady: boolean;
 };

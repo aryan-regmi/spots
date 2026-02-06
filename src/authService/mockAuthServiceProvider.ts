@@ -1,110 +1,122 @@
-import { AuthService, AuthenticationError } from '@/authService/authService';
+import { createStore, produce } from 'solid-js/store';
+import { AuthenticationError, AuthService } from './authService';
+import { errAsync, okAsync } from 'neverthrow';
 import {
   AUTH_STORE_NAME,
-  useDbService,
+  useDBProvider,
 } from '@/dbService/mockDBServiceProvider';
-import { errAsync, okAsync } from 'neverthrow';
-import { createStore } from 'solid-js/store';
+import { DBServiceError } from '@/dbService/dbService';
 
-const { getRecord, getAllRecords, putRecord } = useDbService();
+/** Auth store. */
+const [authStore, setAuthStore] = createStore<AuthService>({
+  authUser: null,
+  isReady: false,
+  authenticate: () => errAsync(new AuthenticationError('Not implemented')),
+  unauthenticate: () => errAsync(new AuthenticationError('Not implemented')),
+});
 
-/** Provides the `AuthService`. */
-export function useAuthService() {
-  // Load authenticated user from the database
-  const request = getAllRecords<AuthStoreRecordType>(AUTH_STORE_NAME);
-  request.match(
-    (data) => {
-      const authUser = data.find((r) => r.isAuth);
-      if (authUser) {
-        setAuthState('authUser', authUser.username);
-      }
-    },
-    (err) => console.error(`Failed to get user records: ${err.message}`)
-  );
+/** Initialize the DB. */
+const db = useDBProvider();
 
-  return authState;
-}
-
-/** Type of records to insert into the database. */
-type AuthStoreRecordType = {
+/** Type of a record in the auth store (DB). */
+type AuthStoreRecord = {
   username: string;
   password?: string;
   isAuth: boolean;
 };
 
-/** The authentication state. */
-const [authState, setAuthState] = createStore<AuthService>({
-  authUser: null,
-  authenticate,
-  unauthenticate,
-  isLoading: false,
-});
-
-/** The types of errors. */
-type ErrorKind = 'InvalidLogin' | 'NoAuthUser';
-
-/** The actual error type returned by the auth service. */
-class AuthServiceError implements AuthenticationError {
-  constructor(kind: ErrorKind) {
-    switch (kind) {
-      case 'InvalidLogin':
-        this.message = 'Login does not exist';
-        break;
-      case 'NoAuthUser':
-        this.message = 'NoAuthUser';
-        break;
-    }
+/** Loads auth state from DB. */
+async function loadAuthState() {
+  if (!db.isReady) {
+    return;
   }
 
-  message: string;
+  setAuthStore('isReady', false);
+  db.getAllRecords<AuthStoreRecord>(AUTH_STORE_NAME).match(
+    (data) => {
+      const authUser = data.find((record) => record.isAuth);
+      if (authUser) {
+        setAuthStore('authUser', authUser.username);
+        setAuthStore('isReady', true);
+      }
+    },
+    (err) => console.error('Failed to load auth state', err.message, err.info)
+  );
 }
 
-/** Authenticates the specified user. */
+/** Authenticates the given login. */
 function authenticate(username: string, password: string) {
-  setAuthState('isLoading', true);
-
-  // Check if the database has the given user
-  let authenticated = getRecord<AuthStoreRecordType>(AUTH_STORE_NAME, username)
+  setAuthStore('isReady', false);
+  return db
+    .getRecord<AuthStoreRecord>(AUTH_STORE_NAME, username) // Get record for the username from DB
     .andThen((record) => {
-      // Authenticate if username and password combo exists in the database
-      if (password === record.password) {
-        setAuthState('authUser', username);
-        setAuthState('isLoading', false);
-        putRecord<AuthStoreRecordType>(
-          AUTH_STORE_NAME,
-          {
-            ...record,
-            isAuth: true,
-          },
-          record.username
-        );
-        return okAsync();
+      // If passwords match, authenticate
+      if (record && password === record.password) {
+        setAuthStore('authUser', username);
+
+        // Update DB record
+        return db
+          .putRecord<AuthStoreRecord>(
+            AUTH_STORE_NAME,
+            {
+              ...record,
+              isAuth: true,
+            },
+            record.username
+          )
+          .andTee(() => setAuthStore('isReady', true))
+          .andThen(() => okAsync());
       }
 
-      // The stored password didn't match the given one
-      setAuthState('isLoading', false);
-      return errAsync(new AuthServiceError('InvalidLogin'));
+      // No match found
+      setAuthStore('isReady', true);
+      return errAsync(new AuthenticationError('Invalid login'));
     })
     .mapErr((e) => {
-      console.error(`DBServiceError: ${e.message}`);
-      const err = new AuthServiceError('InvalidLogin');
-      return err;
+      console.error(
+        'DBError',
+        e.message,
+        e instanceof DBServiceError ? e.info : null
+      );
+      return new AuthenticationError('Invalid login');
     });
-
-  return authenticated;
 }
 
 /** Unauthenticates the currently authenticated user. */
 function unauthenticate() {
-  setAuthState('isLoading', true);
-  if (authState.authUser) {
-    setAuthState('authUser', null);
-    putRecord<AuthStoreRecordType>(AUTH_STORE_NAME, {
-      username: authState.authUser,
-      isAuth: false,
-    });
-    return errAsync(new AuthServiceError('NoAuthUser'));
+  setAuthStore('isReady', false);
+
+  // Return if no auth user
+  if (!authStore.authUser) {
+    setAuthStore('isReady', true);
+    return okAsync();
   }
-  setAuthState('isLoading', false);
-  return okAsync();
+
+  // Update DB (remove auth from user)
+  return db
+    .putRecord<AuthStoreRecord>(
+      AUTH_STORE_NAME,
+      { username: authStore.authUser, isAuth: false },
+      authStore.authUser
+    )
+    .andTee(() => {
+      setAuthStore('authUser', null);
+      setAuthStore('isReady', true);
+    })
+    .andThen(() => okAsync());
 }
+
+/** Update store with actual imlementations. */
+setAuthStore(
+  produce((store) => {
+    store.authenticate = authenticate;
+    store.unauthenticate = unauthenticate;
+  })
+);
+
+/** Returns the auth provider. */
+export function useAuthProvider(): AuthService {
+  return authStore;
+}
+
+loadAuthState();
