@@ -4,7 +4,7 @@ import {
   TRACKS_STORE_NAME,
 } from './mockDBServiceProvider';
 
-export const migrations = [migrationV1];
+export const migrations = [{ version: 1, migrationV1 }];
 
 /** Version 1 migration. */
 function migrationV1(dbConn: IDBDatabase, event: IDBVersionChangeEvent) {
@@ -14,17 +14,17 @@ function migrationV1(dbConn: IDBDatabase, event: IDBVersionChangeEvent) {
 
   // Initalize `authStore`
   const authStore = dbConn.createObjectStore(AUTH_STORE_NAME, {
-    keyPath: 'user',
+    keyPath: 'username',
   });
-  authStore.createIndex('user', 'user', { unique: true });
+  authStore.createIndex('username', 'username', { unique: true });
   authStore.createIndex('password', 'password', { unique: false });
-  authStore.createIndex('isAuth', 'isAuth', { unique: false });
+  authStore.createIndex('isAuth', 'isAuth', { unique: true });
   authStore.transaction.oncomplete = () => {
     // Add dev user
     const store = dbConn
       .transaction(AUTH_STORE_NAME, 'readwrite')
       .objectStore(AUTH_STORE_NAME);
-    store.put({ user: 'dev', password: 'dev', isAuth: false });
+    store.put({ username: 'dev', password: 'dev', isAuth: false });
   };
 
   // Initalize `playlistsStore`
@@ -44,7 +44,6 @@ function migrationV1(dbConn: IDBDatabase, event: IDBVersionChangeEvent) {
   });
   tracksStore.createIndex('id', 'id', { unique: true });
   tracksStore.createIndex('src', 'src', { unique: false });
-  tracksStore.createIndex('imgSrc', 'imgSrc', { unique: false });
   tracksStore.createIndex('imgSrc', 'imgSrc', { unique: false });
   tracksStore.createIndex('title', 'title', { unique: false });
   tracksStore.createIndex('artist', 'artist', { unique: false });

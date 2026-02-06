@@ -1,12 +1,14 @@
-import { IndexDBError, IndexDBService } from '@/dbService/indexDBService';
+import { DBError, DBService } from '@/dbService/dbService';
 import { migrations } from './mockIndexDBMigrations';
-import { errAsync, fromPromise, okAsync, ResultAsync } from 'neverthrow';
+import { fromPromise, ResultAsync } from 'neverthrow';
 
-/** Provides the `IndexDBService` */
-export function useIndexDBService(): IndexDBService {
+/** Provides the database service. */
+export function useDbService(): DBService {
   return {
     dbConn,
     putRecord,
+    getRecord,
+    removeRecord,
   };
 }
 
@@ -46,15 +48,18 @@ openDbRequest.onsuccess = (event) => {
 
 /** Handles DB migrations. */
 openDbRequest.onupgradeneeded = (event) => {
-  migrations.forEach((migration) => migration(dbConn, event));
+  const migration = migrations.find((m) => m.version === DB_VERSION);
+  if (migration) {
+    migration.migrationV1(dbConn, event);
+  }
 };
 
 /** Adds a record to the store. */
-function putRecord(
+function putRecord<T>(
   storeName: string,
-  record: any,
+  record: T,
   dependencies?: string[]
-): ResultAsync<void, IndexDBError> {
+): ResultAsync<void, DBError> {
   const runTransaction = new Promise<void>((resolve, reject) => {
     // Start transaction
     const transactionStores = dependencies
@@ -67,17 +72,74 @@ function putRecord(
     store.put(record);
 
     // Handle transaction events
-    transaction.oncomplete = () => {
-      resolve();
-    };
+    transaction.oncomplete = () => resolve();
     transaction.onerror = (event) => {
       const transaction = event.target as IDBTransaction;
       reject({ message: `Transaction failed: ${transaction.error?.message}` });
     };
+    transaction.onabort = transaction.onerror;
   });
 
-  return fromPromise<void, IndexDBError>(
+  return fromPromise<void, DBError>(
     runTransaction,
-    (originalError) => originalError as IndexDBError
+    (originalError) => originalError as DBError
+  );
+}
+
+/** Gets the specified record from the given store. */
+function getRecord<T>(storeName: string, key: any, dependencies?: string[]) {
+  const runTransaction = new Promise<T>((resolve, reject) => {
+    // Start transaction
+    const transactionStores = dependencies
+      ? [storeName, ...dependencies]
+      : storeName;
+    const transaction = dbConn.transaction(transactionStores, 'readonly');
+    const store = transaction.objectStore(storeName);
+
+    // Request the record
+    let request = store.get(key);
+
+    // Handle transaction events
+    request.onsuccess = (event) => {
+      const value = event.target as IDBRequest<T>;
+      resolve(value.result);
+    };
+    request.onerror = (event) => {
+      const value = event.target as IDBRequest<T>;
+      reject({ message: `Transaction failed: ${value.error?.message}` });
+    };
+  });
+
+  return fromPromise<T, DBError>(
+    runTransaction,
+    (originalError) => originalError as DBError
+  );
+}
+
+/** Removes the specified record from the given store. */
+function removeRecord(storeName: string, key: any, dependencies?: string[]) {
+  const runTransaction = new Promise<void>((resolve, reject) => {
+    // Start transaction
+    const transactionStores = dependencies
+      ? [storeName, ...dependencies]
+      : storeName;
+    const transaction = dbConn.transaction(transactionStores, 'readonly');
+    const store = transaction.objectStore(storeName);
+
+    // Request record deletion
+    store.delete(key);
+
+    // Handle transaction events
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = (event) => {
+      const value = event.target as IDBRequest;
+      reject({ message: `Transaction failed: ${value.error?.message}` });
+    };
+    transaction.onabort = transaction.onerror;
+  });
+
+  return fromPromise(
+    runTransaction,
+    (originalError) => originalError as DBError
   );
 }
