@@ -18,6 +18,8 @@ export type Playlist = {
   createdBy: string;
   tracks: string[];
   followers: string[];
+  pinned: boolean;
+  lastPlayed: number;
 };
 
 /** Represents an error in the music library service. */

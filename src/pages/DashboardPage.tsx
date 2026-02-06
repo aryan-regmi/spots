@@ -16,12 +16,6 @@ import { Loading } from '@/components/Loading';
 import { Navigator, useNavigate } from '@solidjs/router';
 import { PlaylistGrid } from '@/components/Playlist';
 import { Row } from '@/components/Row';
-import { useAuthService } from '@/auth/mockAuthServiceProvider';
-import {
-  ALL_TRACKS,
-  TrackImporter,
-  useMusicLibraryService,
-} from '@/backendApi/mockMusicLibraryServiceProvider';
 
 /** The user's dashboard page. */
 export function DashboardPage() {

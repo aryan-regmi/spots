@@ -1,64 +1,42 @@
-import { Effect, Ref } from 'effect';
 import { ICommonTagsResult, parseBlob } from 'music-metadata';
 import { JSX } from 'solid-js';
 import {
-  MusicLibraryService,
+  MusicLibraryServiceError,
   Playlist,
   Track,
-} from '@/backendApi/musicLibraryService';
-import { createStore } from 'solid-js/store';
+} from '@/musicLibraryService/musicLibraryService';
+import {
+  PLAYLISTS_STORE_NAME,
+  TRACKS_STORE_NAME,
+  useDbService,
+} from '@/dbService/mockDBServiceProvider';
 
-const MUSIC_LIB_STATE_KEY = 'music-lib-state';
+const { getRecord, getAllRecords, putRecord } = useDbService();
 
-// const [musicLibState, setMusicLibState] = createStore<MusicLibraryService>({});
-
-/** Initalizes the music library. */
-const createMusicLibraryState = () => {
-  let state: { playlists: Playlist[]; tracks: Track[] } = {
-    playlists: [],
-    tracks: [],
-  };
-  const storedState = localStorage.getItem(MUSIC_LIB_STATE_KEY);
-  if (storedState) {
-    state = JSON.parse(storedState);
-  } else {
-    localStorage.setItem('music-lib-state', JSON.stringify(state));
-  }
-  return Ref.make(state).pipe(Effect.runSync);
-};
-
-/** State of the music library. */
-const musicLibraryState = createMusicLibraryState();
+/** Hook to use the mock playlist service */
+export function useMusicLibraryService() {
+  throw 'todo!';
+}
 
 /** Gets the specified playlist. */
-const getPlaylist = (playlistId: string) =>
-  Effect.gen(function* () {
-    const musicLibrary = yield* musicLibraryState;
-    const playlist = musicLibrary.playlists.find(
-      (playlist) => playlist.id === playlistId
-    );
-    return playlist
-      ? yield* Effect.succeed(playlist)
-      : yield* Effect.fail(
-          new MusicLibraryServiceError({
-            message: `Playlist (id = ${playlistId}) not found`,
-          })
-        );
+function getPlaylist(playlistId: string) {
+  return getRecord<Playlist>(PLAYLISTS_STORE_NAME, playlistId).mapErr((e) => {
+    console.error(e);
+    return {
+      message: `Invalid playlist: Playlist with id=${playlistId} doesn't exit`,
+    } as MusicLibraryServiceError;
   });
+}
 
 /** Gets the specified track. */
-const getTrack = (trackId: string) =>
-  Effect.gen(function* () {
-    const musicLibrary = yield* musicLibraryState;
-    const track = musicLibrary.tracks.find((track) => track.id === trackId);
-    return track
-      ? yield* Effect.succeed(track)
-      : yield* Effect.fail(
-          new MusicLibraryServiceError({
-            message: `Track (id = ${trackId}) not found`,
-          })
-        );
+function getTrack(trackId: string) {
+  return getRecord<Playlist>(TRACKS_STORE_NAME, trackId).mapErr((e) => {
+    console.error(e);
+    return {
+      message: `Invalid track: Track with id=${trackId} doesn't exit`,
+    } as MusicLibraryServiceError;
   });
+}
 
 /** Gets the (up to) 12 most recently played playlists. */
 const getRecentPlaylists = () =>
@@ -276,100 +254,3 @@ const addTrackToPlaylist = (trackId: string, playlistId: string) =>
       );
     }
   });
-
-/** The (mock) service provider. */
-const mockMusicLibraryServiceProvider = Effect.provideService(
-  playlistServiceProgram,
-  MusicLibraryService,
-  {
-    getPlaylist,
-    getTrack,
-    getRecentPlaylists,
-    getPinnedPlaylists,
-    toggleFollowPlaylist,
-    createPlaylist,
-    addTrack,
-    addTrackToPlaylist,
-  }
-);
-
-/** Hook to use the mock playlist service */
-export function useMusicLibraryService() {
-  return Effect.runSync(mockMusicLibraryServiceProvider);
-}
-
-/** Info for `All Tracks` playlist created by default. */
-export const ALL_TRACKS = {
-  id: '0',
-  name: 'All Tracks',
-  createdBy: '__SYSTEM__',
-};
-
-/** Returns an handler that adds selected files to the music library.
- *
- * # Note
- * This must be attached to an <input type="file" /> element.
- * */
-export function TrackImporter() {
-  const musicLibService = useMusicLibraryService();
-
-  /** Parses the given file as an audio file. */
-  const parseAudioFile = (file: File) =>
-    Effect.tryPromise({
-      try: () => parseBlob(file),
-      catch: (e) => console.error(e),
-    });
-
-  /** Extracts the track image from the audio blob.*/
-  const extractTrackImg = (audioBlob: ICommonTagsResult) =>
-    Effect.gen(function* () {
-      if (audioBlob.picture && audioBlob.picture.length > 0) {
-        const picture = audioBlob.picture[0];
-        const base64String = btoa(
-          String.fromCharCode(...new Uint8Array(picture.data))
-        );
-        const imgSrc = `data:${picture.format};base64,${base64String}`;
-        return imgSrc;
-      }
-    });
-
-  /** Adds the selected files to the music library. */
-  const addTracksToMusicLibrary: JSX.EventHandler<HTMLInputElement, Event> = (
-    e
-  ) => {
-    const program = Effect.gen(function* () {
-      const event = e.target as HTMLInputElement;
-      const files = Array.from(event.files || []);
-
-      files.forEach((file) =>
-        Effect.gen(function* () {
-          // Add track to library
-          const audioBlob = yield* parseAudioFile(file);
-          const imgSrc = yield* extractTrackImg(audioBlob.common);
-          const fileBuffer = yield* Effect.tryPromise({
-            try: () => file.arrayBuffer(),
-            catch: console.error,
-          });
-          const trackSrc = arrayBufferToBase64(fileBuffer);
-          const trackID = yield* musicLibService.addTrack({
-            src: trackSrc,
-            imgSrc,
-            title: audioBlob.common.title || file.name,
-            artist: audioBlob.common.artist,
-            album: audioBlob.common.album,
-          });
-
-          // Add track to `All Songs` playlist
-          yield* musicLibService.addTrackToPlaylist(trackID, ALL_TRACKS.id);
-        }).pipe(Effect.runFork)
-      );
-    });
-    Effect.runFork(program);
-  };
-
-  return {
-    parseAudioFile,
-    extractTrackImg,
-    addTracksToMusicLibrary,
-  };
-}

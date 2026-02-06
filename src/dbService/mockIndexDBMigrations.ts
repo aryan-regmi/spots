@@ -37,6 +37,8 @@ function migrationV1(dbConn: IDBDatabase, event: IDBVersionChangeEvent) {
   playlistsStore.createIndex('createdBy', 'createdBy', { unique: false });
   playlistsStore.createIndex('tracks', 'tracks', { unique: false });
   playlistsStore.createIndex('followers', 'followers', { unique: false });
+  playlistsStore.createIndex('pinned', 'pinned', { unique: false });
+  playlistsStore.createIndex('lastPlayed', 'lastPlayed', { unique: false });
 
   // Initalize `tracksStore`
   const tracksStore = dbConn.createObjectStore(TRACKS_STORE_NAME, {
