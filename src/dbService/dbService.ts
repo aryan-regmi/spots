@@ -1,7 +1,7 @@
 import { ResultAsync } from 'neverthrow';
 
 /** Represents errors in the database service. */
-export type DBError = {
+export type DBServiceError = {
   message: string;
 };
 
@@ -19,26 +19,27 @@ export type DBService = {
   putRecord: <T>(
     storeName: string,
     record: T,
+    key?: string,
     dependencies?: string[]
-  ) => ResultAsync<void, DBError>;
+  ) => ResultAsync<void, DBServiceError>;
 
   /** Gets the specified record from the given store. */
   getRecord: <T>(
     storeName: string,
-    key: any,
+    key: string,
     dependencies?: string[]
-  ) => ResultAsync<T, DBError>;
+  ) => ResultAsync<T, DBServiceError>;
 
   /** Removes the specified record from the given store. */
-  removeRecord: <T>(
+  removeRecord: (
     storeName: string,
-    record: T,
+    key: string,
     dependencies?: string[]
-  ) => ResultAsync<void, DBError>;
+  ) => ResultAsync<void, DBServiceError>;
 
   /** Gets all records from the specified store. */
   getAllRecords: <T>(
     storeName: string,
     dependencies?: string[]
-  ) => ResultAsync<T[], DBError>;
+  ) => ResultAsync<T[], DBServiceError>;
 };

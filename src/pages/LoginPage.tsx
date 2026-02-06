@@ -101,7 +101,7 @@ function LoginForm(props: {
     if (password && password.length > 0) {
       return { isValid: true, password };
     }
-    setLoginErrors('password must be non-empty');
+    setLoginErrors('Password must be non-empty');
     return { isValid: false, password };
   }
 
@@ -114,6 +114,8 @@ function LoginForm(props: {
     const formData = new FormData(e.currentTarget);
     const usernameInput = formData.get('username');
     const passwordInput = formData.get('password');
+
+    // FIXME: Hash + Salt passwords in backend
 
     // Validation
     const username = validateUsername(usernameInput);
@@ -162,7 +164,7 @@ function LoginForm(props: {
             type="text"
             name="username"
             placeholder="Username"
-            oninput={() => resetInput}
+            oninput={resetInput}
             style={inputStyle}
           />
         </Column>
@@ -173,7 +175,7 @@ function LoginForm(props: {
             type="password"
             name="password"
             placeholder="Password"
-            oninput={() => resetInput}
+            oninput={resetInput}
             style={inputStyle}
           />
         </Column>
@@ -205,10 +207,10 @@ function SubmitButton(props: {
 
   /** Style for the disabled button. */
   const disableBtnStyle = {
-    ...btnStyle,
-    outline: 'none',
+    ...btnStyle(),
+    outline: 'non0.5e',
     background: 'none',
-    'background-color': 'rgba(20, 30, 20, 0.5)',
+    'background-color': 'rgba(20, 40, 20, 1)',
     cursor: 'not-allowed',
   };
 

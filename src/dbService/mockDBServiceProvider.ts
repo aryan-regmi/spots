@@ -1,6 +1,6 @@
-import { DBError, DBService } from '@/dbService/dbService';
+import { DBServiceError, DBService } from '@/dbService/dbService';
 import { migrations } from './mockIndexDBMigrations';
-import { fromPromise, ResultAsync } from 'neverthrow';
+import { fromPromise, fromThrowable, ResultAsync } from 'neverthrow';
 
 /** Provides the database service. */
 export function useDbService(): DBService {
@@ -28,39 +28,44 @@ const DB_NAME = 'spots-db';
 /** Current database version. */
 const DB_VERSION = 1;
 
+/** Initalizes the database. */
+const initDatabase = new Promise<IDBDatabase>((resolve, reject) => {
+  /** Initial request to open the database. */
+  const openDbRequest = window.indexedDB.open(DB_NAME, DB_VERSION);
+
+  /** Handles DB opening errors. */
+  openDbRequest.onerror = (event) => {
+    const request = event.target as IDBOpenDBRequest;
+    console.error(`Unable to open database: ${request.error?.message}`);
+    reject();
+  };
+
+  /** Handles DB succefully opening. */
+  openDbRequest.onsuccess = (event) => {
+    const request = event.target as IDBOpenDBRequest;
+    console.log('Database opened');
+    resolve(request.result);
+  };
+
+  /** Handles DB migrations. */
+  openDbRequest.onupgradeneeded = (event) => {
+    const migration = migrations.find((m) => m.version === DB_VERSION);
+    if (migration) {
+      migration.migrationV1(dbConn, event);
+    }
+  };
+});
+
 /** The database connection. */
-let dbConn: IDBDatabase;
-
-/** Initial request to open the database. */
-const openDbRequest = window.indexedDB.open(DB_NAME, DB_VERSION);
-
-/** Handles DB opening errors. */
-openDbRequest.onerror = (event) => {
-  const request = event.target as IDBOpenDBRequest;
-  console.error(`Unable to open database: ${request.error?.message}`);
-};
-
-/** Handles DB succefully opening. */
-openDbRequest.onsuccess = (event) => {
-  const request = event.target as IDBOpenDBRequest;
-  dbConn = request.result;
-  console.log('Database opened');
-};
-
-/** Handles DB migrations. */
-openDbRequest.onupgradeneeded = (event) => {
-  const migration = migrations.find((m) => m.version === DB_VERSION);
-  if (migration) {
-    migration.migrationV1(dbConn, event);
-  }
-};
+const dbConn: IDBDatabase = await initDatabase;
 
 /** Adds a record to the store. */
 function putRecord<T>(
   storeName: string,
-  record: T,
+  value: T,
+  key?: string,
   dependencies?: string[]
-): ResultAsync<void, DBError> {
+): ResultAsync<void, DBServiceError> {
   const runTransaction = new Promise<void>((resolve, reject) => {
     // Start transaction
     const transactionStores = dependencies
@@ -70,7 +75,7 @@ function putRecord<T>(
     const store = transaction.objectStore(storeName);
 
     // Put record in store
-    store.put(record);
+    store.put(value, key);
 
     // Handle transaction events
     transaction.oncomplete = () => resolve();
@@ -81,14 +86,17 @@ function putRecord<T>(
     transaction.onabort = transaction.onerror;
   });
 
-  return fromPromise<void, DBError>(
-    runTransaction,
-    (originalError) => originalError as DBError
-  );
+  return fromPromise<void, DBServiceError>(runTransaction, (originalError) => {
+    if (originalError instanceof Error) {
+      return { message: originalError.message };
+    }
+    return originalError as DBServiceError;
+  });
 }
 
 /** Gets the specified record from the given store. */
 function getRecord<T>(storeName: string, key: any, dependencies?: string[]) {
+  console.log(storeName, key);
   const runTransaction = new Promise<T>((resolve, reject) => {
     // Start transaction
     const transactionStores = dependencies
@@ -111,14 +119,16 @@ function getRecord<T>(storeName: string, key: any, dependencies?: string[]) {
     };
   });
 
-  return fromPromise<T, DBError>(
-    runTransaction,
-    (originalError) => originalError as DBError
-  );
+  return fromPromise<T, DBServiceError>(runTransaction, (originalError) => {
+    if (originalError instanceof Error) {
+      return { message: originalError.message };
+    }
+    return originalError as DBServiceError;
+  });
 }
 
 /** Removes the specified record from the given store. */
-function removeRecord(storeName: string, key: any, dependencies?: string[]) {
+function removeRecord<T>(storeName: string, key: any, dependencies?: string[]) {
   const runTransaction = new Promise<void>((resolve, reject) => {
     // Start transaction
     const transactionStores = dependencies
@@ -133,16 +143,18 @@ function removeRecord(storeName: string, key: any, dependencies?: string[]) {
     // Handle transaction events
     transaction.oncomplete = () => resolve();
     transaction.onerror = (event) => {
-      const value = event.target as IDBRequest;
+      const value = event.target as IDBRequest<T>;
       reject({ message: `Transaction failed: ${value.error?.message}` });
     };
     transaction.onabort = transaction.onerror;
   });
 
-  return fromPromise(
-    runTransaction,
-    (originalError) => originalError as DBError
-  );
+  return fromPromise(runTransaction, (originalError) => {
+    if (originalError instanceof Error) {
+      return { message: originalError.message };
+    }
+    return originalError as DBServiceError;
+  });
 }
 
 /** Gets all records from the specified store. */
@@ -169,8 +181,10 @@ function getAllRecords<T>(storeName: string, dependencies?: string[]) {
     };
   });
 
-  return fromPromise<T[], DBError>(
-    runTransaction,
-    (originalError) => originalError as DBError
-  );
+  return fromPromise<T[], DBServiceError>(runTransaction, (originalError) => {
+    if (originalError instanceof Error) {
+      return { message: originalError.message };
+    }
+    return originalError as DBServiceError;
+  });
 }
