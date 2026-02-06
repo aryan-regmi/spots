@@ -44,9 +44,7 @@ export function LoginPage() {
         <ErrorMessage errorMsg={errorMsg} />
       </span>
 
-      <A href="/signup" style={{ 'margin-top': '-2rem' }}>
-        Sign Up
-      </A>
+      <A href="/signup">Sign Up</A>
     </Column>
   );
 }
