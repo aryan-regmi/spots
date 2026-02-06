@@ -1,35 +1,32 @@
-import { Effect, Either } from 'effect';
 import {
-  createEffect,
-  createResource,
-  createSignal,
   JSX,
   Match,
-  onMount,
   Resource,
   Show,
   Switch,
+  createEffect,
+  createResource,
+  createSignal,
+  onMount,
 } from 'solid-js';
-import { useAuthService } from '@/auth/mockAuthServiceProvider';
-import { Navigator, useNavigate } from '@solidjs/router';
 import { Avatar } from '@/components/Avatar';
-import { Column } from '@/components/Column';
-import { Row } from '@/components/Row';
-import { Loading } from '@/components/Loading';
-import { PlaylistGrid } from '@/components/Playlist';
 import { BottomNavbar } from '@/components/BottomNavBar';
+import { Column } from '@/components/Column';
+import { Loading } from '@/components/Loading';
+import { Navigator, useNavigate } from '@solidjs/router';
+import { PlaylistGrid } from '@/components/Playlist';
+import { Row } from '@/components/Row';
+import { useAuthService } from '@/auth/mockAuthServiceProvider';
 import {
   ALL_TRACKS,
   TrackImporter,
   useMusicLibraryService,
 } from '@/backendApi/mockMusicLibraryServiceProvider';
-import { MusicLibraryService } from '@/backendApi/musicLibraryService';
-import { IAudioMetadata, ICommonTagsResult, parseBlob } from 'music-metadata';
 
 /** The user's dashboard page. */
 export function DashboardPage() {
   const navigate = useNavigate();
-  const auth = useAuthService();
+  const authService = useAuthService();
   const musicLibService = useMusicLibraryService();
 
   /** The `id` attribute for the popover menu. */
@@ -37,8 +34,8 @@ export function DashboardPage() {
 
   /** Redirects to home (login page) if there is no authenticated user. */
   const redirectToHome = Effect.gen(function* () {
-    const authInfo = yield* auth.data;
-    const authLoading = yield* auth.isLoading;
+    const authInfo = yield* authService.data;
+    const authLoading = yield* authService.isLoading;
     if (authInfo.username === null && authLoading === false) {
       navigate('/', { replace: true });
     }
@@ -74,7 +71,7 @@ export function DashboardPage() {
   /** The currently authenticated user's username. */
   const [username] = createResource(async () => {
     return await Effect.gen(function* () {
-      return (yield* auth.data).username;
+      return (yield* authService.data).username;
     }).pipe(Effect.runPromise);
   });
 
@@ -116,7 +113,7 @@ export function DashboardPage() {
         popoverId={POPOVER_ID}
         navigate={navigate}
         username={username}
-        unauthenticate={auth.unauthenticate}
+        unauthenticate={authService.unauthenticate}
       ></PopoverMenu>
 
       <Column style={dashboardContainerStyle}>

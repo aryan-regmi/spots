@@ -2,7 +2,7 @@ import { A, Navigator, useNavigate } from '@solidjs/router';
 import { Accessor, createSignal, onMount, Setter } from 'solid-js';
 import { Column } from '@/components/Column';
 import { JSX } from 'solid-js/h/jsx-runtime';
-import { useAuthService } from '@/auth/mockAuthServiceProvider';
+import { useAuthService } from '@/authService/mockAuthServiceProvider';
 
 const BG_COLOR = 'rgba(50, 100, 50, 1)';
 
@@ -13,7 +13,7 @@ export function LoginPage() {
 
   /** Redirects to dashboard if user is already logged in. */
   onMount(() => {
-    if (authService.authUser) {
+    if (authService.authUser !== null) {
       navigate('/dashboard', { replace: true });
     }
   });
@@ -195,15 +195,15 @@ function SubmitButton(props: {
   const [isHovered, setIsHovered] = createSignal(false);
 
   /** Style for the submit button. */
-  const btnStyle: JSX.CSSProperties = {
+  const btnStyle: () => JSX.CSSProperties = () => ({
     'margin-top': '1.75rem',
     'border-radius': '2rem',
     'align-self': 'center',
     width: '10rem',
     background:
       'linear-gradient(45deg, rgba(50, 100, 50, 0.5) 0%, rgba(40, 175, 40, 0.9) 50%)',
-    transform: isHovered() ? 'scale(1.1)' : '',
-  };
+    transform: isHovered() ? 'scale(1.1)' : 'scale(1)',
+  });
 
   /** Style for the disabled button. */
   const disableBtnStyle = {
@@ -218,7 +218,7 @@ function SubmitButton(props: {
     <button
       type="submit"
       disabled={props.submitDisabled()}
-      style={props.submitDisabled() ? disableBtnStyle : btnStyle}
+      style={props.submitDisabled() ? disableBtnStyle : btnStyle()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

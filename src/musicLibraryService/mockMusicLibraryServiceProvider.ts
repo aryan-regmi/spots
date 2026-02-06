@@ -1,16 +1,16 @@
 import { Effect, Ref } from 'effect';
-import {
-  MusicLibraryService,
-  MusicLibraryServiceError,
-  Playlist,
-  Track,
-  playlistServiceProgram,
-} from '@/backendApi/musicLibraryService';
 import { ICommonTagsResult, parseBlob } from 'music-metadata';
 import { JSX } from 'solid-js';
-import { base64String } from 'effect/FastCheck';
+import {
+  MusicLibraryService,
+  Playlist,
+  Track,
+} from '@/backendApi/musicLibraryService';
+import { createStore } from 'solid-js/store';
 
 const MUSIC_LIB_STATE_KEY = 'music-lib-state';
+
+// const [musicLibState, setMusicLibState] = createStore<MusicLibraryService>({});
 
 /** Initalizes the music library. */
 const createMusicLibraryState = () => {

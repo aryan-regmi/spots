@@ -1,4 +1,4 @@
-import { AuthService, AuthenticationError } from '@/auth/authService';
+import { AuthService, AuthenticationError } from '@/authService/authService';
 import { errAsync, fromPromise, okAsync } from 'neverthrow';
 import { createStore } from 'solid-js/store';
 
