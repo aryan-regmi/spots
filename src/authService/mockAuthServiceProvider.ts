@@ -40,7 +40,7 @@ async function loadAuthState() {
         setAuthStore('isReady', true);
       }
     },
-    (err) => console.error('Failed to load auth state', err.message, err.info)
+    (err) => console.debug('Failed to load auth state', err.message, err.info)
   );
 }
 
@@ -73,7 +73,7 @@ function authenticate(username: string, password: string) {
       return errAsync(new AuthenticationError('Invalid login'));
     })
     .mapErr((e) => {
-      console.error(
+      console.debug(
         'DBError',
         e.message,
         e instanceof DBServiceError ? e.info : null

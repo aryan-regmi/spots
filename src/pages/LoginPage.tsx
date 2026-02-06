@@ -49,8 +49,6 @@ export function LoginPage() {
   );
 }
 
-// FIXME: Use solidjs-router `action` to replace validation etc
-
 /** The form part of the login page. */
 function LoginForm(props: {
   navigate: Navigator;
