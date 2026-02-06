@@ -2,7 +2,7 @@ import { createStore, produce } from 'solid-js/store';
 import { AuthenticationError, AuthService } from './authService';
 import { errAsync, okAsync } from 'neverthrow';
 import {
-  AUTH_STORE_NAME,
+  USERS_STORE_NAME,
   useDBProvider,
 } from '@/dbService/mockDBServiceProvider';
 import { DBServiceError } from '@/dbService/dbService';
@@ -19,7 +19,8 @@ const [authStore, setAuthStore] = createStore<AuthService>({
 const db = useDBProvider();
 
 /** Type of a record in the auth store (DB). */
-type AuthStoreRecord = {
+type UserRecord = {
+  id: string;
   username: string;
   password?: string;
   isAuth: boolean;
@@ -32,7 +33,7 @@ async function loadAuthState() {
   }
 
   setAuthStore('isReady', false);
-  db.getAllRecords<AuthStoreRecord>(AUTH_STORE_NAME).match(
+  db.getAllRecords<UserRecord>(USERS_STORE_NAME).match(
     (data) => {
       const authUser = data.find((record) => record.isAuth);
       if (authUser) {
@@ -47,8 +48,7 @@ async function loadAuthState() {
 /** Authenticates the given login. */
 function authenticate(username: string, password: string) {
   setAuthStore('isReady', false);
-  return db
-    .getRecord<AuthStoreRecord>(AUTH_STORE_NAME, username) // Get record for the username from DB
+  return getUser(username)
     .andThen((record) => {
       // If passwords match, authenticate
       if (record && password === record.password) {
@@ -56,8 +56,8 @@ function authenticate(username: string, password: string) {
 
         // Update DB record
         return db
-          .putRecord<AuthStoreRecord>(
-            AUTH_STORE_NAME,
+          .putRecord<UserRecord>(
+            USERS_STORE_NAME,
             {
               ...record,
               isAuth: true,
@@ -72,14 +72,15 @@ function authenticate(username: string, password: string) {
       setAuthStore('isReady', true);
       return errAsync(new AuthenticationError('Invalid login'));
     })
-    .mapErr((e) => {
+    .andTee(() => setAuthStore('isReady', true))
+    .orTee((e) =>
       console.debug(
         'DBError',
         e.message,
         e instanceof DBServiceError ? e.info : null
-      );
-      return new AuthenticationError('Invalid login');
-    });
+      )
+    )
+    .mapErr(() => new AuthenticationError('Invalid login'));
 }
 
 /** Unauthenticates the currently authenticated user. */
@@ -93,17 +94,31 @@ function unauthenticate() {
   }
 
   // Update DB (remove auth from user)
-  return db
-    .putRecord<AuthStoreRecord>(
-      AUTH_STORE_NAME,
-      { username: authStore.authUser, isAuth: false },
-      authStore.authUser
-    )
-    .andTee(() => {
-      setAuthStore('authUser', null);
-      setAuthStore('isReady', true);
+  return getUser(authStore.authUser)
+    .andThen((user) => {
+      if (user) {
+        return db.putRecord<UserRecord>(
+          USERS_STORE_NAME,
+          {
+            ...user,
+            id: user.id,
+            isAuth: false,
+          },
+          authStore.authUser!
+        );
+      }
+
+      return okAsync();
     })
-    .andThen(() => okAsync());
+    .andTee(() => setAuthStore('isReady', true))
+    .orTee((e) =>
+      console.debug(
+        'DBError',
+        e.message,
+        e instanceof DBServiceError ? e.info : null
+      )
+    )
+    .mapErr(() => new AuthenticationError('Invalid login'));
 }
 
 /** Update store with actual imlementations. */
@@ -117,6 +132,11 @@ setAuthStore(
 /** Returns the auth provider. */
 export function useAuthProvider(): AuthService {
   return authStore;
+}
+
+/** Gets the user from the username. */
+export function getUser(username: string) {
+  return db.getRecord<UserRecord>(USERS_STORE_NAME, username);
 }
 
 loadAuthState();

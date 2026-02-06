@@ -237,6 +237,6 @@ setMusicStore(
 );
 
 /** Returns the auth provider. */
-export function useMusicLibraryService(): MusicLibraryService {
+export function useMusicLibraryProvider(): MusicLibraryService {
   return musicStore;
 }

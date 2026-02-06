@@ -1,8 +1,9 @@
 import {
-  AUTH_STORE_NAME,
+  USERS_STORE_NAME,
   PLAYLISTS_STORE_NAME,
   TRACKS_STORE_NAME,
 } from './mockDBServiceProvider';
+import { v1 as uuidV1 } from 'uuid';
 
 export const migrations = [{ version: 1, run: migrationV1 }];
 
@@ -10,21 +11,26 @@ export const migrations = [{ version: 1, run: migrationV1 }];
 function migrationV1(dbConn: IDBDatabase, event: IDBVersionChangeEvent) {
   const request = event.target as IDBOpenDBRequest;
   dbConn = request.result;
-  console.log('Applying database migrations');
 
-  // Initalize `authStore`
-  const authStore = dbConn.createObjectStore(AUTH_STORE_NAME, {
+  // Initalize `userStore`
+  const userStore = dbConn.createObjectStore(USERS_STORE_NAME, {
     keyPath: 'username',
   });
-  authStore.createIndex('username', 'username', { unique: true });
-  authStore.createIndex('password', 'password', { unique: false });
-  authStore.createIndex('isAuth', 'isAuth', { unique: true });
-  authStore.transaction.oncomplete = () => {
+  userStore.createIndex('username', 'username', { unique: true });
+  userStore.createIndex('password', 'password', { unique: false });
+  userStore.createIndex('isAuth', 'isAuth', { unique: true });
+  userStore.createIndex('id', 'id', { unique: true });
+  userStore.transaction.oncomplete = () => {
     // Add dev user
     const store = dbConn
-      .transaction(AUTH_STORE_NAME, 'readwrite')
-      .objectStore(AUTH_STORE_NAME);
-    store.put({ username: 'dev', password: 'dev', isAuth: false });
+      .transaction(USERS_STORE_NAME, 'readwrite')
+      .objectStore(USERS_STORE_NAME);
+    store.put({
+      username: 'dev',
+      password: 'dev',
+      isAuth: false,
+      id: uuidV1(),
+    });
   };
 
   // Initalize `playlistsStore`
@@ -50,6 +56,4 @@ function migrationV1(dbConn: IDBDatabase, event: IDBVersionChangeEvent) {
   tracksStore.createIndex('title', 'title', { unique: false });
   tracksStore.createIndex('artist', 'artist', { unique: false });
   tracksStore.createIndex('album', 'album', { unique: false });
-
-  console.log('Applied migration (V1)');
 }

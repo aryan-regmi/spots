@@ -3,7 +3,7 @@ import { DBService, DBServiceError } from './dbService';
 import { errAsync, ResultAsync } from 'neverthrow';
 import { migrations } from './mockIndexDBMigrations';
 
-export const AUTH_STORE_NAME = 'auth-store';
+export const USERS_STORE_NAME = 'users-store';
 export const PLAYLISTS_STORE_NAME = 'playlists-store';
 export const TRACKS_STORE_NAME = 'tracks-store';
 
