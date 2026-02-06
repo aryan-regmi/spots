@@ -9,6 +9,7 @@ export function useDbService(): DBService {
     putRecord,
     getRecord,
     removeRecord,
+    getAllRecords,
   };
 }
 
@@ -139,6 +140,36 @@ function removeRecord(storeName: string, key: any, dependencies?: string[]) {
   });
 
   return fromPromise(
+    runTransaction,
+    (originalError) => originalError as DBError
+  );
+}
+
+/** Gets all records from the specified store. */
+function getAllRecords<T>(storeName: string, dependencies?: string[]) {
+  const runTransaction = new Promise<T[]>((resolve, reject) => {
+    // Start transaction
+    const transactionStores = dependencies
+      ? [storeName, ...dependencies]
+      : storeName;
+    const transaction = dbConn.transaction(transactionStores, 'readonly');
+    const store = transaction.objectStore(storeName);
+
+    // Request the record
+    let request = store.getAll();
+
+    // Handle transaction events
+    request.onsuccess = (event) => {
+      const value = event.target as IDBRequest<T[]>;
+      resolve(value.result);
+    };
+    request.onerror = (event) => {
+      const value = event.target as IDBRequest<T[]>;
+      reject({ message: `Transaction failed: ${value.error?.message}` });
+    };
+  });
+
+  return fromPromise<T[], DBError>(
     runTransaction,
     (originalError) => originalError as DBError
   );

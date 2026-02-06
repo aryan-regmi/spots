@@ -30,9 +30,15 @@ export type DBService = {
   ) => ResultAsync<T, DBError>;
 
   /** Removes the specified record from the given store. */
-  removeRecord: (
+  removeRecord: <T>(
     storeName: string,
-    record: any,
+    record: T,
     dependencies?: string[]
   ) => ResultAsync<void, DBError>;
+
+  /** Gets all records from the specified store. */
+  getAllRecords: <T>(
+    storeName: string,
+    dependencies?: string[]
+  ) => ResultAsync<T[], DBError>;
 };
