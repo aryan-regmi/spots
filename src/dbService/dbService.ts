@@ -8,6 +8,8 @@ export interface DBServiceError {
 }
 
 // TODO: Make this work with all databases (not just indexDB)?
+//
+// TODO: Add getRecordByIndex
 
 /** Service responsible for database operations. */
 export interface DBService {

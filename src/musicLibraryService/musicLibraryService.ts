@@ -18,50 +18,56 @@ export type Playlist = {
   createdBy: string;
   tracks: string[];
   followers: string[];
-  pinned: boolean;
+  pinned: string[];
   lastPlayed: number;
 };
 
 /** Represents an error in the music library service. */
+export class MusicLibraryServiceError extends Error {}
 export interface MusicLibraryServiceError {
   message: string;
 }
 
 /** Service that handles all playlist operations. */
 export type MusicLibraryService = {
+  /** Determines if the service is ready. */
+  isReady: boolean;
+
   /** Gets the specified playlist. */
   getPlaylist: (
     playlistId: string
-  ) => ResultAsync<Playlist, MusicLibraryServiceError>;
+  ) => ResultAsync<Playlist | undefined, MusicLibraryServiceError>;
 
   /** Gets the specified track. */
-  getTrack: (trackId: string) => ResultAsync<Track, MusicLibraryServiceError>;
+  getTrack: (
+    trackId: string
+  ) => ResultAsync<Track | undefined, MusicLibraryServiceError>;
 
   /** Gets the recently played playlists. */
   getRecentPlaylists: (
-    username: string
+    userId: string
   ) => ResultAsync<Playlist[], MusicLibraryServiceError>;
 
   /** Gets the pinned playlists. */
   getPinnedPlaylists: (
-    username: string
+    userId: string
   ) => ResultAsync<Playlist[], MusicLibraryServiceError>;
 
   /** Follows/unfollows the specified playlist for the user. */
   toggleFollowPlaylist: (
-    username: string,
+    userId: string,
     playlistId: string
-  ) => ResultAsync<boolean, MusicLibraryServiceError>;
+  ) => ResultAsync<{ following: boolean }, MusicLibraryServiceError>;
 
   /** Creates a new playlist. */
   createPlaylist: (
-    playlist: Partial<Playlist>
-  ) => ResultAsync<string, MusicLibraryServiceError>;
+    playlist: Omit<Playlist, 'id'>
+  ) => ResultAsync<{ playlistId: string }, MusicLibraryServiceError>;
 
   /** Adds a track to the music library. */
   addTrack: (
-    track: Partial<Track>
-  ) => ResultAsync<string, MusicLibraryServiceError>;
+    track: Omit<Track, 'id'>
+  ) => ResultAsync<{ trackId: string }, MusicLibraryServiceError>;
 
   /** Adds the track to the specified playlist. */
   addTrackToPlaylist: (
