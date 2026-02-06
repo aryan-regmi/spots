@@ -1,45 +1,47 @@
 import { ResultAsync } from 'neverthrow';
 
 /** Represents errors in the database service. */
-export type DBServiceError = {
+export class DBServiceError extends Error {}
+export interface DBServiceError {
   message: string;
-};
-
-/** Represents a database */
-export interface Database extends EventTarget {
-  close(): void;
+  info?: any;
 }
 
+// TODO: Make this work with all databases (not just indexDB)?
+
 /** Service responsible for database operations. */
-export type DBService = {
+export interface DBService {
   /** The database connection. */
-  dbConn: Database;
+  database?: IDBDatabase;
+
+  /** Determines if the database is ready. */
+  isReady: boolean;
 
   /** Adds a record to the store. */
   putRecord: <T>(
-    storeName: string,
-    record: T,
+    store: string,
+    value: T,
     key?: string,
-    dependencies?: string[]
+    deps?: string[]
   ) => ResultAsync<void, DBServiceError>;
 
   /** Gets the specified record from the given store. */
   getRecord: <T>(
-    storeName: string,
+    store: string,
     key: string,
-    dependencies?: string[]
-  ) => ResultAsync<T, DBServiceError>;
+    deps?: string[]
+  ) => ResultAsync<T | undefined, DBServiceError>;
 
   /** Removes the specified record from the given store. */
   removeRecord: (
-    storeName: string,
+    store: string,
     key: string,
-    dependencies?: string[]
+    deps?: string[]
   ) => ResultAsync<void, DBServiceError>;
 
   /** Gets all records from the specified store. */
   getAllRecords: <T>(
-    storeName: string,
-    dependencies?: string[]
+    store: string,
+    deps?: string[]
   ) => ResultAsync<T[], DBServiceError>;
-};
+}

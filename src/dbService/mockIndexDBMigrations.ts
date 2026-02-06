@@ -4,7 +4,7 @@ import {
   TRACKS_STORE_NAME,
 } from './mockDBServiceProvider';
 
-export const migrations = [{ version: 1, migrationV1 }];
+export const migrations = [{ version: 1, run: migrationV1 }];
 
 /** Version 1 migration. */
 function migrationV1(dbConn: IDBDatabase, event: IDBVersionChangeEvent) {
