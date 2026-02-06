@@ -3,7 +3,7 @@ import './App.css';
 import { LoginPage } from '@/pages/LoginPage';
 // import { PlaylistPage } from '@/pages/PlaylistPage';
 import { Route, Router } from '@solidjs/router';
-import { useDbService } from './dbService/mockDBServiceProvider';
+import { useDBProvider } from './dbService/mockDBServiceProvider';
 import { onCleanup } from 'solid-js';
 
 // TODO: Add bottom navbar
@@ -13,8 +13,8 @@ import { onCleanup } from 'solid-js';
 function App() {
   // Close database connection
   onCleanup(() => {
-    const dbService = useDbService();
-    dbService.dbConn.close();
+    const dbService = useDBProvider();
+    dbService.database?.close();
   });
 
   return (

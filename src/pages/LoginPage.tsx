@@ -2,14 +2,14 @@ import { A, Navigator, useNavigate } from '@solidjs/router';
 import { Accessor, createSignal, onMount, Setter } from 'solid-js';
 import { Column } from '@/components/Column';
 import { JSX } from 'solid-js/h/jsx-runtime';
-import { useAuthService } from '@/authService/mockAuthServiceProvider';
+import { useAuthProvider } from '@/authService/mockAuthServiceProvider';
 
 const BG_COLOR = 'rgba(50, 100, 50, 1)';
 
 /** The login page for the app. */
 export function LoginPage() {
   const navigate = useNavigate();
-  const authService = useAuthService();
+  const authService = useAuthProvider();
 
   /** Redirects to dashboard if user is already logged in. */
   onMount(() => {
@@ -56,7 +56,7 @@ function LoginForm(props: {
   navigate: Navigator;
   setErrorMsg: Setter<string | null>;
 }) {
-  const { authenticate } = useAuthService();
+  const { authenticate } = useAuthProvider();
 
   /** Determines if the login is invalid. */
   const [invalidLogin, setInvalidLogin] = createSignal(false);
