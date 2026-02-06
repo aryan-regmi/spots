@@ -5,6 +5,7 @@ type LoadingProps = {
   message?: string;
 };
 
+/** A loading screen. */
 export function Loading(props: LoadingProps) {
   const sizeMap = {
     small: '2rem',

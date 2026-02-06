@@ -16,48 +16,63 @@ import { Loading } from '@/components/Loading';
 import { Navigator, useNavigate } from '@solidjs/router';
 import { PlaylistGrid } from '@/components/Playlist';
 import { Row } from '@/components/Row';
+import { useAuthProvider } from '@/authService/mockAuthServiceProvider';
+import { useMusicLibraryProvider } from '@/musicLibraryService/mockMusicLibraryServiceProvider';
+import { NIL as uuidNil, v1 as uuidV1 } from 'uuid';
+import { Playlist } from '@/musicLibraryService/musicLibraryService';
+import {
+  USERS_STORE_NAME,
+  useDBProvider,
+} from '@/dbService/mockDBServiceProvider';
 
 /** The user's dashboard page. */
 export function DashboardPage() {
   const navigate = useNavigate();
-  const authService = useAuthService();
-  const musicLibService = useMusicLibraryService();
+  const dbService = useDBProvider();
+  const authService = useAuthProvider();
+  const musicService = useMusicLibraryProvider();
+
+  if (!authService.isReady || !musicService.isReady) {
+    return <Loading />;
+  }
 
   /** The `id` attribute for the popover menu. */
   const POPOVER_ID = 'popover-menu';
 
   /** Redirects to home (login page) if there is no authenticated user. */
-  const redirectToHome = Effect.gen(function* () {
-    const authInfo = yield* authService.data;
-    const authLoading = yield* authService.isLoading;
-    if (authInfo.username === null && authLoading === false) {
+  function redirectToHome() {
+    if (authService.isReady && authService.authUser === null) {
       navigate('/', { replace: true });
     }
-  });
+  }
 
   /** Adds an `All Tracks` playlist if no playlist exists. */
+  function createAllTracksPlaylist() {
+    const playlist: Playlist = {
+      id: uuidNil,
+      name: 'All Tracks',
+      createdBy: uuidNil,
+      tracks: [],
+      followers: [],
+    };
+  }
   const createAllTracksPlaylist = Effect.gen(function* () {
-    const allTracksExists = yield* musicLibService
+    const allTracksExists = yield* musicService
       .getPlaylist(ALL_TRACKS.id)
       .pipe(Effect.either, Effect.map(Either.isRight));
 
     if (!allTracksExists) {
-      yield* musicLibService.createPlaylist({
+      yield* musicService.createPlaylist({
         name: ALL_TRACKS.name,
         createdBy: ALL_TRACKS.createdBy,
       });
     }
   });
 
-  onMount(() => {
-    Effect.runFork(redirectToHome);
-    Effect.runFork(createAllTracksPlaylist);
-  });
-
   /** Determines if the `All Tracks` playlist is empty. */
   let allTracksIsEmpty = false;
   createEffect(() =>
-    Effect.runPromise(musicLibService.getPlaylist(ALL_TRACKS.id)).then(
+    Effect.runPromise(musicService.getPlaylist(ALL_TRACKS.id)).then(
       (playlist) => (allTracksIsEmpty = playlist.tracks.length === 0)
     )
   );
@@ -74,7 +89,7 @@ export function DashboardPage() {
     username,
     async (username) => {
       const playlists = await Effect.runPromise(
-        musicLibService.getPinnedPlaylists(username)
+        musicService.getPinnedPlaylists(username)
       ).catch(console.error);
 
       return playlists ? playlists.slice(0, 6) : [];
@@ -87,7 +102,7 @@ export function DashboardPage() {
     username,
     async (username) => {
       const playlists = await Effect.runPromise(
-        musicLibService.getRecentPlaylists(username)
+        musicService.getRecentPlaylists(username)
       ).catch(console.error);
       return playlists ? playlists.slice(0, 12) : [];
     },
