@@ -11,19 +11,6 @@ export interface MusicLibraryError {
 /** The ID of a playlist. */
 export type PlaylistID = { playlistId: string };
 
-/** Represents a playlist in the music library. */
-export type Playlist = Partial<Omit<PlaylistRecord, 'id' | 'isCurrent'>> & {
-  id: string;
-  isCurrent: boolean;
-};
-
-/** Represents a track in the music library. */
-export type Track = Partial<Omit<TrackRecord, 'id' | 'src' | 'isCurrent'>> & {
-  id: string;
-  src: string;
-  isCurrent: boolean;
-};
-
 /** The ID of a track. */
 export type TrackID = { trackId: string };
 
@@ -34,8 +21,8 @@ export type UserID =
 
 /** Represents a user's music library. */
 export type MusicLibrary = {
-  playlists: Playlist[];
-  tracks: Track[];
+  playlists: PlaylistRecord[];
+  tracks: TrackRecord[];
 };
 
 /** The state for the music service. */
@@ -61,15 +48,17 @@ export interface MusicLibraryService {
   // create read update delete
 
   /** Adds a new track to the library. */
-  addTrack: (track: Track) => ResultAsync<TrackID, MusicLibraryError>;
+  addTrack: (track: TrackRecord) => ResultAsync<void, MusicLibraryError>;
 
   /** Gets the specified track from the library. */
-  getTrack: (trackId: TrackID) => ResultAsync<Track, MusicLibraryError>;
+  getTrack: (
+    trackId: TrackID
+  ) => ResultAsync<TrackRecord | null, MusicLibraryError>;
 
   /** Updates the specified track to the new value. */
   updateTrack: (
     trackId: TrackID,
-    value: Track
+    value: TrackRecord
   ) => ResultAsync<void, MusicLibraryError>;
 
   /** Removes the specified track from the library.
@@ -77,7 +66,9 @@ export interface MusicLibraryService {
    * # Note
    * The deleted track is returned if the delete was successful.
    * */
-  removeTrack: (trackId: TrackID) => ResultAsync<Track, MusicLibraryError>;
+  removeTrack: (
+    trackId: TrackID
+  ) => ResultAsync<TrackRecord, MusicLibraryError>;
 
   /** Adds the given tracks to the specified playlist. */
   addTracksToPlaylist: (
@@ -89,22 +80,22 @@ export interface MusicLibraryService {
   removeTracksFromPlaylist: (
     trackIds: TrackID | TrackID[],
     playlistId: PlaylistID
-  ) => ResultAsync<Track[], MusicLibraryError>;
+  ) => ResultAsync<TrackRecord[], MusicLibraryError>;
 
   /** Adds a new playlist to the library. */
   addPlaylist: (
-    playlist: Playlist
+    playlist: PlaylistRecord
   ) => ResultAsync<PlaylistID, MusicLibraryError>;
 
   /** Gets the specified playlist from the library. */
   getPlaylist: (
     playlistId: PlaylistID
-  ) => ResultAsync<Playlist, MusicLibraryError>;
+  ) => ResultAsync<PlaylistRecord, MusicLibraryError>;
 
   /** Updates the specified playlist to the new value. */
   updatePlaylist: (
     playlistId: PlaylistID,
-    value: Playlist
+    value: PlaylistRecord
   ) => ResultAsync<void, MusicLibraryError>;
 
   /** Removes the specified playlist from the library.
@@ -114,7 +105,7 @@ export interface MusicLibraryService {
    * */
   removePlaylist: (
     playlistId: PlaylistID
-  ) => ResultAsync<Playlist, MusicLibraryError>;
+  ) => ResultAsync<PlaylistRecord, MusicLibraryError>;
 
   /** Make the specified user follow the playlist. */
   followPlaylist: (
@@ -141,10 +132,12 @@ export interface MusicLibraryService {
   ) => ResultAsync<void, MusicLibraryError>;
 
   /** Gets all tracks in the user's library. */
-  getAllTracks: (userId: UserID) => ResultAsync<Track[], MusicLibraryError>;
+  getAllTracks: (
+    userId: UserID
+  ) => ResultAsync<TrackRecord[], MusicLibraryError>;
 
   /** Gets all playlists in the user's library. */
   getAllPlaylists: (
     userId: UserID
-  ) => ResultAsync<Playlist[], MusicLibraryError>;
+  ) => ResultAsync<PlaylistRecord[], MusicLibraryError>;
 }
