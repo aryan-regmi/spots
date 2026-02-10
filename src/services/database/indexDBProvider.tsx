@@ -3,22 +3,24 @@ import {
   DBError,
   DBService,
   DBState,
-  DBTableId,
+  DBTableID,
 } from '@/services/database/service';
 import { Component, createContext, useContext } from 'solid-js';
 import { errAsync, okAsync, ResultAsync } from 'neverthrow';
 import { useLogger } from '@/services/logger/provider';
 import { createAsync } from '@solidjs/router';
 
-export const USERS_STORE_NAME: DBTableId = {
+// FIXME: Replace with sqlite for production!!
+
+export const USERS_STORE_NAME: DBTableID = {
   kind: 'name',
   name: 'users-store',
 };
-export const PLAYLISTS_STORE_NAME: DBTableId = {
+export const PLAYLISTS_STORE_NAME: DBTableID = {
   kind: 'name',
   name: 'playlists-store',
 };
-export const TRACKS_STORE_NAME: DBTableId = {
+export const TRACKS_STORE_NAME: DBTableID = {
   kind: 'name',
   name: 'tracks-store',
 };
@@ -123,7 +125,7 @@ async function initDBProvider(): Promise<DBService<IDBDatabase>> {
   }
 
   /** Gets the name from a `DBTableId`. */
-  function getTableName(tableId: DBTableId): ResultAsync<string, DBError> {
+  function getTableName(tableId: DBTableID): ResultAsync<string, DBError> {
     // indexedDB only requires store/table names
     if (tableId.kind !== 'name') {
       return errAsync({
@@ -137,7 +139,7 @@ async function initDBProvider(): Promise<DBService<IDBDatabase>> {
   }
 
   /** Creates a new record. */
-  function createRecord<R>(tableId: DBTableId, value: R) {
+  function createRecord<R>(tableId: DBTableID, value: R) {
     setState('isReady', false);
     return getTableName(tableId).andThen((tableName) =>
       runTransaction([tableName], 'readwrite', async (tx) => {
@@ -158,7 +160,7 @@ async function initDBProvider(): Promise<DBService<IDBDatabase>> {
 
   /** Reads the record with the given key from the specified table. */
   function readRecord<R, Key = IDBValidKey | IDBKeyRange>(
-    tableId: DBTableId,
+    tableId: DBTableID,
     key: Key
   ) {
     setState('isReady', false);
@@ -181,7 +183,7 @@ async function initDBProvider(): Promise<DBService<IDBDatabase>> {
 
   /** Updates the record with the given key. */
   function updateRecord<R, Key = IDBValidKey>(
-    tableId: DBTableId,
+    tableId: DBTableID,
     key: Key,
     value: R
   ) {
@@ -214,7 +216,7 @@ async function initDBProvider(): Promise<DBService<IDBDatabase>> {
    * The deleted record is returned if the delete was successful.
    * */
   function deleteRecord<R, Key = IDBValidKey | IDBKeyRange>(
-    tableId: DBTableId,
+    tableId: DBTableID,
     key: Key
   ) {
     setState('isReady', false);
@@ -255,7 +257,7 @@ async function initDBProvider(): Promise<DBService<IDBDatabase>> {
   }
 
   /** Reads all records from the specified table. */
-  function readAllRecords<R>(tableId: DBTableId) {
+  function readAllRecords<R>(tableId: DBTableID) {
     return getTableName(tableId).andThen((tableName) =>
       runTransaction([tableName], 'readonly', async (tx) => {
         const objectStore = tx.objectStore(tableName);

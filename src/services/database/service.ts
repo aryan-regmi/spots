@@ -1,5 +1,12 @@
 import { ResultAsync } from 'neverthrow';
 
+/** The error returned from an authentication service. */
+export interface DBError {
+  kind?: string;
+  message: string;
+  info?: any;
+}
+
 /** Represents a user record in the database. */
 export type UserRecord = {
   /** The user's ID. */
@@ -39,7 +46,7 @@ export type PlaylistRecord = {
   pinned: string[];
 
   /** The last time the playlist was played (timestamp). */
-  lastPlayed: string;
+  lastPlayed?: string;
 };
 
 /** Represents a track record in the database. */
@@ -66,18 +73,11 @@ export type TrackRecord = {
   pinned: string[];
 
   /** The last time the track was played (timestamp). */
-  lastPlayed: string;
+  lastPlayed?: string;
 };
 
-/** The error returned from an authentication service. */
-export interface DBError {
-  kind?: string;
-  message: string;
-  info?: any;
-}
-
 /** Represents a DB table ID. */
-export type DBTableId =
+export type DBTableID =
   | { kind: 'name'; name: string }
   | { kind: 'id'; id: string };
 
@@ -102,17 +102,17 @@ export interface DBService<T> {
   state: DBState<T>;
 
   /** Creates a new record. */
-  createRecord: <R>(tableId: DBTableId, value: R) => ResultAsync<void, DBError>;
+  createRecord: <R>(tableId: DBTableID, value: R) => ResultAsync<void, DBError>;
 
   /** Reads the record with the given key from the specified table. */
   readRecord: <R, Key>(
-    tableId: DBTableId,
+    tableId: DBTableID,
     key: Key
   ) => ResultAsync<R | null, DBError>;
 
   /** Updates the record with the given key. */
   updateRecord: <R, Key>(
-    tableId: DBTableId,
+    tableId: DBTableID,
     key: Key,
     value: R
   ) => ResultAsync<void, DBError>;
@@ -123,12 +123,12 @@ export interface DBService<T> {
    * The deleted record is returned if the delete was successful.
    * */
   deleteRecord: <R, Key>(
-    tableId: DBTableId,
+    tableId: DBTableID,
     key: Key
   ) => ResultAsync<R, DBError>;
 
   /** Reads all records from the specified table. */
-  readAllRecords: <R>(tableId: DBTableId) => ResultAsync<R[], DBError>;
+  readAllRecords: <R>(tableId: DBTableID) => ResultAsync<R[], DBError>;
 
   /** Closes the database connection. */
   close: () => ResultAsync<void, DBError>;
