@@ -1,3 +1,4 @@
+/** The state for the logger service. */
 export type LoggerState = {};
 
 /** Defines the interface for the logger service. */

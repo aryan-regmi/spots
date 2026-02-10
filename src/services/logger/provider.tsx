@@ -20,7 +20,8 @@ export function initLoggerProvider(): LoggerService {
 
 const LoggerContext = createContext<LoggerService>();
 
-export const LoggerContextProvider: Component<{ children: any }> = (props) => {
+/** Provides the context for the logger service. */
+export const LoggerProvider: Component<{ children: any }> = (props) => {
   const logger = initLoggerProvider();
 
   return (

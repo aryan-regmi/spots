@@ -16,7 +16,7 @@ export interface DBState<T> {
   name: string;
 
   /** The version of the database. */
-  version: number | string;
+  version: number;
 
   /** The underlying database connection. */
   connection: T | null;
@@ -25,7 +25,7 @@ export interface DBState<T> {
   isReady: boolean;
 }
 
-/** Defines the provider interface for the database service. */
+/** Defines the interface for the database service. */
 export interface DBServiceProvider<T> {
   /** The database state. */
   state: DBState<T>;

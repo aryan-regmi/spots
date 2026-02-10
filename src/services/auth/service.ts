@@ -6,7 +6,7 @@ export type AuthError = {
   info?: any;
 };
 
-/** Defines the provider interface for the authentication service. */
+/** Defines the interface for the authentication service. */
 export interface AuthServiceProvider {
   /** The authentication state. */
   state: AuthState;
