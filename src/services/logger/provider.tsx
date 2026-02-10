@@ -1,4 +1,4 @@
-import { LoggerService } from './service';
+import { LoggerService } from '@/services/logger/service';
 import { Component, createContext, useContext } from 'solid-js';
 
 /** Initalizes the provider for the `LoggerService` */
@@ -35,7 +35,7 @@ export const LoggerProvider: Component<{ children: any }> = (props) => {
 export function useLogger() {
   const logger = useContext(LoggerContext);
   if (!logger) {
-    throw new Error('useLogger must be used within LoggerContextProvider');
+    throw new Error('useLogger must be used within LoggerProvider');
   }
   return logger;
 }

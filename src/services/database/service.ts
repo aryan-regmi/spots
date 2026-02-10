@@ -1,5 +1,74 @@
 import { ResultAsync } from 'neverthrow';
 
+/** Represents a user record in the database. */
+export type UserRecord = {
+  /** The user's ID. */
+  id: string;
+
+  /** The user's username. */
+  username: string;
+
+  /** The user's password (hashed). */
+  password: string;
+
+  /** Whether or not the user is authenticated.. */
+  isAuth: boolean;
+};
+
+/** Represents a playlist record in the database. */
+export type PlaylistRecord = {
+  /** The playlist's ID. */
+  id: string;
+
+  /** The playlist's name. */
+  name: string;
+
+  /** The playlist's cover image source. */
+  imgSrc: string;
+
+  /** The playlist's creator (reference to `id` of `UserRecord`). */
+  createdBy: string;
+
+  /** The tracks in the playlist (reference to `id` of `TrackRecord`). */
+  tracks: string[];
+
+  /** The playlist's followers (reference to `id` of `UserRecord`). */
+  followers: string[];
+
+  /** The list of users that have the playlist pinned (reference to `id` of `UserRecord`). */
+  pinned: string[];
+
+  /** The last time the playlist was played (timestamp). */
+  lastPlayed: string;
+};
+
+/** Represents a track record in the database. */
+export type TrackRecord = {
+  /** The track's ID. */
+  id: string;
+
+  /** The track's source. */
+  src: string;
+
+  /** The track's cover image source. */
+  imgSrc: string;
+
+  /** The track's name. */
+  title: string;
+
+  /** The track's artist. */
+  artist: string;
+
+  /** The album that the track belongs to. */
+  album: string[];
+
+  /** The list of users that have the track pinned (reference to `id` of `UserRecord`). */
+  pinned: string[];
+
+  /** The last time the track was played (timestamp). */
+  lastPlayed: string;
+};
+
 /** The error returned from an authentication service. */
 export interface DBError {
   kind?: string;

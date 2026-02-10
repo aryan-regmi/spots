@@ -1,13 +1,80 @@
 import { createStore } from 'solid-js/store';
-import { DBError, DBService, DBState, DBTableId } from './service';
+import {
+  DBError,
+  DBService,
+  DBState,
+  DBTableId,
+} from '@/services/database/service';
 import { Component, createContext, useContext } from 'solid-js';
 import { errAsync, okAsync, ResultAsync } from 'neverthrow';
-import { useLogger } from '../logger/provider';
+import { useLogger } from '@/services/logger/provider';
 import { createAsync } from '@solidjs/router';
 
-export const USERS_STORE_NAME = 'users-store';
-export const PLAYLISTS_STORE_NAME = 'playlists-store';
-export const TRACKS_STORE_NAME = 'tracks-store';
+export const USERS_STORE_NAME: DBTableId = {
+  kind: 'name',
+  name: 'users-store',
+};
+export const PLAYLISTS_STORE_NAME: DBTableId = {
+  kind: 'name',
+  name: 'playlists-store',
+};
+export const TRACKS_STORE_NAME: DBTableId = {
+  kind: 'name',
+  name: 'tracks-store',
+};
+
+/** Initalizes the underlying IndexDB database. */
+async function initDatabase(
+  dbName: string,
+  dbVersion: number,
+  migrations: Migration[]
+) {
+  const logger = useLogger();
+  const dbLogInfo = { database: dbName, version: dbVersion };
+
+  // Open DB connection
+  const openRequest = indexedDB.open(dbName, dbVersion);
+
+  // Run migrations
+  openRequest.onupgradeneeded = (e) => {
+    logger.info('Initial DB connection', dbLogInfo);
+    logger.info('Running migrations', dbLogInfo);
+    const currentMigration = migrations.find((m) => m.version === dbVersion);
+    if (currentMigration) {
+      currentMigration.run(e);
+      logger.info('Migrations applied', dbLogInfo);
+    } else {
+      logger.warn('No migrations found', dbLogInfo);
+    }
+  };
+
+  // Handle open request
+  const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    // Propagate error
+    openRequest.onerror = () =>
+      reject(
+        openRequest.error
+          ? {
+              kind: 'DB Open Error',
+              message: openRequest.error.message,
+              info: openRequest.error.stack,
+            }
+          : {
+              kind: 'DB Open Error',
+              message: 'Unable to open database connection',
+              info: dbLogInfo,
+            }
+      );
+
+    // Open the connection
+    openRequest.onsuccess = (e) => {
+      logger.info('DB connection open', dbLogInfo);
+      return resolve((e.target as IDBOpenDBRequest).result);
+    };
+  });
+
+  return db;
+}
 
 /** Initalizes the IndexDB database provider. */
 async function initDBProvider(): Promise<DBService<IDBDatabase>> {
@@ -20,7 +87,7 @@ async function initDBProvider(): Promise<DBService<IDBDatabase>> {
     name: DB_NAME,
     version: DB_VERSION,
     connection,
-    isReady: false,
+    isReady: true,
   });
 
   /** Runs a transaction and converts result to `ResultAsync`. */
@@ -220,7 +287,7 @@ async function initDBProvider(): Promise<DBService<IDBDatabase>> {
   }
 
   return {
-    state: state,
+    state,
     createRecord,
     readRecord,
     updateRecord,
@@ -236,59 +303,6 @@ type Migration = {
   run: (event: IDBVersionChangeEvent) => void;
 };
 
-/** Initalizes the underlying IndexDB database. */
-async function initDatabase(
-  dbName: string,
-  dbVersion: number,
-  migrations: Migration[]
-) {
-  const logger = useLogger();
-  const dbLogInfo = { database: dbName, version: dbVersion };
-
-  // Open DB connection
-  const openRequest = indexedDB.open(dbName, dbVersion);
-
-  // Run migrations
-  openRequest.onupgradeneeded = (e) => {
-    logger.info('Initial DB connection', dbLogInfo);
-    logger.info('Running migrations', dbLogInfo);
-    const currentMigration = migrations.find((m) => m.version === dbVersion);
-    if (currentMigration) {
-      currentMigration.run(e);
-      logger.info('Migrations applied', dbLogInfo);
-    } else {
-      logger.warn('No migrations found', dbLogInfo);
-    }
-  };
-
-  // Handle open request
-  const db = await new Promise<IDBDatabase>((resolve, reject) => {
-    // Propagate error
-    openRequest.onerror = () =>
-      reject(
-        openRequest.error
-          ? {
-              kind: 'DB Open Error',
-              message: openRequest.error.message,
-              info: openRequest.error.stack,
-            }
-          : {
-              kind: 'DB Open Error',
-              message: 'Unable to open database connection',
-              info: dbLogInfo,
-            }
-      );
-
-    // Open the connection
-    openRequest.onsuccess = (e) => {
-      logger.info('DB connection open', dbLogInfo);
-      return resolve((e.target as IDBOpenDBRequest).result);
-    };
-  });
-
-  return db;
-}
-
 /** The database migrations. */
 const migrations: Migration[] = [
   {
@@ -298,7 +312,7 @@ const migrations: Migration[] = [
       indexedDB.deleteDatabase(dbConn.name);
 
       // Initalize `userStore`
-      const userStore = dbConn.createObjectStore(USERS_STORE_NAME, {
+      const userStore = dbConn.createObjectStore(USERS_STORE_NAME.name, {
         keyPath: 'username',
       });
       userStore.createIndex('username', 'username', { unique: true });
@@ -307,9 +321,12 @@ const migrations: Migration[] = [
       userStore.createIndex('id', 'id', { unique: true });
 
       // Initalize `playlistsStore`
-      const playlistsStore = dbConn.createObjectStore(PLAYLISTS_STORE_NAME, {
-        keyPath: 'id',
-      });
+      const playlistsStore = dbConn.createObjectStore(
+        PLAYLISTS_STORE_NAME.name,
+        {
+          keyPath: 'id',
+        }
+      );
       playlistsStore.createIndex('id', 'id', { unique: true });
       playlistsStore.createIndex('name', 'name', { unique: false });
       playlistsStore.createIndex('imgSrc', 'imgSrc', { unique: false });
@@ -320,7 +337,7 @@ const migrations: Migration[] = [
       playlistsStore.createIndex('lastPlayed', 'lastPlayed', { unique: false });
 
       // Initalize `tracksStore`
-      const tracksStore = dbConn.createObjectStore(TRACKS_STORE_NAME, {
+      const tracksStore = dbConn.createObjectStore(TRACKS_STORE_NAME.name, {
         keyPath: 'id',
       });
       tracksStore.createIndex('id', 'id', { unique: true });
@@ -349,11 +366,11 @@ export const IndexDBProvider: Component<{ children: any }> = (props) => {
   );
 };
 
-/** Hook to use the logger service. */
+/** Hook to use the indexDB database service. */
 export function useIndexDB() {
-  const logger = useContext(IndexDBContext);
-  if (!logger) {
-    throw new Error('useLogger must be used within LoggerContextProvider');
+  const db = useContext(IndexDBContext);
+  if (!db) {
+    throw new Error('useIndexDB must be used within DBProvider');
   }
-  return logger;
+  return db;
 }
