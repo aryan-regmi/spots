@@ -8,7 +8,9 @@ export interface DBError {
 }
 
 /** Represents a DB table ID. */
-export type DBTableId = { tableName: string } | { tableId: string };
+export type DBTableId =
+  | { kind: 'name'; name: string }
+  | { kind: 'id'; id: string };
 
 /** The state for the database service. */
 export interface DBState<T> {
@@ -26,24 +28,24 @@ export interface DBState<T> {
 }
 
 /** Defines the interface for the database service. */
-export interface DBServiceProvider<T> {
+export interface DBService<T> {
   /** The database state. */
   state: DBState<T>;
 
   /** Creates a new record. */
-  createRecord: <T>(table: DBTableId, value: T) => ResultAsync<void, DBError>;
+  createRecord: <R>(tableId: DBTableId, value: R) => ResultAsync<void, DBError>;
 
   /** Reads the record with the given key from the specified table. */
-  readRecord: <T, Key = any>(
-    table: DBTableId,
+  readRecord: <R, Key>(
+    tableId: DBTableId,
     key: Key
-  ) => ResultAsync<T | null, DBError>;
+  ) => ResultAsync<R | null, DBError>;
 
   /** Updates the record with the given key. */
-  updateRecord: <T, Key = any>(
-    table: DBTableId,
+  updateRecord: <R, Key>(
+    tableId: DBTableId,
     key: Key,
-    value: T
+    value: R
   ) => ResultAsync<void, DBError>;
 
   /** Deletes the record with the given key from the specified table.
@@ -51,13 +53,13 @@ export interface DBServiceProvider<T> {
    * # Note
    * The deleted record is returned if the delete was successful.
    * */
-  deleteRecord: <T, Key = any>(
-    table: DBTableId,
+  deleteRecord: <R, Key>(
+    tableId: DBTableId,
     key: Key
-  ) => ResultAsync<T, DBError>;
+  ) => ResultAsync<R, DBError>;
 
   /** Reads all records from the specified table. */
-  readAllRecords: <T>(table: DBTableId) => ResultAsync<T[], DBError>;
+  readAllRecords: <R>(tableId: DBTableId) => ResultAsync<R[], DBError>;
 
   /** Closes the database connection. */
   close: () => ResultAsync<void, DBError>;
