@@ -12,12 +12,16 @@ export interface MusicLibraryError {
 export type PlaylistID = { playlistId: string };
 
 /** Represents a playlist in the music library. */
-export type Playlist = Partial<Omit<PlaylistRecord, 'id'>> & { id: string };
+export type Playlist = Partial<Omit<PlaylistRecord, 'id' | 'isCurrent'>> & {
+  id: string;
+  isCurrent: boolean;
+};
 
 /** Represents a track in the music library. */
-export type Track = Partial<Omit<TrackRecord, 'id' | 'src'>> & {
+export type Track = Partial<Omit<TrackRecord, 'id' | 'src' | 'isCurrent'>> & {
   id: string;
   src: string;
+  isCurrent: boolean;
 };
 
 /** The ID of a track. */

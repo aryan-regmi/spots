@@ -337,6 +337,8 @@ const migrations: Migration[] = [
       playlistsStore.createIndex('followers', 'followers', { unique: false });
       playlistsStore.createIndex('pinned', 'pinned', { unique: false });
       playlistsStore.createIndex('lastPlayed', 'lastPlayed', { unique: false });
+      playlistsStore.createIndex('isCurrent', 'isCurrent', { unique: true });
+      playlistsStore.createIndex('download', 'download', { unique: false });
 
       // Initalize `tracksStore`
       const tracksStore = dbConn.createObjectStore(TRACKS_STORE_NAME.name, {
@@ -348,6 +350,8 @@ const migrations: Migration[] = [
       tracksStore.createIndex('title', 'title', { unique: false });
       tracksStore.createIndex('artist', 'artist', { unique: false });
       tracksStore.createIndex('album', 'album', { unique: false });
+      tracksStore.createIndex('isCurrent', 'isCurrent', { unique: true });
+      tracksStore.createIndex('download', 'download', { unique: false });
     },
   },
 ];

@@ -47,6 +47,12 @@ export type PlaylistRecord = {
 
   /** The last time the playlist was played (timestamp). */
   lastPlayed?: string;
+
+  /** Whether or not this is the playlist currently being played. */
+  isCurrent: boolean;
+
+  /** List of users that have downloaded this playlist (reference to `id` of `UserRecord`). */
+  download: string[];
 };
 
 /** Represents a track record in the database. */
@@ -74,6 +80,12 @@ export type TrackRecord = {
 
   /** The last time the track was played (timestamp). */
   lastPlayed?: string;
+
+  /** Whether or not this is the track currently being played. */
+  isCurrent: boolean;
+
+  /** List of users that have downloaded this playlist (reference to `id` of `UserRecord`). */
+  download: string[];
 };
 
 /** Represents a DB table ID. */

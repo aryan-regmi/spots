@@ -9,6 +9,7 @@ import { onCleanup } from 'solid-js';
 // TODO: Add bottom navbar
 // TODO: Add `Create user/Sign up` page
 // TODO: Add Error boundaries
+// TODO: Make all providers use solid-router queries!
 
 function App() {
   // Close database connection
