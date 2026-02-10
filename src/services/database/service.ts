@@ -117,13 +117,13 @@ export interface DBService<T> {
   createRecord: <R>(tableId: DBTableID, value: R) => ResultAsync<void, DBError>;
 
   /** Reads the record with the given key from the specified table. */
-  readRecord: <R, Key>(
+  readRecord: <R, Key = string>(
     tableId: DBTableID,
     key: Key
   ) => ResultAsync<R | null, DBError>;
 
   /** Updates the record with the given key. */
-  updateRecord: <R, Key>(
+  updateRecord: <R, Key = string>(
     tableId: DBTableID,
     key: Key,
     value: R
@@ -134,7 +134,7 @@ export interface DBService<T> {
    * # Note
    * The deleted record is returned if the delete was successful.
    * */
-  deleteRecord: <R, Key>(
+  deleteRecord: <R, Key = string>(
     tableId: DBTableID,
     key: Key
   ) => ResultAsync<R, DBError>;

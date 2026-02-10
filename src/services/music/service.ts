@@ -85,12 +85,12 @@ export interface MusicLibraryService {
   /** Adds a new playlist to the library. */
   addPlaylist: (
     playlist: PlaylistRecord
-  ) => ResultAsync<PlaylistID, MusicLibraryError>;
+  ) => ResultAsync<void, MusicLibraryError>;
 
   /** Gets the specified playlist from the library. */
   getPlaylist: (
     playlistId: PlaylistID
-  ) => ResultAsync<PlaylistRecord, MusicLibraryError>;
+  ) => ResultAsync<PlaylistRecord | null, MusicLibraryError>;
 
   /** Updates the specified playlist to the new value. */
   updatePlaylist: (
@@ -110,25 +110,25 @@ export interface MusicLibraryService {
   /** Make the specified user follow the playlist. */
   followPlaylist: (
     userId: UserID,
-    playlistID: PlaylistID
+    playlistId: PlaylistID
   ) => ResultAsync<void, MusicLibraryError>;
 
   /** Make the specified user un-follow the playlist. */
   unfollowPlaylist: (
     userId: UserID,
-    playlistID: PlaylistID
+    playlistId: PlaylistID
   ) => ResultAsync<void, MusicLibraryError>;
 
   /** Make the specified user pin the playlist. */
   pinPlaylist: (
     userId: UserID,
-    playlistID: PlaylistID
+    playlistId: PlaylistID
   ) => ResultAsync<void, MusicLibraryError>;
 
   /** Make the specified user un-pin the playlist. */
   unpinPlaylist: (
     userId: UserID,
-    playlistID: PlaylistID
+    playlistId: PlaylistID
   ) => ResultAsync<void, MusicLibraryError>;
 
   /** Gets all tracks in the user's library. */
