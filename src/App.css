@@ -64,8 +64,6 @@ button {
   :root {
     color: #f6f6f6;
     background-color: #0f0f0f;
-    background: linear-gradient(to right, rgba(20, 50, 20, 1), rgba(20, 20, 50, 1));
-    backdrop-filter: blur(10px);
   }
 
   a:hover {

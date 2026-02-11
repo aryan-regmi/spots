@@ -1,6 +1,6 @@
-import { Route, Router } from "@solidjs/router";
-import "./App.css";
+import "@/App.css";
 import { LoginPage } from "./pages/LoginPage";
+import { Route, Router } from "@solidjs/router";
 
 function App() {
 

@@ -1,10 +1,13 @@
-import { path } from '@tauri-apps/api';
-import { dirname, join } from '@tauri-apps/api/path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { defineConfig } from 'vite';
 import solid from 'vite-plugin-solid';
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
@@ -12,10 +15,7 @@ export default defineConfig(async () => ({
 
   resolve: {
     alias: {
-      '@': await join(
-        await dirname(await fileURLToPath(import.meta.url)),
-        './src'
-      ),
+      '@': join(__dirname, './src'),
     },
   },
 

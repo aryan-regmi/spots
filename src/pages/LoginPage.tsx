@@ -1,6 +1,11 @@
-import "@/App.css";
+// import "@/App.css";
 
 /** The login page. */
 export function LoginPage() {
-  return <div class="col">Log In</div>
+  return <div class="col">
+
+
+
+    Log In
+  </div>
 }
