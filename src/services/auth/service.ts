@@ -32,4 +32,10 @@ export interface AuthService {
 
   /** Unauthenticates the currently authenticated session. */
   unauthenticate: () => ResultAsync<void, AuthError>;
+
+  /** Hashes the password. */
+  hashPassword: (
+    username: string,
+    password: string
+  ) => ResultAsync<string, AuthError>;
 }

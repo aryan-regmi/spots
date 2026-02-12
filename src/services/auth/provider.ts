@@ -1,7 +1,7 @@
 import { AuthError, AuthService } from '@/services/auth/service';
 import { action } from '@solidjs/router';
 import { invoke } from '@tauri-apps/api/core';
-import { errAsync, ResultAsync } from 'neverthrow';
+import { ResultAsync } from 'neverthrow';
 
 /** Provides the auth service by calling backend functions. */
 class AuthProvider implements AuthService {
@@ -27,10 +27,23 @@ class AuthProvider implements AuthService {
   }
 
   unauthenticate(): ResultAsync<void, AuthError> {
-    return errAsync(new AuthError('NotImplemented', 'NotImplemented'));
+    return ResultAsync.fromPromise(
+      this.unauthenticateLoginBackend(),
+      (err) => err as AuthError
+    );
   }
 
-  /** The query that invokes the backend validation function. */
+  hashPassword(
+    username: string,
+    password: string
+  ): ResultAsync<string, AuthError> {
+    return ResultAsync.fromPromise(
+      this.hashPasswordBackend(username, password),
+      (err) => err as AuthError
+    );
+  }
+
+  /** The action that invokes the backend validation function. */
   private validateLoginBackend = async (username: string, password: string) => {
     try {
       return await invoke<boolean>('validate_login', {
@@ -47,20 +60,48 @@ class AuthProvider implements AuthService {
     }
   };
 
-  /** The query that invokes the backend authentication function. */
+  /** The action that invokes the backend authentication function. */
   private authenticateLoginBackend = async (
     username: string,
     password: string
   ) => {
     try {
       return await invoke<void>('authenticate_login', {
-        username,
-        password,
+        hashed_username: username,
+        hashed_password: password,
       });
     } catch (e) {
       const error = e as Error;
       throw new AuthError(
         'AuthenticationFailed',
+        'Backend function returned with error',
+        error
+      );
+    }
+  };
+
+  /** The action that invokes the backend unauthentication function. */
+  private unauthenticateLoginBackend = async () => {
+    try {
+      return await invoke<void>('uauthenticate_login', {});
+    } catch (e) {
+      const error = e as Error;
+      throw new AuthError(
+        'UnauthenticationFailed',
+        'Backend function returned with error',
+        error
+      );
+    }
+  };
+
+  /** The action that invoes the backend has function. */
+  private hashPasswordBackend = async (username: string, password: string) => {
+    try {
+      return await invoke<string>('hash_password', { username, password });
+    } catch (e) {
+      const error = e as Error;
+      throw new AuthError(
+        'HashingFailed',
         'Backend function returned with error',
         error
       );
@@ -95,9 +136,16 @@ export function useAuth() {
       ),
     'unauthenticateLogin'
   );
+  const hashAction = action((username: string, password: string) =>
+    auth.hashPassword(username, password).match(
+      (hashedResponse) => hashedResponse,
+      (err) => err
+    )
+  );
   return {
     validateAction,
     authenticateAction,
     unauthenticateAction,
+    hashAction,
   };
 }

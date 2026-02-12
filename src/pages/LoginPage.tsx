@@ -1,13 +1,5 @@
 import { AuthError } from '@/services/auth/service';
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  ErrorBoundary,
-  For,
-  JSX,
-  Show,
-} from 'solid-js';
+import { createSignal, ErrorBoundary, JSX, Show } from 'solid-js';
 import { useAction } from '@solidjs/router';
 import { useAuth } from '@/services/auth/provider';
 
@@ -45,7 +37,7 @@ const LoginPageStyles: styles = {
   headerStyle: {
     'background-color': 'rgba(20, 50, 100, 0.8)',
     'border-radius': '1rem',
-    width: '25rem',
+    width: '80%',
     'margin-top': '3rem',
   },
 
@@ -83,6 +75,7 @@ const LoginPageStyles: styles = {
 /** The login page. */
 export function LoginPage() {
   const auth = useAuth();
+  const hashLogin = useAction(auth.hashAction);
   const validateLogin = useAction(auth.validateAction);
   const authenticate = useAction(auth.authenticateAction);
 
@@ -119,8 +112,6 @@ export function LoginPage() {
     if (username && password) {
       console.debug('Logging In!');
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
       // Validate
       const isValid = await validateLogin(username, password);
       if (isValid instanceof AuthError) {
@@ -131,7 +122,17 @@ export function LoginPage() {
 
       // Authenticate
       if (isValid) {
-        const authenticatedResult = await authenticate(username, password);
+        // Hash the login
+        const hashedResult = await hashLogin(username, password);
+        if (hashedResult instanceof AuthError) {
+          setErrMsgs((prev) => [...prev, hashedResult]);
+          return;
+        }
+
+        const authenticatedResult = await authenticate(
+          hashedResult.hashedUsername,
+          hashedResult.hashedPassword
+        );
         authenticatedResult instanceof AuthError
           ? setErrMsgs((prev) => [...prev, authenticatedResult])
           : console.debug('User authenticated');
