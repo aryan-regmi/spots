@@ -16,12 +16,9 @@ class AuthProvider implements AuthService {
     ).map((b) => (b ? b : false));
   }
 
-  authenticate(
-    username: string,
-    password: string
-  ): ResultAsync<void, AuthError> {
+  authenticate(username: string): ResultAsync<void, AuthError> {
     return ResultAsync.fromPromise(
-      this.authenticateLoginBackend(username, password),
+      this.authenticateLoginBackend(username),
       (err) => err as AuthError
     );
   }
@@ -29,16 +26,6 @@ class AuthProvider implements AuthService {
   unauthenticate(): ResultAsync<void, AuthError> {
     return ResultAsync.fromPromise(
       this.unauthenticateLoginBackend(),
-      (err) => err as AuthError
-    );
-  }
-
-  hashPassword(
-    username: string,
-    password: string
-  ): ResultAsync<string, AuthError> {
-    return ResultAsync.fromPromise(
-      this.hashPasswordBackend(username, password),
       (err) => err as AuthError
     );
   }
@@ -61,14 +48,10 @@ class AuthProvider implements AuthService {
   };
 
   /** The action that invokes the backend authentication function. */
-  private authenticateLoginBackend = async (
-    username: string,
-    password: string
-  ) => {
+  private authenticateLoginBackend = async (username: string) => {
     try {
       return await invoke<void>('authenticate_login', {
-        hashed_username: username,
-        hashed_password: password,
+        username,
       });
     } catch (e) {
       const error = e as Error;
@@ -93,20 +76,6 @@ class AuthProvider implements AuthService {
       );
     }
   };
-
-  /** The action that invoes the backend has function. */
-  private hashPasswordBackend = async (username: string, password: string) => {
-    try {
-      return await invoke<string>('hash_password', { username, password });
-    } catch (e) {
-      const error = e as Error;
-      throw new AuthError(
-        'HashingFailed',
-        'Backend function returned with error',
-        error
-      );
-    }
-  };
 }
 
 /** Hooks to use the authentication service. */
@@ -121,8 +90,8 @@ export function useAuth() {
     'validateLogin'
   );
   const authenticateAction = action(
-    (username: string, password: string) =>
-      auth.authenticate(username, password).match(
+    (username: string) =>
+      auth.authenticate(username).match(
         (_ok) => {},
         (err) => err
       ),
@@ -136,16 +105,9 @@ export function useAuth() {
       ),
     'unauthenticateLogin'
   );
-  const hashAction = action((username: string, password: string) =>
-    auth.hashPassword(username, password).match(
-      (hashedResponse) => hashedResponse,
-      (err) => err
-    )
-  );
   return {
     validateAction,
     authenticateAction,
     unauthenticateAction,
-    hashAction,
   };
 }

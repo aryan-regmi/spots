@@ -75,7 +75,6 @@ const LoginPageStyles: styles = {
 /** The login page. */
 export function LoginPage() {
   const auth = useAuth();
-  const hashLogin = useAction(auth.hashAction);
   const validateLogin = useAction(auth.validateAction);
   const authenticate = useAction(auth.authenticateAction);
 
@@ -122,17 +121,7 @@ export function LoginPage() {
 
       // Authenticate
       if (isValid) {
-        // Hash the login
-        const hashedResult = await hashLogin(username, password);
-        if (hashedResult instanceof AuthError) {
-          setErrMsgs((prev) => [...prev, hashedResult]);
-          return;
-        }
-
-        const authenticatedResult = await authenticate(
-          hashedResult.hashedUsername,
-          hashedResult.hashedPassword
-        );
+        const authenticatedResult = await authenticate(username);
         authenticatedResult instanceof AuthError
           ? setErrMsgs((prev) => [...prev, authenticatedResult])
           : console.debug('User authenticated');

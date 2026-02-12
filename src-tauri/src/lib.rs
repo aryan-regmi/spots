@@ -5,35 +5,18 @@ use tokio::sync::Mutex;
 
 type Res<T> = Result<T, String>;
 
-/// Hashes the password.
-#[tauri::command]
-async fn hash_password(state: State<'_, AppState>, username: &str, password: &str) -> Res<String> {
-    // Get salt from db
-    let state = state.try_lock().map_err(|e| e.to_string())?;
-    let db = &state.db;
-    let salt: (String,) = sqlx::query_as("SELECT salt FROM users WHERE username = $1")
-        .bind(username)
-        .fetch_one(db)
-        .await
-        .map_err(|e| e.to_string())?;
-    let salt = SaltString::from_b64(&salt.0).map_err(|e| e.to_string())?;
-    drop(state);
-
-    // Hash password
-    let hasher = argon2::Argon2::default();
-    let hashed_password = hasher
-        .hash_password(password.as_bytes(), &salt)
-        .map_err(|e| e.to_string())?
-        .to_string();
-
-    Ok(hashed_password)
+#[derive(sqlx::FromRow)]
+struct UserRecord {
+    username: String,
+    password: String,
+    salt: String,
 }
 
 /// Validates the login to make sure the user exists and the username and password are in the
 /// correct formats.
 #[tauri::command]
 async fn validate_login(state: State<'_, AppState>, username: &str, password: &str) -> Res<bool> {
-    // Make sure username is formatted correctly
+    // Make sure username and password are formatted correctly
     let username_formatted_correct =
         username.is_ascii() && username.len() > 0 && username.len() <= 64;
     let password_formatted_correct =
@@ -42,25 +25,72 @@ async fn validate_login(state: State<'_, AppState>, username: &str, password: &s
     // Make sure user exists in the db
     let state = state.try_lock().map_err(|e| e.to_string())?;
     let db = &state.db;
-    let username_query_result: Option<(String,)> =
-        sqlx::query_as("SELECT username FROM users WHERE username = ?1")
-            .bind(username)
-            .fetch_optional(db)
-            .await
-            .map_err(|e| e.to_string())?;
-    let user_exists =
-        username_query_result.is_some() && username_query_result.unwrap().0 == username;
+    let user: Option<UserRecord> = sqlx::query_as("SELECT * FROM users WHERE username = $1")
+        .bind(username)
+        .fetch_optional(db)
+        .await
+        .map_err(|e| e.to_string())?;
     drop(state);
+    let user_exists = user.is_some() && user.as_ref().unwrap().username == username;
 
-    Ok(username_formatted_correct && password_formatted_correct && user_exists)
+    // Make sure password matches stored password
+    let passwords_match = if let Some(user) = user {
+        // Get salt
+        let salt = SaltString::from_b64(&user.salt).map_err(|e| e.to_string())?;
+
+        // Hash password
+        let hasher = argon2::Argon2::default();
+        let hashed_password = hasher
+            .hash_password(password.as_bytes(), &salt)
+            .map_err(|e| e.to_string())?
+            .to_string();
+
+        hashed_password == user.password
+    } else {
+        false
+    };
+
+    Ok(username_formatted_correct && password_formatted_correct && user_exists && passwords_match)
 }
 
-/// Authenticates the login by checking its hashes against those in the database.
+/// Authenticates the login by setting the is_auth field in the database.
 #[tauri::command]
-fn authenticate_login(hashed_username: &str, hashed_password: &str) {
-    // TODO:
-    //  - Check against database for the user
-    //  - Return true if it exists and the hashes are equal
+async fn authenticate_login(state: State<'_, AppState>, username: &str) -> Res<()> {
+    let state = state.try_lock().map_err(|e| e.to_string())?;
+    let db = &state.db;
+
+    // Authenticate the user
+    let query_result = sqlx::query("UPDATE users SET is_auth = $1 WHERE username = ?2")
+        .bind(true)
+        .bind(username)
+        .execute(db)
+        .await
+        .map_err(|e| e.to_string())?;
+    assert_eq!(query_result.rows_affected(), 1);
+
+    drop(state);
+
+    Ok(())
+}
+
+/// Unauthenticates the login by un-setting the is_auth field in the database.
+#[tauri::command]
+async fn unauthenticate_login(state: State<'_, AppState>) -> Res<()> {
+    let state = state.try_lock().map_err(|e| e.to_string())?;
+    let db = &state.db;
+
+    // Unauthenticate the user
+    let query_result = sqlx::query("UPDATE users SET is_auth = $1 WHERE is_auth = $2")
+        .bind(false)
+        .bind(true)
+        .execute(db)
+        .await
+        .map_err(|e| e.to_string())?;
+    assert_eq!(query_result.rows_affected(), 1);
+
+    drop(state);
+
+    Ok(())
 }
 
 /// Sets up the sqlite database.
@@ -102,12 +132,21 @@ type AppState = Mutex<AppStateInner>;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(
+            // TODO: Configure log to write to file
+            tauri_plugin_log::Builder::new()
+                .level(tauri_plugin_log::log::LevelFilter::Debug)
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::Webview,
+                ))
+                .build(),
+        )
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            hash_password,
             validate_login,
-            authenticate_login
+            authenticate_login,
+            unauthenticate_login
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {

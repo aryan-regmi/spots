@@ -4,15 +4,13 @@ import { ServiceError } from '@/services/utils/error';
 /** The error returned from an authentication service. */
 export class AuthError extends Error implements ServiceError {
   constructor(kind: string, message: string, info?: any) {
-    super(message);
+    super();
+    super.name = 'AuthError';
+    super.message = message;
     this.kind = kind;
-    this.message = message;
     this.info = info;
-    this.name = 'AuthError';
   }
-  name: string;
   kind: string;
-  message: string;
   info?: any;
 }
 
@@ -24,18 +22,9 @@ export interface AuthService {
     password: string
   ) => ResultAsync<boolean, AuthError>;
 
-  /** Authenticates the login. */
-  authenticate: (
-    username: string,
-    password: string
-  ) => ResultAsync<void, AuthError>;
+  /** Authenticates the user. */
+  authenticate: (username: string) => ResultAsync<void, AuthError>;
 
   /** Unauthenticates the currently authenticated session. */
   unauthenticate: () => ResultAsync<void, AuthError>;
-
-  /** Hashes the password. */
-  hashPassword: (
-    username: string,
-    password: string
-  ) => ResultAsync<string, AuthError>;
 }
