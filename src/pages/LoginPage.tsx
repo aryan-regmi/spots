@@ -1,6 +1,15 @@
-// import "@/App.css";
-
-import { createSignal, ErrorBoundary, JSX } from 'solid-js';
+import { AuthError } from '@/services/auth/service';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  ErrorBoundary,
+  For,
+  JSX,
+  Show,
+} from 'solid-js';
+import { useAction } from '@solidjs/router';
+import { useAuth } from '@/services/auth/provider';
 
 /** Type of styles in the login page. */
 type styles = {
@@ -69,25 +78,75 @@ const LoginPageStyles: styles = {
   },
 };
 
+// TODO: add real logger service instead of console
+
 /** The login page. */
 export function LoginPage() {
+  const auth = useAuth();
+  const validateLogin = useAction(auth.validateAction);
+  const authenticate = useAction(auth.authenticateAction);
+
   /** Determines if the login page is in a busy state. */
   const [isBusy, setIsBusy] = createSignal(false);
 
+  /** List of error messages. */
+  const [errMsgs, setErrMsgs] = createSignal<(string | Error)[]>([]);
+
+  /** List of unique error messages. */
+  const uniqueErrMsgs = () => [
+    ...new Set(
+      errMsgs().map((e) =>
+        e instanceof AuthError ? `${e.name}: ${e.kind}: ${e.message}` : e
+      )
+    ),
+  ];
+
+  /** Determines if the button should be disabled */
+  const isBtnDisabled = () => isBusy() || uniqueErrMsgs().length > 0;
+
   /** Handles login button click. */
-  async function handleLoginClicked(e: Event) {
+  const handleLoginClicked: JSX.EventHandler<
+    HTMLFormElement,
+    SubmitEvent
+  > = async (e) => {
     setIsBusy(true);
     e.preventDefault();
-    console.debug('Logging In!');
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsBusy(false);
-    console.debug('Logged In!');
-    // TODO: Validate and authenticate in backend
-  }
 
-  {
-    /* TODO: Add real error fallback component */
-  }
+    // Validate and authenticate in backend
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get('username')?.toString();
+    const password = formData.get('password')?.toString();
+    if (username && password) {
+      console.debug('Logging In!');
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Validate
+      const isValid = await validateLogin(username, password);
+      if (isValid instanceof AuthError) {
+        setErrMsgs((prev) => [...prev, isValid]);
+        setIsBusy(false);
+        return;
+      }
+
+      // Authenticate
+      if (isValid) {
+        const authenticatedResult = await authenticate(username, password);
+        authenticatedResult instanceof AuthError
+          ? setErrMsgs((prev) => [...prev, authenticatedResult])
+          : console.debug('User authenticated');
+        setIsBusy(false);
+        return;
+      }
+    }
+
+    // Empty inputs
+    setErrMsgs((prev) => [...prev, 'Username and password must not be empty']);
+    setIsBusy(false);
+    return;
+  };
+
+  // TODO: Add real error fallback component
   return (
     <ErrorBoundary
       fallback={(error, reset) => (
@@ -98,32 +157,61 @@ export function LoginPage() {
       )}
     >
       <div class="col" style={LoginPageStyles.containerStyle}>
+        {/* Header */}
         <div style={LoginPageStyles.headerStyle}>
           <h1>Spots</h1>
         </div>
-        <form class="col" style={LoginPageStyles.formStyle}>
+
+        {/* Login form */}
+        <form
+          class="col"
+          style={LoginPageStyles.formStyle}
+          onsubmit={handleLoginClicked}
+        >
           <input
+            name="username"
             style={LoginPageStyles.inputStyle}
             type="text"
             placeholder="Username"
+            oninput={() => setErrMsgs([])}
           />
           <input
+            name="password"
             style={LoginPageStyles.inputStyle}
             type="text"
             placeholder="Password"
+            oninput={() => setErrMsgs([])}
           />
           <button
             type="submit"
+            disabled={isBtnDisabled()}
             style={
-              isBusy()
+              isBtnDisabled()
                 ? LoginPageStyles.submitBtnDisabledStyle
                 : LoginPageStyles.submitBtnStyle
             }
-            onclick={handleLoginClicked}
           >
             {isBusy() ? 'Logging in...' : 'Log In'}
           </button>
         </form>
+
+        {/* Error Messages */}
+        <div style={{ 'margin-top': '-3rem', color: 'red' }}>
+          <Show when={errMsgs().length > 0}>
+            <strong>{'Error:'}</strong>
+            <span>
+              <ul>
+                {uniqueErrMsgs().map((msg) => {
+                  return msg instanceof AuthError ? (
+                    <li>{`${msg.kind}:${msg.message}:${msg.info}`}</li>
+                  ) : (
+                    <li>{msg as string}</li>
+                  );
+                })}
+              </ul>
+            </span>
+          </Show>
+        </div>
       </div>
     </ErrorBoundary>
   );
