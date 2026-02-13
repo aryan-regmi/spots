@@ -2,6 +2,7 @@ use argon2::{self, password_hash::SaltString, PasswordHasher};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Pool, Sqlite};
 use tauri::{App, Manager, State};
 use tokio::sync::Mutex;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 type Res<T> = Result<T, String>;
 
@@ -131,15 +132,17 @@ async fn setup_db(app: &App) -> Res<Pool<sqlx::Sqlite>> {
 
 /// Sets up the logger.
 fn setup_logger(app: &mut App) -> tauri_plugin_tracing::Builder {
-    let targets = Targets::new()
-        .with_default(Level::DEBUG)
-        .with_target("hyper", Level::WARN)
-        .with_target("reqwest", Level::WARN)
-        .with_target("sqlx", Level::WARN);
+    let targets = tracing_subscriber::filter::Targets::new()
+        .with_default(tracing::Level::DEBUG)
+        .with_target("hyper", tracing::Level::WARN)
+        .with_target("reqwest", tracing::Level::WARN)
+        .with_target("sqlx", tracing::Level::WARN);
 
-    registry()
-        .with(fmt::layer())
-        .with(WebviewLayer::new(app.handle().clone()))
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(tauri_plugin_tracing::WebviewLayer::new(
+            app.handle().clone(),
+        ))
         .with(targets)
         .init();
 
@@ -165,7 +168,9 @@ pub fn run() {
             tauri::async_runtime::block_on(async move {
                 // Setup logger
                 let log_builder = setup_logger(app);
-                app.wry_plugin(log_builder.build());
+                app.handle()
+                    .plugin(log_builder.build())
+                    .expect("Failed to add logger plugin");
 
                 // Setup database
                 let db = setup_db(&app).await.expect("Database setup failed");
