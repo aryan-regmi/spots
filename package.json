@@ -12,11 +12,10 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@fltsci/tauri-plugin-tracing": "^0.3.2",
     "@solidjs/router": "^0.15.4",
     "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-log": "^2.8.0",
     "@tauri-apps/plugin-opener": "^2",
-    "@tauri-apps/plugin-sql": "^2.3.2",
     "neverthrow": "^8.2.0",
     "solid-js": "^1.9.3"
   },

@@ -8,6 +8,6 @@ CREATE TABLE users(
 );
 -- Enforce only one auth user at a time
 CREATE UNIQUE INDEX IF NOT EXISTS idx_single_auth_true
-ON auth_settings(is_auth)
+ON users(is_auth)
 WHERE
     is_auth = 1;

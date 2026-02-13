@@ -104,44 +104,57 @@ async fn setup_db(app: &App) -> Res<Pool<sqlx::Sqlite>> {
         .ok_or_else(|| String::from("Invalid database URL"))?;
 
     // Create database
+    // tauri_plugin_log::log::info!("Creating database");
     Sqlite::create_database(&format!("sqlite:{}", db_url))
         .await
         .map_err(|e| e.to_string())?;
+    // tauri_plugin_log::log::info!("Database created");
 
     // Connect to database
+    // tauri_plugin_log::log::info!("Connecting to database");
     let db = SqlitePoolOptions::new()
         .connect(db_url)
         .await
         .map_err(|e| e.to_string())?;
+    // tauri_plugin_log::log::info!("Connected to database");
 
     // Apply migrations
+    // tauri_plugin_log::log::info!("Applying database migrations");
     sqlx::migrate!("./migrations/")
         .run(&db)
         .await
         .map_err(|e| e.to_string())?;
+    // tauri_plugin_log::log::info!("Migrations applied");
 
     Ok(db)
+}
+
+/// Sets up the logger.
+fn setup_logger(app: &mut App) -> tauri_plugin_tracing::Builder {
+    let targets = Targets::new()
+        .with_default(Level::DEBUG)
+        .with_target("hyper", Level::WARN)
+        .with_target("reqwest", Level::WARN)
+        .with_target("sqlx", Level::WARN);
+
+    registry()
+        .with(fmt::layer())
+        .with(WebviewLayer::new(app.handle().clone()))
+        .with(targets)
+        .init();
+
+    // Return minimal builder - logging is already configured
+    tauri_plugin_tracing::Builder::new()
 }
 
 struct AppStateInner {
     db: Pool<Sqlite>,
 }
-
 type AppState = Mutex<AppStateInner>;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(
-            // TODO: Configure log to write to file
-            tauri_plugin_log::Builder::new()
-                .level(tauri_plugin_log::log::LevelFilter::Debug)
-                .target(tauri_plugin_log::Target::new(
-                    tauri_plugin_log::TargetKind::Webview,
-                ))
-                .build(),
-        )
-        .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             validate_login,
@@ -150,6 +163,11 @@ pub fn run() {
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {
+                // Setup logger
+                let log_builder = setup_logger(app);
+                app.wry_plugin(log_builder.build());
+
+                // Setup database
                 let db = setup_db(&app).await.expect("Database setup failed");
                 app.manage(AppState::new(AppStateInner { db }))
             });

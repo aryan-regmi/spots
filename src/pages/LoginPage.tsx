@@ -2,6 +2,7 @@ import { AuthError } from '@/services/auth/service';
 import { createSignal, ErrorBoundary, JSX, Show } from 'solid-js';
 import { useAction } from '@solidjs/router';
 import { useAuth } from '@/services/auth/provider';
+import { useLogger } from '@/services/logger/provider';
 
 /** Type of styles in the login page. */
 type styles = {
@@ -70,10 +71,9 @@ const LoginPageStyles: styles = {
   },
 };
 
-// TODO: add real logger service instead of console
-
 /** The login page. */
 export function LoginPage() {
+  const logger = useLogger();
   const auth = useAuth();
   const validateLogin = useAction(auth.validateAction);
   const authenticate = useAction(auth.authenticateAction);
@@ -109,9 +109,8 @@ export function LoginPage() {
     const username = formData.get('username')?.toString();
     const password = formData.get('password')?.toString();
     if (username && password) {
-      console.debug('Logging In!');
-
       // Validate
+      logger.info('Validating login');
       const isValid = await validateLogin(username, password);
       if (isValid instanceof AuthError) {
         setErrMsgs((prev) => [...prev, isValid]);
@@ -121,10 +120,12 @@ export function LoginPage() {
 
       // Authenticate
       if (isValid) {
+        logger.info('Login validated');
+        logger.info('Authenticating user');
         const authenticatedResult = await authenticate(username);
         authenticatedResult instanceof AuthError
           ? setErrMsgs((prev) => [...prev, authenticatedResult])
-          : console.debug('User authenticated');
+          : logger.info('User authenticated');
         setIsBusy(false);
         return;
       }
