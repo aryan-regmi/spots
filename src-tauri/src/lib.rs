@@ -57,6 +57,7 @@ async fn validate_login(state: State<'_, AppState>, username: &str, password: &s
 /// Authenticates the login by setting the is_auth field in the database.
 #[tauri::command]
 async fn authenticate_login(state: State<'_, AppState>, username: &str) -> Res<()> {
+    tracing::info!("Authenticating user");
     let state = state.try_lock().map_err(|e| e.to_string())?;
     let db = &state.db;
 
@@ -67,9 +68,9 @@ async fn authenticate_login(state: State<'_, AppState>, username: &str) -> Res<(
         .execute(db)
         .await
         .map_err(|e| e.to_string())?;
-    assert_eq!(query_result.rows_affected(), 1);
-
     drop(state);
+    assert_eq!(query_result.rows_affected(), 1);
+    tracing::info!("User authenticated: {}", username);
 
     Ok(())
 }
@@ -77,6 +78,7 @@ async fn authenticate_login(state: State<'_, AppState>, username: &str) -> Res<(
 /// Unauthenticates the login by un-setting the is_auth field in the database.
 #[tauri::command]
 async fn unauthenticate_login(state: State<'_, AppState>) -> Res<()> {
+    tracing::info!("Unathenticating user");
     let state = state.try_lock().map_err(|e| e.to_string())?;
     let db = &state.db;
 
@@ -87,9 +89,9 @@ async fn unauthenticate_login(state: State<'_, AppState>) -> Res<()> {
         .execute(db)
         .await
         .map_err(|e| e.to_string())?;
-    assert_eq!(query_result.rows_affected(), 1);
-
     drop(state);
+    assert_eq!(query_result.rows_affected(), 1);
+    tracing::info!("User unathenticated ");
 
     Ok(())
 }
@@ -97,35 +99,37 @@ async fn unauthenticate_login(state: State<'_, AppState>) -> Res<()> {
 /// Sets up the sqlite database.
 async fn setup_db(app: &App) -> Res<Pool<sqlx::Sqlite>> {
     // Open/create db path
+    tracing::info!("Creating database path");
     let mut path = app.path().app_data_dir().map_err(|e| e.to_string())?;
     std::fs::create_dir_all(path.clone()).map_err(|e| e.to_string())?;
     path.push("spots-db.sqlite");
     let db_url = path
         .to_str()
         .ok_or_else(|| String::from("Invalid database URL"))?;
+    tracing::info!("Database path created");
 
     // Create database
-    // tauri_plugin_log::log::info!("Creating database");
+    tracing::info!("Creating database");
     Sqlite::create_database(&format!("sqlite:{}", db_url))
         .await
         .map_err(|e| e.to_string())?;
-    // tauri_plugin_log::log::info!("Database created");
+    tracing::info!("Database created");
 
     // Connect to database
-    // tauri_plugin_log::log::info!("Connecting to database");
+    tracing::info!("Connecting to database");
     let db = SqlitePoolOptions::new()
         .connect(db_url)
         .await
         .map_err(|e| e.to_string())?;
-    // tauri_plugin_log::log::info!("Connected to database");
+    tracing::info!("Connected to database");
 
     // Apply migrations
-    // tauri_plugin_log::log::info!("Applying database migrations");
+    tracing::info!("Applying database migrations");
     sqlx::migrate!("./migrations/")
         .run(&db)
         .await
         .map_err(|e| e.to_string())?;
-    // tauri_plugin_log::log::info!("Migrations applied");
+    tracing::info!("Migrations applied");
 
     Ok(db)
 }
@@ -134,8 +138,8 @@ async fn setup_db(app: &App) -> Res<Pool<sqlx::Sqlite>> {
 fn setup_logger(app: &mut App) -> tauri_plugin_tracing::Builder {
     let targets = tracing_subscriber::filter::Targets::new()
         .with_default(tracing::Level::DEBUG)
-        .with_target("hyper", tracing::Level::WARN)
-        .with_target("reqwest", tracing::Level::WARN)
+        // .with_target("hyper", tracing::Level::WARN)
+        // .with_target("reqwest", tracing::Level::WARN)
         .with_target("sqlx", tracing::Level::WARN);
 
     tracing_subscriber::registry()
