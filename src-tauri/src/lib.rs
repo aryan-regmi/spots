@@ -1,8 +1,8 @@
 use argon2::{self, password_hash::SaltString, PasswordHasher};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Pool, Sqlite};
 use tauri::{App, Manager, State};
+use tauri_plugin_log::log;
 use tokio::sync::Mutex;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 type Res<T> = Result<T, String>;
 
@@ -57,7 +57,7 @@ async fn validate_login(state: State<'_, AppState>, username: &str, password: &s
 /// Authenticates the login by setting the is_auth field in the database.
 #[tauri::command]
 async fn authenticate_login(state: State<'_, AppState>, username: &str) -> Res<()> {
-    tracing::info!("Authenticating user");
+    log::info!("Authenticating user");
     let state = state.try_lock().map_err(|e| e.to_string())?;
     let db = &state.db;
 
@@ -70,7 +70,7 @@ async fn authenticate_login(state: State<'_, AppState>, username: &str) -> Res<(
         .map_err(|e| e.to_string())?;
     drop(state);
     assert_eq!(query_result.rows_affected(), 1);
-    tracing::info!("User authenticated: {}", username);
+    log::info!("User authenticated: {}", username);
 
     Ok(())
 }
@@ -78,7 +78,7 @@ async fn authenticate_login(state: State<'_, AppState>, username: &str) -> Res<(
 /// Unauthenticates the login by un-setting the is_auth field in the database.
 #[tauri::command]
 async fn unauthenticate_login(state: State<'_, AppState>) -> Res<()> {
-    tracing::info!("Unathenticating user");
+    log::info!("Unathenticating user");
     let state = state.try_lock().map_err(|e| e.to_string())?;
     let db = &state.db;
 
@@ -91,7 +91,7 @@ async fn unauthenticate_login(state: State<'_, AppState>) -> Res<()> {
         .map_err(|e| e.to_string())?;
     drop(state);
     assert_eq!(query_result.rows_affected(), 1);
-    tracing::info!("User unathenticated ");
+    log::info!("User unathenticated ");
 
     Ok(())
 }
@@ -99,59 +99,39 @@ async fn unauthenticate_login(state: State<'_, AppState>) -> Res<()> {
 /// Sets up the sqlite database.
 async fn setup_db(app: &App) -> Res<Pool<sqlx::Sqlite>> {
     // Open/create db path
-    tracing::info!("Creating database path");
+    log::info!("Creating database path");
     let mut path = app.path().app_data_dir().map_err(|e| e.to_string())?;
     std::fs::create_dir_all(path.clone()).map_err(|e| e.to_string())?;
     path.push("spots-db.sqlite");
     let db_url = path
         .to_str()
         .ok_or_else(|| String::from("Invalid database URL"))?;
-    tracing::info!("Database path created");
+    log::info!("Database path created");
 
     // Create database
-    tracing::info!("Creating database");
+    log::info!("Creating database");
     Sqlite::create_database(&format!("sqlite:{}", db_url))
         .await
         .map_err(|e| e.to_string())?;
-    tracing::info!("Database created");
+    log::info!("Database created");
 
     // Connect to database
-    tracing::info!("Connecting to database");
+    log::info!("Connecting to database");
     let db = SqlitePoolOptions::new()
         .connect(db_url)
         .await
         .map_err(|e| e.to_string())?;
-    tracing::info!("Connected to database");
+    log::info!("Connected to database");
 
     // Apply migrations
-    tracing::info!("Applying database migrations");
+    log::info!("Applying database migrations");
     sqlx::migrate!("./migrations/")
         .run(&db)
         .await
         .map_err(|e| e.to_string())?;
-    tracing::info!("Migrations applied");
+    log::info!("Migrations applied");
 
     Ok(db)
-}
-
-/// Sets up the logger.
-fn setup_logger(app: &mut App) -> tauri_plugin_tracing::Builder {
-    let targets = tracing_subscriber::filter::Targets::new()
-        .with_default(tracing::Level::DEBUG)
-        // .with_target("hyper", tracing::Level::WARN)
-        // .with_target("reqwest", tracing::Level::WARN)
-        .with_target("sqlx", tracing::Level::WARN);
-
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer())
-        .with(tauri_plugin_tracing::WebviewLayer::new(
-            app.handle().clone(),
-        ))
-        .with(targets)
-        .init();
-
-    // Return minimal builder - logging is already configured
-    tauri_plugin_tracing::Builder::new()
 }
 
 struct AppStateInner {
@@ -162,6 +142,43 @@ type AppState = Mutex<AppStateInner>;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .clear_targets()
+                .format(|out, message, record| {
+                    let mut target = record.target();
+                    if target.to_lowercase().contains("@tauri-apps_plugin-log.js") {
+                        target = "spots_lib_frontend"
+                    }
+
+                    let timestamp = tauri_plugin_log::TimezoneStrategy::UseUtc
+                        .get_now()
+                        .format(
+                            &tauri::webview::cookie::time::format_description::parse(
+                                "[year]-[month]-[day] [hour]:[minute]:[second]",
+                            )
+                            .expect("Invalid time format"),
+                        )
+                        .expect("Invalid timestamp");
+
+                    out.finish(format_args!(
+                        "[{}][{}][{}] {}",
+                        timestamp,
+                        target,
+                        record.level(),
+                        message
+                    ));
+                })
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::Stderr,
+                ))
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::Webview,
+                ))
+                .level(tauri_plugin_log::log::LevelFilter::Debug)
+                .level_for("sqlx::query", log::LevelFilter::Error)
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             validate_login,
@@ -170,12 +187,6 @@ pub fn run() {
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {
-                // Setup logger
-                let log_builder = setup_logger(app);
-                app.handle()
-                    .plugin(log_builder.build())
-                    .expect("Failed to add logger plugin");
-
                 // Setup database
                 let db = setup_db(&app).await.expect("Database setup failed");
                 app.manage(AppState::new(AppStateInner { db }))

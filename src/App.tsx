@@ -1,24 +1,20 @@
 import '@/App.css';
 import { LoginPage } from './pages/LoginPage';
 import { Route, Router } from '@solidjs/router';
-import { UnlistenFn } from '@tauri-apps/api/event';
-import { attachConsole } from '@fltsci/tauri-plugin-tracing';
 import { onCleanup, onMount } from 'solid-js';
-import { useLogger } from './services/logger/provider';
+import { attachConsole } from '@tauri-apps/plugin-log';
+import { UnlistenFn } from '@tauri-apps/api/event';
 
 // TODO: Add isolation app (check tauri docs)
 function App() {
-  const logger = useLogger();
-
   // TODO: Remove during prod (log to file!)
   //
   // Prints backend logs to the console
-  let detach!: UnlistenFn;
-  onMount(async () => {
-    detach = await attachConsole();
-    logger.info('Attached backend console');
+  let detachConsole!: Promise<UnlistenFn>;
+  onMount(() => {
+    detachConsole = attachConsole();
   });
-  onCleanup(() => detach());
+  onCleanup(async () => (await detachConsole)());
 
   return (
     <main class="container">
