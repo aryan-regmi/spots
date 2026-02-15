@@ -111,3 +111,5 @@ export function useAuth() {
     unauthenticateAction,
   };
 }
+
+/// Returns the current logged in user

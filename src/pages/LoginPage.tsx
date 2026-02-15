@@ -129,6 +129,12 @@ export function LoginPage() {
         setIsBusy(false);
         return;
       }
+
+      // Inputs are invalid
+      logger.info('Invalid inputs');
+      setErrMsgs((prev) => [...prev, 'Login was not found']);
+      setIsBusy(false);
+      return;
     }
 
     // Empty inputs
