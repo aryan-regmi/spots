@@ -1,63 +1,220 @@
-// import "@/App.css";
+import { AuthError } from '@/services/auth/service';
+import { createSignal, ErrorBoundary, JSX, Show } from 'solid-js';
+import { useAction, useNavigate } from '@solidjs/router';
+import { useAuth } from '@/services/auth/provider';
+import { useLogger } from '@/services/logger/provider';
 
-import { createSignal, JSX } from 'solid-js';
-
-/** The login page. */
-export function LoginPage() {
-  /** Determines if the login page is in a busy state. */
-  const [isBusy, setIsBusy] = createSignal(false);
-
+/** Type of styles in the login page. */
+type styles = {
   /** Style for the main container. */
-  const containerStyle: JSX.CSSProperties = {
+  containerStyle: JSX.CSSProperties;
+
+  /** Style for the header. */
+  headerStyle: JSX.CSSProperties;
+
+  /** Style for the form. */
+  formStyle: JSX.CSSProperties;
+
+  /** Style for the form inputs. */
+  inputStyle: JSX.CSSProperties;
+
+  /** Style for the login button. */
+  submitBtnStyle: JSX.CSSProperties;
+
+  /** Style for the disabled login button. */
+  submitBtnDisabledStyle: JSX.CSSProperties;
+};
+
+/** All styles for the login page.  */
+const LoginPageStyles: styles = {
+  containerStyle: {
     padding: '2rem',
     'align-items': 'center',
     'align-content': 'center',
     gap: '7em',
-    'backdrop-filter': 'blur(10px)',
-  };
+    'backdrop-filter': 'blur(20px)',
+  },
 
-  /** Style for the header. */
-  const headerStyle: JSX.CSSProperties = {
+  headerStyle: {
     'background-color': 'rgba(20, 50, 100, 0.8)',
     'border-radius': '1rem',
-    width: '25rem',
+    width: '80%',
     'margin-top': '3rem',
-  };
+  },
 
-  /** Style for the form. */
-  const formStyle: JSX.CSSProperties = {
+  formStyle: {
     gap: '2rem',
     'font-size': '1.2rem',
-  };
+  },
 
-  /** Style for the form inputs. */
-  const inputStyle: JSX.CSSProperties = {
+  inputStyle: {
     width: '20rem',
     'background-color': 'black',
     color: 'rgba(200, 200, 255, 0.9)',
     'border-radius': '2rem',
-    'border-style': 'ridge',
-    'border-color': 'rgba(20, 50, 100, 0.5)',
+    'box-shadow': '0 1px 1px',
+  },
+
+  submitBtnStyle: {
+    'background-color': 'rgba(50, 50, 150, 1)',
+    'margin-top': '3rem',
+    'box-shadow': '0 1px 1px black',
+    'border-radius': '1rem',
+  },
+
+  submitBtnDisabledStyle: {
+    'background-color': 'rgba(50, 50, 55, 1)',
+    'margin-top': '3rem',
+    'box-shadow': '0 1px 1px black',
+    'border-radius': '1rem',
+    cursor: 'not-allowed',
+  },
+};
+
+/** The login page. */
+export function LoginPage() {
+  const logger = useLogger();
+  const navigate = useNavigate();
+  const auth = useAuth();
+  const validateLogin = useAction(auth.validateAction);
+  const authenticate = useAction(auth.authenticateAction);
+
+  /** Determines if the login page is in a busy state. */
+  const [isBusy, setIsBusy] = createSignal(false);
+
+  /** List of error messages. */
+  const [errMsgs, setErrMsgs] = createSignal<(string | Error)[]>([]);
+
+  /** List of unique error messages. */
+  const uniqueErrMsgs = () => [
+    ...new Set(
+      errMsgs().map((e) =>
+        e instanceof AuthError ? `${e.name}: ${e.kind}: ${e.message}` : e
+      )
+    ),
+  ];
+
+  /** Determines if the button should be disabled */
+  const isBtnDisabled = () => isBusy() || uniqueErrMsgs().length > 0;
+
+  /** Handles login button click. */
+  const handleLoginClicked: JSX.EventHandler<
+    HTMLFormElement,
+    SubmitEvent
+  > = async (e) => {
+    setIsBusy(true);
+    e.preventDefault();
+
+    // Validate and authenticate in backend
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get('username')?.toString();
+    const password = formData.get('password')?.toString();
+    if (username && password) {
+      // Validate
+      logger.info('Validating login');
+      const isValid = await validateLogin(username, password);
+      if (isValid instanceof AuthError) {
+        setErrMsgs((prev) => [...prev, isValid]);
+        setIsBusy(false);
+        return;
+      }
+
+      // Authenticate
+      if (isValid) {
+        logger.info('Login validated');
+        logger.info('Authenticating user');
+        const authenticatedResult = await authenticate(username);
+        if (authenticatedResult instanceof AuthError) {
+          setErrMsgs((prev) => [...prev, authenticatedResult]);
+          setIsBusy(false);
+        } else {
+          logger.info('User authenticated');
+          navigate('/dashboard', { replace: false }); // Redirect to dashboard
+          setIsBusy(false);
+        }
+        return;
+      }
+
+      // Inputs are invalid
+      logger.info('Invalid inputs');
+      setErrMsgs((prev) => [...prev, 'Login was not found']);
+      setIsBusy(false);
+      return;
+    }
+
+    // Empty inputs
+    setErrMsgs((prev) => [...prev, 'Username and password must not be empty']);
+    setIsBusy(false);
+    return;
   };
 
-  /** Style for the login button. */
-  const buttonStyle: JSX.CSSProperties = {
-    'background-color': 'rgba(100, 100, 200, 0.9)',
-    'margin-top': '1.5em',
-  };
-
+  // TODO: Add real error fallback component
   return (
-    <div class="col" style={containerStyle}>
-      <div style={headerStyle}>
-        <h1>Spots</h1>
+    <ErrorBoundary
+      fallback={(error, reset) => (
+        <div>
+          <p>{error.message}</p>
+          <button onClick={reset}>Try Again</button>
+        </div>
+      )}
+    >
+      <div class="col" style={LoginPageStyles.containerStyle}>
+        {/* Header */}
+        <div style={LoginPageStyles.headerStyle}>
+          <h1>Spots</h1>
+        </div>
+
+        {/* Login form */}
+        <form
+          class="col"
+          style={LoginPageStyles.formStyle}
+          onsubmit={handleLoginClicked}
+        >
+          <input
+            name="username"
+            style={LoginPageStyles.inputStyle}
+            type="text"
+            placeholder="Username"
+            oninput={() => setErrMsgs([])}
+          />
+          <input
+            name="password"
+            style={LoginPageStyles.inputStyle}
+            type="text"
+            placeholder="Password"
+            oninput={() => setErrMsgs([])}
+          />
+          <button
+            type="submit"
+            disabled={isBtnDisabled()}
+            style={
+              isBtnDisabled()
+                ? LoginPageStyles.submitBtnDisabledStyle
+                : LoginPageStyles.submitBtnStyle
+            }
+          >
+            {isBusy() ? 'Logging in...' : 'Log In'}
+          </button>
+        </form>
+
+        {/* Error Messages */}
+        <div style={{ 'margin-top': '-3rem', color: 'red' }}>
+          <Show when={errMsgs().length > 0}>
+            <strong>{'Error:'}</strong>
+            <span>
+              <ul>
+                {uniqueErrMsgs().map((msg) => {
+                  return msg instanceof AuthError ? (
+                    <li>{`${msg.kind}:${msg.message}:${msg.info}`}</li>
+                  ) : (
+                    <li>{msg as string}</li>
+                  );
+                })}
+              </ul>
+            </span>
+          </Show>
+        </div>
       </div>
-      <form class="col" style={formStyle}>
-        <input style={inputStyle} type="text" placeholder="Username" />
-        <input style={inputStyle} type="text" placeholder="Password" />
-        <button type="submit" style={buttonStyle}>
-          Log In
-        </button>
-      </form>
-    </div>
+    </ErrorBoundary>
   );
 }
