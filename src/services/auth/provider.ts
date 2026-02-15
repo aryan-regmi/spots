@@ -2,9 +2,13 @@ import { AuthError, AuthService } from '@/services/auth/service';
 import { action } from '@solidjs/router';
 import { invoke } from '@tauri-apps/api/core';
 import { ResultAsync } from 'neverthrow';
+import * as Api from '@/services/utils/api';
+import { useLogger } from '../logger/provider';
 
 /** Provides the auth service by calling backend functions. */
 class AuthProvider implements AuthService {
+  private logger = useLogger();
+
   validateLogin(
     username: string,
     password: string
@@ -33,12 +37,17 @@ class AuthProvider implements AuthService {
   /** The action that invokes the backend validation function. */
   private validateLoginBackend = async (username: string, password: string) => {
     try {
-      return await invoke<boolean>('validate_login', {
+      const resp = await invoke<Api.Response<boolean>>('validate_login', {
         username,
         password,
       });
+      if (resp.success) {
+        return resp.value;
+      }
+      this.logger.warn(`Invalid response: ${resp}`);
+      return false;
     } catch (e) {
-      const error = e as Error;
+      const error = e as Api.ErrorResponse;
       throw new AuthError(
         'ValidationFailed',
         'Backend function returned with an error',
@@ -50,11 +59,15 @@ class AuthProvider implements AuthService {
   /** The action that invokes the backend authentication function. */
   private authenticateLoginBackend = async (username: string) => {
     try {
-      return await invoke<void>('authenticate_login', {
+      const resp = await invoke<Api.Response<void>>('authenticate_login', {
         username,
       });
+      if (resp.success) {
+        return resp.value;
+      }
+      this.logger.warn(`Invalid response: ${resp}`);
     } catch (e) {
-      const error = e as Error;
+      const error = e as Api.ErrorResponse;
       throw new AuthError(
         'AuthenticationFailed',
         'Backend function returned with error',
@@ -66,9 +79,13 @@ class AuthProvider implements AuthService {
   /** The action that invokes the backend unauthentication function. */
   private unauthenticateLoginBackend = async () => {
     try {
-      return await invoke<void>('uauthenticate_login', {});
+      const resp = await invoke<Api.Response<void>>('uauthenticate_login', {});
+      if (resp.success) {
+        return resp.value;
+      }
+      this.logger.warn(`Invalid response: ${resp}`);
     } catch (e) {
-      const error = e as Error;
+      const error = e as Api.ErrorResponse;
       throw new AuthError(
         'UnauthenticationFailed',
         'Backend function returned with error',
@@ -111,5 +128,3 @@ export function useAuth() {
     unauthenticateAction,
   };
 }
-
-/// Returns the current logged in user

@@ -1,6 +1,6 @@
 import { AuthError } from '@/services/auth/service';
 import { createSignal, ErrorBoundary, JSX, Show } from 'solid-js';
-import { useAction } from '@solidjs/router';
+import { useAction, useNavigate } from '@solidjs/router';
 import { useAuth } from '@/services/auth/provider';
 import { useLogger } from '@/services/logger/provider';
 
@@ -74,6 +74,7 @@ const LoginPageStyles: styles = {
 /** The login page. */
 export function LoginPage() {
   const logger = useLogger();
+  const navigate = useNavigate();
   const auth = useAuth();
   const validateLogin = useAction(auth.validateAction);
   const authenticate = useAction(auth.authenticateAction);
@@ -123,10 +124,14 @@ export function LoginPage() {
         logger.info('Login validated');
         logger.info('Authenticating user');
         const authenticatedResult = await authenticate(username);
-        authenticatedResult instanceof AuthError
-          ? setErrMsgs((prev) => [...prev, authenticatedResult])
-          : logger.info('User authenticated');
-        setIsBusy(false);
+        if (authenticatedResult instanceof AuthError) {
+          setErrMsgs((prev) => [...prev, authenticatedResult]);
+          setIsBusy(false);
+        } else {
+          logger.info('User authenticated');
+          navigate('/dashboard', { replace: false }); // Redirect to dashboard
+          setIsBusy(false);
+        }
         return;
       }
 
