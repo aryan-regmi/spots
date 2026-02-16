@@ -1,10 +1,12 @@
 import '@/App.css';
-import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from '@/pages/DashboardPage';
+import { LoginPage } from '@/pages/LoginPage';
+import { NavMusicLayout } from '@/pages/NavMusicLayout';
 import { Route, Router } from '@solidjs/router';
-import { onCleanup, onMount } from 'solid-js';
-import { attachConsole } from '@tauri-apps/plugin-log';
+import { SignupPage } from '@/pages/SignupPage';
 import { UnlistenFn } from '@tauri-apps/api/event';
-import { SignupPage } from './pages/SignupPage';
+import { attachConsole } from '@tauri-apps/plugin-log';
+import { onCleanup, onMount } from 'solid-js';
 
 // TODO: Add isolation app (check tauri docs)
 function App() {
@@ -22,6 +24,9 @@ function App() {
       <Router>
         <Route path={'/'} component={LoginPage} />
         <Route path={'/signup'} component={SignupPage} />
+        <Route path="/user" component={NavMusicLayout}>
+          <Route path="/dashboard" component={DashboardPage} />
+        </Route>
       </Router>
     </main>
   );

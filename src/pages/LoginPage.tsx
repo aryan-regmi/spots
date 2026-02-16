@@ -131,7 +131,7 @@ export function LoginPage() {
           setIsBusy(false);
         } else {
           logger.info('User authenticated');
-          navigate('/dashboard', { replace: true });
+          navigate('/user/dashboard', { replace: true });
           setIsBusy(false);
         }
         return;

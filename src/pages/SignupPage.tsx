@@ -146,7 +146,7 @@ export function SignupPage() {
           return;
         }
         logger.info('User authenticated');
-        navigate('/dashboard', { replace: true });
+        navigate('/user/dashboard', { replace: true });
         setIsBusy(false);
         return;
       }

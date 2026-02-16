@@ -76,6 +76,16 @@ pub async fn authenticate_login(state: State<'_, AppState>, username: &str) -> A
         .map_err(|e| api::Response::error("DatabaseLockError", e.to_string()))?;
     let db = &state.db;
 
+    // Unauthenticate the previous user if ther is one
+    let query_result = sqlx::query("UPDATE users SET is_auth = $1 WHERE is_auth = 1")
+        .bind(false)
+        .execute(db)
+        .await
+        .map_err(|e| api::Response::error("DadtabaseQueryError", e.to_string()))?;
+    if query_result.rows_affected() >= 1 {
+        log::info!("Unauthenticated previous user");
+    }
+
     // Authenticate the user
     let query_result = sqlx::query("UPDATE users SET is_auth = $1 WHERE username = ?2")
         .bind(true)
