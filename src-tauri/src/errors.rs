@@ -18,6 +18,13 @@ impl ToString for ServerError {
     }
 }
 
+/// Represents an error response.
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct ErrorResponse {
+    pub status: String,
+    pub message: String,
+}
+
 /// Represents an HTTP error sent by an endpoint.
 #[derive(Debug)]
 pub struct HttpError {
@@ -37,7 +44,7 @@ impl HttpError {
     /// An [HttpError] representing a server error.
     pub fn server_error(message: ServerError) -> Self {
         HttpError {
-            message: message.into(),
+            message: message.to_string(),
             status: StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
