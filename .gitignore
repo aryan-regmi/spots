@@ -1,3 +1,4 @@
 node_modules
 dist
 src-tauri/.env
+src-tauri/ssl-keys
