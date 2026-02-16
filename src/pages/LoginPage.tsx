@@ -1,6 +1,13 @@
 import { AuthError } from '@/services/auth/service';
-import { createSignal, ErrorBoundary, JSX, Show } from 'solid-js';
-import { A, useAction, useNavigate } from '@solidjs/router';
+import {
+  createEffect,
+  createSignal,
+  ErrorBoundary,
+  JSX,
+  onMount,
+  Show,
+} from 'solid-js';
+import { A, createAsync, useAction, useNavigate } from '@solidjs/router';
 import { useAuth } from '@/services/auth/provider';
 import { useLogger } from '@/services/logger/provider';
 import { ErrorMessages } from '@/components/ErrorMessages';
@@ -78,8 +85,22 @@ export function LoginPage() {
   const logger = useLogger();
   const navigate = useNavigate();
   const auth = useAuth();
+  const authUserQuery = createAsync(() => auth.getAuthUserQuery());
   const validateLogin = useAction(auth.validateAction);
   const authenticate = useAction(auth.authenticateAction);
+
+  /** Redirects to the dashboard if already authenticated. */
+  onMount(() => {
+    const authUser = authUserQuery();
+    if (authUser instanceof AuthError) {
+      logger.error(`InvalidQueryResult: ${authUser.message}`);
+      return;
+    }
+    if (authUser != null && authUser != undefined) {
+      logger.info('User already authenticated: redirecting to dashboard');
+      navigate('/user/dashboard', { replace: true });
+    }
+  });
 
   /** Determines if the login page is in a busy state. */
   const [isBusy, setIsBusy] = createSignal(false);

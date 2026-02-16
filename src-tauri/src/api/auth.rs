@@ -24,7 +24,7 @@ pub async fn get_auth_user(state: State<'_, AppState>) -> ApiResult<Option<Strin
         .try_lock()
         .map_err(|e| api::Response::error("DatabaseLockError", e.to_string()))?;
     let db = &state.db;
-    let user: Option<UserRecord> = sqlx::query_as("SELECT * FROM users WHERE auth = $1")
+    let user: Option<UserRecord> = sqlx::query_as("SELECT * FROM users WHERE is_auth = $1")
         .bind(true)
         .fetch_optional(db)
         .await

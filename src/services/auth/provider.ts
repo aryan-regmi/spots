@@ -8,10 +8,6 @@ import * as uuid from 'uuid';
 
 /** Provides the auth service by calling backend functions. */
 class AuthProvider implements AuthService {
-  constructor() {
-    // Load auth info from the database
-  }
-
   private logger = useLogger();
 
   getAuthUser(): ResultAsync<string | null, AuthError> {
