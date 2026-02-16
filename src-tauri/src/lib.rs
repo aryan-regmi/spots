@@ -1,9 +1,9 @@
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Pool, Sqlite};
 use tauri::{App, Manager};
-use tauri_plugin_log::log;
 use tokio::sync::Mutex;
 
 mod api;
+mod errors;
 
 /// Result type for IPC.
 pub(crate) type Res<T> = Result<T, String>;
