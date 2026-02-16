@@ -4,6 +4,7 @@ use tokio::sync::Mutex;
 
 mod api;
 mod errors;
+mod logger;
 
 /// Result type for IPC.
 pub(crate) type Res<T> = Result<T, String>;
@@ -97,7 +98,12 @@ pub fn run() {
             api::auth::validate_login,
             api::auth::authenticate_login,
             api::auth::unauthenticate_login,
-            api::auth::create_login
+            api::auth::create_login,
+            logger::debug,
+            logger::trace,
+            logger::info,
+            logger::warn,
+            logger::error,
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {
