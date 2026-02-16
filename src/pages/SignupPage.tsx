@@ -132,7 +132,7 @@ export function SignupPage() {
         // Create login
         const created = await createLogin(username, password);
         if (created instanceof AuthError) {
-          logger.error(`${JSON.stringify(created)}`);
+          logger.info(`${created.name}:${created.kind}:${created.message}`);
           setErrMsgs('serverErrors', (prev) => [...prev, created]);
           setIsBusy(false);
           return;

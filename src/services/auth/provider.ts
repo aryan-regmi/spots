@@ -59,11 +59,7 @@ class AuthProvider implements AuthService {
       return false;
     } catch (e) {
       const error = e as Api.ErrorResponse;
-      throw new AuthError(
-        'ValidationFailed',
-        'Backend function returned with an error',
-        error
-      );
+      throw new AuthError('ValidationFailed', error.value.message);
     }
   };
 
@@ -79,11 +75,7 @@ class AuthProvider implements AuthService {
       this.logger.warn(`Invalid response: ${resp}`);
     } catch (e) {
       const error = e as Api.ErrorResponse;
-      throw new AuthError(
-        'AuthenticationFailed',
-        'Backend function returned with error',
-        error
-      );
+      throw new AuthError('AuthenticationFailed', error.value.message);
     }
   };
 
@@ -97,11 +89,7 @@ class AuthProvider implements AuthService {
       this.logger.warn(`Invalid response: ${resp}`);
     } catch (e) {
       const error = e as Api.ErrorResponse;
-      throw new AuthError(
-        'UnauthenticationFailed',
-        'Backend function returned with error',
-        error
-      );
+      throw new AuthError('UnauthenticationFailed', error.value.message);
     }
   };
 
@@ -119,11 +107,7 @@ class AuthProvider implements AuthService {
       this.logger.warn(`Invalid response: ${resp}`);
     } catch (e) {
       const error = e as Api.ErrorResponse;
-      throw new AuthError(
-        'CreateLoginFailed',
-        'Backend function returned with error',
-        error
-      );
+      throw new AuthError('CreateLoginFailed', error.value.message);
     }
   };
 }
