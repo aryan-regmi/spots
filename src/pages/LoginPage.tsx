@@ -90,7 +90,7 @@ export function LoginPage() {
   const authenticate = useAction(auth.authenticateAction);
 
   /** Redirects to the dashboard if already authenticated. */
-  onMount(() => {
+  createEffect(() => {
     const authUser = authUserQuery();
     if (authUser instanceof AuthError) {
       logger.error(`InvalidQueryResult: ${authUser.message}`);

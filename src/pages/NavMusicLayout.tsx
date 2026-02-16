@@ -1,11 +1,29 @@
 import { useAuth } from '@/services/auth/provider';
 import { createAsync, useNavigate } from '@solidjs/router';
 import { Shimmer } from '@shimmer-from-structure/solid';
-import { JSX } from 'solid-js';
+import { JSX, onMount } from 'solid-js';
+import { AuthError } from '@/services/auth/service';
+import { useLogger } from '@/services/logger/provider';
 
 export function NavMusicLayout(props: { children?: any }) {
+  const logger = useLogger();
+  const navigate = useNavigate();
   const auth = useAuth();
   const authUserQuery = createAsync(() => auth.getAuthUserQuery());
+
+  /** Redirects to login if not authenticated */
+  onMount(() => {
+    const authUser = authUserQuery();
+    if (authUser === null || authUser instanceof AuthError) {
+      if (authUser instanceof AuthError) {
+        logger.info(`InvalidAuthUser: ${authUser.message}`);
+      } else {
+        logger.info('InvalidAuthUser: No authenticated user found');
+      }
+      navigate('/', { replace: true });
+      return;
+    }
+  });
 
   return (
     <>
@@ -125,3 +143,5 @@ function Navbar(props: { currentPath?: string }) {
     </nav>
   );
 }
+
+function MiniPlayer() {}
