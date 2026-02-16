@@ -3,6 +3,7 @@ import { createSignal, ErrorBoundary, JSX, Show } from 'solid-js';
 import { A, useAction, useNavigate } from '@solidjs/router';
 import { useAuth } from '@/services/auth/provider';
 import { useLogger } from '@/services/logger/provider';
+import { ErrorMessages } from '@/components/ErrorMessages';
 
 /** Type of styles in the login page. */
 type styles = {
@@ -71,8 +72,6 @@ const LoginPageStyles: styles = {
     cursor: 'not-allowed',
   },
 };
-
-// TODO: Use ErrorMessages component!
 
 /** The login page. */
 export function LoginPage() {
@@ -208,44 +207,9 @@ export function LoginPage() {
         >
           New user? <A href="/signup">Sign Up</A>
         </div>
-
-        {/* Error Messages */}
-        <div
-          style={{
-            'margin-top': '-4rem',
-            'margin-bottom': '-3rem',
-            color: 'red',
-          }}
-        >
-          <Show when={uniqueErrMsgs().length > 0}>
-            <div
-              style={{
-                width: '100%',
-                'margin-bottom': '0',
-                'padding-bottom': '0',
-              }}
-            >
-              <strong>{'Error:'}</strong>
-              <span
-                style={{
-                  'overflow-x': 'auto',
-                  'overflow-y': 'auto',
-                }}
-              >
-                <ul>
-                  {uniqueErrMsgs().map((msg) => {
-                    return msg instanceof AuthError ? (
-                      <li>{`${msg.kind}:${msg.message}:${msg.info}`}</li>
-                    ) : (
-                      <li>{msg as string}</li>
-                    );
-                  })}
-                </ul>
-              </span>
-            </div>
-          </Show>
-        </div>
       </div>
+      {/* Error Messages */}
+      <ErrorMessages errors={uniqueErrMsgs()} />
     </ErrorBoundary>
   );
 }
