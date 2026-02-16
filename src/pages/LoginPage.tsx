@@ -1,6 +1,6 @@
 import { AuthError } from '@/services/auth/service';
 import { createSignal, ErrorBoundary, JSX, Show } from 'solid-js';
-import { useAction, useNavigate } from '@solidjs/router';
+import { A, useAction, useNavigate } from '@solidjs/router';
 import { useAuth } from '@/services/auth/provider';
 import { useLogger } from '@/services/logger/provider';
 
@@ -38,13 +38,14 @@ const LoginPageStyles: styles = {
   headerStyle: {
     'background-color': 'rgba(20, 50, 100, 0.8)',
     'border-radius': '1rem',
-    width: '80%',
-    'margin-top': '3rem',
+    width: '95%',
+    'margin-top': '10rem',
   },
 
   formStyle: {
     gap: '2rem',
     'font-size': '1.2rem',
+    'margin-bottom': '-3rem',
   },
 
   inputStyle: {
@@ -70,6 +71,8 @@ const LoginPageStyles: styles = {
     cursor: 'not-allowed',
   },
 };
+
+// TODO: Use ErrorMessages component!
 
 /** The login page. */
 export function LoginPage() {
@@ -119,7 +122,7 @@ export function LoginPage() {
         return;
       }
 
-      // Authenticate
+      // Authenticate and redirect to dashboard
       if (isValid) {
         logger.info('Login validated');
         logger.info('Authenticating user');
@@ -129,7 +132,7 @@ export function LoginPage() {
           setIsBusy(false);
         } else {
           logger.info('User authenticated');
-          navigate('/dashboard', { replace: false }); // Redirect to dashboard
+          navigate('/dashboard', { replace: true });
           setIsBusy(false);
         }
         return;
@@ -148,7 +151,7 @@ export function LoginPage() {
     return;
   };
 
-  // TODO: Add real error fallback component
+  // TODO: Add real error fallback component + Error display
   return (
     <ErrorBoundary
       fallback={(error, reset) => (
@@ -180,7 +183,7 @@ export function LoginPage() {
           <input
             name="password"
             style={LoginPageStyles.inputStyle}
-            type="text"
+            type="password"
             placeholder="Password"
             oninput={() => setErrMsgs([])}
           />
@@ -197,21 +200,49 @@ export function LoginPage() {
           </button>
         </form>
 
+        {/* Signup link */}
+        <div
+          style={{
+            'font-size': '0.8rem',
+          }}
+        >
+          New user? <A href="/signup">Sign Up</A>
+        </div>
+
         {/* Error Messages */}
-        <div style={{ 'margin-top': '-3rem', color: 'red' }}>
-          <Show when={errMsgs().length > 0}>
-            <strong>{'Error:'}</strong>
-            <span>
-              <ul>
-                {uniqueErrMsgs().map((msg) => {
-                  return msg instanceof AuthError ? (
-                    <li>{`${msg.kind}:${msg.message}:${msg.info}`}</li>
-                  ) : (
-                    <li>{msg as string}</li>
-                  );
-                })}
-              </ul>
-            </span>
+        <div
+          style={{
+            'margin-top': '-4rem',
+            'margin-bottom': '-3rem',
+            color: 'red',
+          }}
+        >
+          <Show when={uniqueErrMsgs().length > 0}>
+            <div
+              style={{
+                width: '100%',
+                'margin-bottom': '0',
+                'padding-bottom': '0',
+              }}
+            >
+              <strong>{'Error:'}</strong>
+              <span
+                style={{
+                  'overflow-x': 'auto',
+                  'overflow-y': 'auto',
+                }}
+              >
+                <ul>
+                  {uniqueErrMsgs().map((msg) => {
+                    return msg instanceof AuthError ? (
+                      <li>{`${msg.kind}:${msg.message}:${msg.info}`}</li>
+                    ) : (
+                      <li>{msg as string}</li>
+                    );
+                  })}
+                </ul>
+              </span>
+            </div>
           </Show>
         </div>
       </div>

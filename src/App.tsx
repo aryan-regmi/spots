@@ -4,6 +4,7 @@ import { Route, Router } from '@solidjs/router';
 import { onCleanup, onMount } from 'solid-js';
 import { attachConsole } from '@tauri-apps/plugin-log';
 import { UnlistenFn } from '@tauri-apps/api/event';
+import { SignupPage } from './pages/SignupPage';
 
 // TODO: Add isolation app (check tauri docs)
 function App() {
@@ -20,6 +21,7 @@ function App() {
     <main class="container">
       <Router>
         <Route path={'/'} component={LoginPage} />
+        <Route path={'/signup'} component={SignupPage} />
       </Router>
     </main>
   );

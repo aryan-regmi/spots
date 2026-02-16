@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { ResultAsync } from 'neverthrow';
 import * as Api from '@/services/utils/api';
 import { useLogger } from '../logger/provider';
+import * as uuid from 'uuid';
 
 /** Provides the auth service by calling backend functions. */
 class AuthProvider implements AuthService {
@@ -30,6 +31,16 @@ class AuthProvider implements AuthService {
   unauthenticate(): ResultAsync<void, AuthError> {
     return ResultAsync.fromPromise(
       this.unauthenticateLoginBackend(),
+      (err) => err as AuthError
+    );
+  }
+
+  createLogin(
+    username: string,
+    password: string
+  ): ResultAsync<void, AuthError> {
+    return ResultAsync.fromPromise(
+      this.createLoginBackend(username, password),
       (err) => err as AuthError
     );
   }
@@ -93,6 +104,28 @@ class AuthProvider implements AuthService {
       );
     }
   };
+
+  /** The action that invokes the backend create login function. */
+  private createLoginBackend = async (username: string, password: string) => {
+    try {
+      const resp = await invoke<Api.Response<void>>('create_login', {
+        userId: uuid.v1(),
+        username,
+        password,
+      });
+      if (resp.success) {
+        return resp.value;
+      }
+      this.logger.warn(`Invalid response: ${resp}`);
+    } catch (e) {
+      const error = e as Api.ErrorResponse;
+      throw new AuthError(
+        'CreateLoginFailed',
+        'Backend function returned with error',
+        error
+      );
+    }
+  };
 }
 
 /** Hooks to use the authentication service. */
@@ -122,9 +155,18 @@ export function useAuth() {
       ),
     'unauthenticateLogin'
   );
+  const createLoginAction = action(
+    (username: string, password: string) =>
+      auth.createLogin(username, password).match(
+        (_ok) => {},
+        (err) => err
+      ),
+    'createLogin'
+  );
   return {
     validateAction,
     authenticateAction,
     unauthenticateAction,
+    createLoginAction,
   };
 }

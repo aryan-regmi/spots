@@ -2,7 +2,11 @@ use crate::{
     api::{self, ApiResult},
     AppState,
 };
-use argon2::{self, password_hash::SaltString, PasswordHasher};
+use argon2::{
+    self,
+    password_hash::{rand_core::OsRng, SaltString},
+    PasswordHasher,
+};
 use tauri::State;
 use tauri_plugin_log::log;
 
@@ -107,4 +111,60 @@ pub async fn unauthenticate_login(state: State<'_, AppState>) -> ApiResult<()> {
     log::info!("User unathenticated ");
 
     Ok(api::Response::success(()))
+}
+
+/// Creates a new login.
+#[tauri::command]
+pub async fn create_login(
+    state: State<'_, AppState>,
+    user_id: &str,
+    username: &str,
+    password: &str,
+) -> ApiResult<()> {
+    log::info!("Creating login: {}", username);
+    let state = state
+        .try_lock()
+        .map_err(|e| api::Response::error("DatabaseLockError", e.to_string()))?;
+    let db = &state.db;
+
+    // Make sure login already doesnt exist
+    let user: Option<UserRecord> = sqlx::query_as("SELECT * FROM users WHERE username = $1")
+        .bind(username)
+        .fetch_optional(db)
+        .await
+        .map_err(|e| api::Response::error("DatabaseQueryError", e.to_string()))?;
+    let user_exists = user.is_some() && user.as_ref().unwrap().username == username;
+
+    if !user_exists {
+        // Hash password
+        let salt = SaltString::generate(&mut OsRng);
+        let hasher = argon2::Argon2::default();
+        let hashed_password = hasher
+            .hash_password(password.as_bytes(), &salt)
+            .map_err(|e| api::Response::error("PasswordHasherError", e.to_string()))?
+            .to_string();
+
+        // Insert new user
+        let query_result = sqlx::query(
+            "INSERT INTO users (id, username, password, salt, is_auth) VALUES ($1, $2, $3, $4, $5)",
+        )
+        .bind(user_id)
+        .bind(username)
+        .bind(hashed_password)
+        .bind(salt.to_string())
+        .bind(false)
+        .execute(db)
+        .await
+        .map_err(|e| api::Response::error("DatabaseQueryError", e.to_string()))?;
+        drop(state);
+        assert_eq!(query_result.rows_affected(), 1);
+        log::info!("Login created: {}", username);
+
+        Ok(api::Response::success(()))
+    } else {
+        Err(api::Response::error(
+            "InvalidLogin",
+            "Username already exists in the database",
+        ))
+    }
 }

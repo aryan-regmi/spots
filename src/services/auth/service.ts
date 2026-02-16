@@ -27,4 +27,10 @@ export interface AuthService {
 
   /** Unauthenticates the currently authenticated session. */
   unauthenticate: () => ResultAsync<void, AuthError>;
+
+  /** Creates a new login. */
+  createLogin: (
+    username: string,
+    password: string
+  ) => ResultAsync<void, AuthError>;
 }

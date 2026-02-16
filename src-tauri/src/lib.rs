@@ -95,7 +95,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             api::auth::validate_login,
             api::auth::authenticate_login,
-            api::auth::unauthenticate_login
+            api::auth::unauthenticate_login,
+            api::auth::create_login
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {
