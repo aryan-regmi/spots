@@ -16,6 +16,9 @@ export class AuthError extends Error implements ServiceError {
 
 /** The authentication service. */
 export interface AuthService {
+  /** Gets the currently authenticated user. */
+  getAuthUser: () => ResultAsync<string | null, AuthError>;
+
   /** Validates the login. */
   validateLogin: (
     username: string,

@@ -1,5 +1,5 @@
 import { AuthError, AuthService } from '@/services/auth/service';
-import { action } from '@solidjs/router';
+import { action, query } from '@solidjs/router';
 import { invoke } from '@tauri-apps/api/core';
 import { ResultAsync } from 'neverthrow';
 import * as Api from '@/services/utils/api';
@@ -8,7 +8,18 @@ import * as uuid from 'uuid';
 
 /** Provides the auth service by calling backend functions. */
 class AuthProvider implements AuthService {
+  constructor() {
+    // Load auth info from the database
+  }
+
   private logger = useLogger();
+
+  getAuthUser(): ResultAsync<string | null, AuthError> {
+    return ResultAsync.fromPromise(
+      this.getAuthUserBackend(),
+      (err) => err as AuthError
+    );
+  }
 
   validateLogin(
     username: string,
@@ -45,7 +56,25 @@ class AuthProvider implements AuthService {
     );
   }
 
-  /** The action that invokes the backend validation function. */
+  /** Invokes the backend validation function. */
+  private getAuthUserBackend = async () => {
+    try {
+      const resp = await invoke<Api.Response<string | null>>(
+        'get_auth_user',
+        {}
+      );
+      if (resp.success) {
+        return resp.value;
+      }
+      this.logger.warn(`Invalid response: ${resp}`);
+      return null;
+    } catch (e) {
+      const error = e as Api.ErrorResponse;
+      throw new AuthError('GetAuthUserFailed', error.value.message);
+    }
+  };
+
+  /** Invokes the backend validation function. */
   private validateLoginBackend = async (username: string, password: string) => {
     try {
       const resp = await invoke<Api.Response<boolean>>('validate_login', {
@@ -63,7 +92,7 @@ class AuthProvider implements AuthService {
     }
   };
 
-  /** The action that invokes the backend authentication function. */
+  /** Invokes the backend authentication function. */
   private authenticateLoginBackend = async (username: string) => {
     try {
       const resp = await invoke<Api.Response<void>>('authenticate_login', {
@@ -79,7 +108,7 @@ class AuthProvider implements AuthService {
     }
   };
 
-  /** The action that invokes the backend unauthentication function. */
+  /** Invokes the backend unauthentication function. */
   private unauthenticateLoginBackend = async () => {
     try {
       const resp = await invoke<Api.Response<void>>('uauthenticate_login', {});
@@ -93,7 +122,7 @@ class AuthProvider implements AuthService {
     }
   };
 
-  /** The action that invokes the backend create login function. */
+  /** Invokes the backend create login function. */
   private createLoginBackend = async (username: string, password: string) => {
     try {
       const resp = await invoke<Api.Response<void>>('create_login', {
@@ -115,6 +144,13 @@ class AuthProvider implements AuthService {
 /** Hooks to use the authentication service. */
 export function useAuth() {
   const auth = new AuthProvider();
+  const getAuthUserQuery = query(async () => {
+    const authUser = await auth.getAuthUser().match(
+      (authUser) => authUser,
+      (err) => err
+    );
+    return authUser;
+  }, 'getAuthUser');
   const validateAction = action(
     (username: string, password: string) =>
       auth.validateLogin(username, password).match(
@@ -148,6 +184,7 @@ export function useAuth() {
     'createLogin'
   );
   return {
+    getAuthUserQuery,
     validateAction,
     authenticateAction,
     unauthenticateAction,

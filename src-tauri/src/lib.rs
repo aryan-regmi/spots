@@ -93,6 +93,7 @@ pub fn run() {
         )
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            api::auth::get_auth_user,
             api::auth::validate_login,
             api::auth::authenticate_login,
             api::auth::unauthenticate_login,

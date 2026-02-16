@@ -17,6 +17,23 @@ struct UserRecord {
     salt: String,
 }
 
+/// Gets the currently authenticated user.
+#[tauri::command]
+pub async fn get_auth_user(state: State<'_, AppState>) -> ApiResult<Option<String>> {
+    let state = state
+        .try_lock()
+        .map_err(|e| api::Response::error("DatabaseLockError", e.to_string()))?;
+    let db = &state.db;
+    let user: Option<UserRecord> = sqlx::query_as("SELECT * FROM users WHERE auth = $1")
+        .bind(true)
+        .fetch_optional(db)
+        .await
+        .map_err(|e| api::Response::error("DatabaseQueryError", e.to_string()))?;
+    drop(state);
+
+    Ok(api::Response::success(user.map(|user| user.username)))
+}
+
 /// Validates the login to make sure the user exists and the username and password are in the
 /// correct formats.
 #[tauri::command]
