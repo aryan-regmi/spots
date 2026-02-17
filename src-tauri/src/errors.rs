@@ -13,6 +13,7 @@ pub enum ServerError {
     HashingError,
     InvalidHashFormat,
     DatabaseError(String),
+    InvalidLogin,
     OtherError(String),
 }
 
@@ -26,6 +27,8 @@ impl ToString for ServerError {
             ServerError::HashingError => "An error occured while hashing the password".into(),
             ServerError::InvalidHashFormat => "The hashed password was an invalid format".into(),
             ServerError::DatabaseError(e) => format!("An error occured in the database: {e}"),
+            ServerError::InvalidLogin => "Invalid login credentials".into(),
+            ServerError::OtherError(e) => e.into(),
         }
     }
 }

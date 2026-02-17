@@ -28,6 +28,19 @@ pub struct RegisterUserDto {
     pub password_confirm: String,
 }
 
+/// DTO for loggin a user in.
+#[derive(Debug, Clone, Validate, serde::Serialize, serde::Deserialize)]
+pub struct LoginUserDto {
+    #[validate(length(min = 3, message = "Username must be at least 3 characters"))]
+    pub username: String,
+
+    #[validate(
+        length(min = 1, message = "Password is required"),
+        length(min = 8, message = "Password must be at least 8 characters")
+    )]
+    pub password: String,
+}
+
 /// Validates the username.
 fn validate_username(username: &str) -> Result<(), validator::ValidationError> {
     let re = regex::Regex::new(r"^[a-zA-Z0-9_]+$").unwrap();

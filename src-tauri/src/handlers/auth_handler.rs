@@ -1,20 +1,14 @@
 use crate::{
     database::users::UserExt,
     errors::{HttpError, ServerError},
-    handlers::dtos::{self as dtos, RegisterUserDto},
+    handlers::dtos::{self as dtos, LoginUserDto, RegisterUserDto},
     AppState,
 };
-use argon2::{
-    password_hash::{rand_core::OsRng, SaltString},
-    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
-};
-use axum::{http::StatusCode, response::IntoResponse, routing::post, Extension, Json, Router};
-use std::sync::Arc;
+use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::post, Json, Router};
 use validator::Validate;
 
 /// Handles all auth related API calls.
-pub fn handler() -> Router {
-    // TODO: Add actual endpoint handlers!
+pub fn handler() -> Router<AppState> {
     Router::new()
         .route("/register", post(register))
         .route("/login", post(login))
@@ -22,7 +16,7 @@ pub fn handler() -> Router {
 
 /// Registers the given user in the database.
 pub async fn register(
-    Extension(app_state): Extension<Arc<AppState>>,
+    State(app_state): State<AppState>,
     Json(body): Json<RegisterUserDto>,
 ) -> Result<impl IntoResponse, HttpError> {
     // Validate the request body
@@ -30,13 +24,13 @@ pub async fn register(
         .map_err(|e| HttpError::bad_request(e.to_string()));
 
     // Hash the password
-    let hashed_password = hash_password(&body.password).map_err(|e| HttpError::server_error(e))?;
+    let hashed_password = password::hash(&body.password).map_err(|e| HttpError::server_error(e))?;
 
     // Create new user in DB
     let create_user_result = app_state
+        .db
         .lock()
         .await
-        .db
         .create_user(&body.username, hashed_password)
         .await;
 
@@ -65,47 +59,106 @@ pub async fn register(
     }
 }
 
-pub async fn login() {}
+pub async fn login(
+    State(app_state): State<AppState>,
+    Json(body): Json<LoginUserDto>,
+) -> Result<impl IntoResponse, HttpError> {
+    // Validate the request body
+    body.validate()
+        .map_err(|e| HttpError::bad_request(e.to_string()));
 
-const MAX_PASSWORD_LENGTH: usize = 128;
+    // Hash the password
+    let hashed_password = password::hash(&body.password).map_err(|e| HttpError::server_error(e))?;
 
-/// Hashes the given password.
-fn hash_password(password: impl Into<String>) -> Result<String, ServerError> {
-    let password = password.into();
+    // Get user from DB
+    let user = app_state
+        .db
+        .lock()
+        .await
+        .get_user(None, Some(&body.username))
+        .await
+        .map_err(|e| HttpError::server_error(ServerError::DatabaseError(e.to_string())))?
+        .ok_or_else(|| HttpError::server_error(ServerError::InvalidLogin))?;
 
-    if password.is_empty() {
-        return Err(ServerError::EmptyPassword);
+    // Compare passwords
+    let passwords_match = password::compare(&body.password, &user.password_hash)
+        .map_err(|e| HttpError::server_error(e))?;
+
+    if passwords_match {
+        // Create JWT
+        let jwt = jwt::create_jwt()
+            .map_err(|e| HttpError::server_error(ServerError::OtherError(e.to_string())))?;
+
+        // Create cookie
+
+        // Create response
+
+        Ok(dtos::Response {
+            status: "failure",
+            message: "TODO".into(),
+        })
+    } else {
+        Err(HttpError::bad_request(
+            ServerError::InvalidLogin.to_string(),
+        ))
     }
-
-    if password.len() > MAX_PASSWORD_LENGTH {
-        return Err(ServerError::MaxPasswordLengthExceeded(MAX_PASSWORD_LENGTH));
-    }
-
-    let salt = SaltString::generate(&mut OsRng);
-    let hashed_password = Argon2::default()
-        .hash_password(password.as_bytes(), &salt)
-        .map_err(|_| ServerError::HashingError)?
-        .to_string();
-
-    Ok(hashed_password)
 }
 
-/// Compares the two passwords.
-fn compare_passwords(password: &str, hashed_password: &str) -> Result<bool, ServerError> {
-    if password.is_empty() {
-        return Err(ServerError::EmptyPassword);
+mod password {
+    use argon2::{
+        password_hash::{rand_core::OsRng, SaltString},
+        Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
+    };
+
+    use crate::errors::ServerError;
+
+    /// Max password length.
+    const MAX_PASSWORD_LENGTH: usize = 128;
+
+    /// Hashes the given password.
+    pub(super) fn hash(password: impl Into<String>) -> Result<String, ServerError> {
+        let password = password.into();
+
+        if password.is_empty() {
+            return Err(ServerError::EmptyPassword);
+        }
+
+        if password.len() > MAX_PASSWORD_LENGTH {
+            return Err(ServerError::MaxPasswordLengthExceeded(MAX_PASSWORD_LENGTH));
+        }
+
+        let salt = SaltString::generate(&mut OsRng);
+        let hashed_password = Argon2::default()
+            .hash_password(password.as_bytes(), &salt)
+            .map_err(|_| ServerError::HashingError)?
+            .to_string();
+
+        Ok(hashed_password)
     }
 
-    if password.len() > MAX_PASSWORD_LENGTH {
-        return Err(ServerError::MaxPasswordLengthExceeded(MAX_PASSWORD_LENGTH));
+    /// Compares the two passwords.
+    pub(super) fn compare(password: &str, hashed_password: &str) -> Result<bool, ServerError> {
+        if password.is_empty() {
+            return Err(ServerError::EmptyPassword);
+        }
+
+        if password.len() > MAX_PASSWORD_LENGTH {
+            return Err(ServerError::MaxPasswordLengthExceeded(MAX_PASSWORD_LENGTH));
+        }
+
+        let parsed_hash =
+            PasswordHash::new(hashed_password).map_err(|_| ServerError::InvalidHashFormat)?;
+
+        let password_matches = Argon2::default()
+            .verify_password(password.as_bytes(), &parsed_hash)
+            .map_or(false, |_| true);
+
+        Ok(password_matches)
     }
+}
 
-    let parsed_hash =
-        PasswordHash::new(hashed_password).map_err(|_| ServerError::InvalidHashFormat)?;
-
-    let password_matches = Argon2::default()
-        .verify_password(password.as_bytes(), &parsed_hash)
-        .map_or(false, |_| true);
-
-    Ok(password_matches)
+mod jwt {
+    pub(super) fn create_jwt() -> Result<String, jsonwebtoken::errors::Error> {
+        todo!()
+    }
 }
