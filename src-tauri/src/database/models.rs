@@ -1,12 +1,8 @@
 use std::str::FromStr;
 
-use chrono::{Datelike, NaiveDateTime};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use sqlx::{
-    prelude::FromRow,
-    sqlite::{self, SqliteRow},
-    Row,
-};
+use sqlx::{prelude::FromRow, sqlite::SqliteRow, Row};
 use uuid::Uuid;
 
 /// Represents a user.
