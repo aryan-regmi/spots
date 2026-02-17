@@ -10,6 +10,7 @@ mod database;
 mod errors;
 mod handlers;
 mod logger;
+mod middleware;
 mod server;
 mod utils;
 
