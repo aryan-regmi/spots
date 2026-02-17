@@ -9,6 +9,33 @@ use crate::{
     AppState,
 };
 
+/// Axum server configurations.
+#[derive(Debug, Clone)]
+pub struct ServerConfig {
+    pub port: u64,
+    pub jwt_secret: String,
+    pub jwt_maxage_secs: i64,
+}
+impl ServerConfig {
+    pub fn new() -> Self {
+        let port = std::env::var("PORT")
+            .expect("PORT must be set")
+            .parse()
+            .expect("Invalid value for PORT");
+        let jwt_secret = std::env::var("JWT_SECRET_KEY").expect("JWT_SECRET_KEY must be set");
+        let jwt_maxage_secs = std::env::var("JWT_MAXAGE_SECS")
+            .expect("JWT_MAXAGE_SECS must be set")
+            .parse()
+            .expect("Invalid value for JWT_MAXAGE_SECS");
+
+        Self {
+            port,
+            jwt_secret,
+            jwt_maxage_secs,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Server;
 
@@ -64,6 +91,7 @@ impl Server {
 
     /// Creates the router for the HTTP server.
     async fn create_router() -> Router<AppState> {
+        // TODO: Add auth middleware
         let api_route = Router::new()
             .nest("/auth", auth_handler::handler())
             .nest("/user", user_handler::handler());
