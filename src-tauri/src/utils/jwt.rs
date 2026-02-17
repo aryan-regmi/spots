@@ -2,7 +2,7 @@ use axum::http::StatusCode;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 
-use crate::errors::{HttpError, ServerError};
+use crate::errors::{HttpError, HttpErrorMessage};
 
 #[derive(serde::Serialize, serde::Deserialize)]
 /// Represents a JWT's claims.
@@ -48,7 +48,7 @@ pub fn decode_jwt<T: Into<String>>(token: T, secret: &[u8]) -> Result<String, Ht
     decoded.map(|token| token.claims.subject).map_err(|_| {
         HttpError::new(
             StatusCode::UNAUTHORIZED,
-            ServerError::InvalidToken.to_string(),
+            HttpErrorMessage::InvalidToken.to_string(),
         )
     })
 }

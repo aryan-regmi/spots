@@ -7,7 +7,7 @@ use axum::{
 // TODO: Update with actual errors!
 //
 /// Represents all the errors from server.
-pub enum ServerError {
+pub enum HttpErrorMessage {
     EmptyPassword,
     MaxPasswordLengthExceeded(usize),
     HashingError,
@@ -15,23 +15,33 @@ pub enum ServerError {
     DatabaseError(String),
     InvalidLogin,
     InvalidToken,
-    OtherError(String),
+    TokenNotProvided,
+    InvalidUser,
 }
 
-impl ToString for ServerError {
+impl ToString for HttpErrorMessage {
     fn to_string(&self) -> String {
         match self {
-            ServerError::EmptyPassword => "The password field cannot be empty".into(),
-            ServerError::MaxPasswordLengthExceeded(max_len) => {
+            HttpErrorMessage::EmptyPassword => "The password field cannot be empty".into(),
+            HttpErrorMessage::MaxPasswordLengthExceeded(max_len) => {
                 format!("The password length must not exceed {max_len} charcters")
             }
-            ServerError::HashingError => "An error occured while hashing the password".into(),
-            ServerError::InvalidHashFormat => "The hashed password was an invalid format".into(),
-            ServerError::DatabaseError(e) => format!("An error occured in the database: {e}"),
-            ServerError::InvalidLogin => "Invalid login credentials".into(),
-            ServerError::InvalidToken => "The JWT was invalid".into(),
-            ServerError::OtherError(e) => e.into(),
+            HttpErrorMessage::HashingError => "An error occured while hashing the password".into(),
+            HttpErrorMessage::InvalidHashFormat => {
+                "The hashed password was an invalid format".into()
+            }
+            HttpErrorMessage::DatabaseError(e) => format!("An error occured in the database: {e}"),
+            HttpErrorMessage::InvalidLogin => "Invalid login credentials".into(),
+            HttpErrorMessage::InvalidToken => "The JWT was invalid".into(),
+            HttpErrorMessage::TokenNotProvided => "The JWT was not provided".into(),
+            HttpErrorMessage::InvalidUser => "The user does not exist".into(),
         }
+    }
+}
+
+impl Into<String> for HttpErrorMessage {
+    fn into(self) -> String {
+        self.to_string()
     }
 }
 
@@ -59,7 +69,7 @@ impl HttpError {
     }
 
     /// An [HttpError] representing a server error.
-    pub fn server_error(message: ServerError) -> Self {
+    pub fn server_error(message: HttpErrorMessage) -> Self {
         HttpError {
             message: message.to_string(),
             status: StatusCode::INTERNAL_SERVER_ERROR,

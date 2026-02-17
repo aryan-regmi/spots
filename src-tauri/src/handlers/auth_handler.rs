@@ -1,6 +1,6 @@
 use crate::{
     database::users::UserExt,
-    errors::{HttpError, ServerError},
+    errors::{HttpError, HttpErrorMessage},
     handlers::dtos::{
         self as dtos, FilterUserDto, LoginUserDto, LoginUserResponseDto, RegisterUserDto,
     },
@@ -57,16 +57,14 @@ pub async fn register(
         )),
         Err(sqlx::Error::Database(db_err)) => {
             if db_err.is_unique_violation() {
-                Err(HttpError::server_error(ServerError::OtherError(
-                    "Unique constraint violation".into(),
-                )))
+                Err(HttpError::unique_constraint_violation(db_err.message()))
             } else {
-                Err(HttpError::server_error(ServerError::OtherError(
+                Err(HttpError::server_error(HttpErrorMessage::DatabaseError(
                     db_err.to_string(),
                 )))
             }
         }
-        Err(e) => Err(HttpError::server_error(ServerError::OtherError(
+        Err(e) => Err(HttpError::server_error(HttpErrorMessage::DatabaseError(
             e.to_string(),
         ))),
     }
@@ -87,8 +85,8 @@ pub async fn login(
         .await
         .get_user(None, Some(&body.username))
         .await
-        .map_err(|e| HttpError::server_error(ServerError::DatabaseError(e.to_string())))?
-        .ok_or_else(|| HttpError::server_error(ServerError::InvalidLogin))?;
+        .map_err(|e| HttpError::server_error(HttpErrorMessage::DatabaseError(e.to_string())))?
+        .ok_or_else(|| HttpError::server_error(HttpErrorMessage::InvalidLogin))?;
 
     // Compare passwords
     let passwords_match = compare_password(&body.password, &user.password_hash)
@@ -104,7 +102,7 @@ pub async fn login(
             config.jwt_secret.as_bytes(),
             config.jwt_maxage_secs,
         )
-        .map_err(|e| HttpError::server_error(ServerError::OtherError(e.to_string())))?;
+        .map_err(|e| HttpError::server_error(HttpErrorMessage::OtherError(e.to_string())))?;
 
         // Create cookie
         let cookie_duration =
@@ -133,7 +131,7 @@ pub async fn login(
         Ok(response)
     } else {
         Err(HttpError::bad_request(
-            ServerError::InvalidLogin.to_string(),
+            HttpErrorMessage::InvalidLogin.to_string(),
         ))
     }
 }
