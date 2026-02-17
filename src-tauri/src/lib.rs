@@ -1,18 +1,51 @@
-use tauri::Manager;
-use tokio::sync::Mutex;
+use std::path::PathBuf;
 
-use crate::database::client::DatabaseClient;
+use crate::{database::client::DatabaseClient, server::Server};
+use axum::http::HeaderValue;
+use axum_server::tls_rustls::RustlsConfig;
+use tauri::{async_runtime::Mutex, Manager};
+use tower_http::cors::CorsLayer;
 
 mod database;
 mod errors;
+mod handlers;
 mod logger;
+mod routes;
+mod server;
 
 /// Result type for IPC.
 pub type Res<T> = Result<T, String>;
 
+#[derive(Debug, Clone)]
+pub struct ServerConfig {
+    pub port: u64,
+    pub jwt_secret: String,
+    pub jwt_maxage_secs: i64,
+}
+impl ServerConfig {
+    fn new() -> Self {
+        let port = std::env::var("PORT")
+            .expect("PORT must be set")
+            .parse()
+            .expect("Invalid value for PORT");
+        let jwt_secret = std::env::var("JWT_SECRET_KEY").expect("JWT_SECRET_KEY must be set");
+        let jwt_maxage_secs = std::env::var("JWT_MAXAGE_SECS")
+            .expect("JWT_MAXAGE_SECS must be set")
+            .parse()
+            .expect("Invalid value for JWT_MAXAGE_SECS");
+
+        Self {
+            port,
+            jwt_secret,
+            jwt_maxage_secs,
+        }
+    }
+}
+
 /// The app state.
 struct AppStateInner {
     db: DatabaseClient,
+    config: ServerConfig,
 }
 type AppState = Mutex<AppStateInner>;
 
@@ -33,23 +66,17 @@ pub fn run() {
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {
+                let config = ServerConfig::new();
+
                 // Setup database
                 let db = DatabaseClient::try_new(&app)
                     .await
                     .expect("Failed to setup database");
-                app.manage(AppState::new(AppStateInner { db }));
 
                 // Setup http server
-                let config_http = RustlsConfig::from_pem_file(
-                    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                        .join("certs")
-                        .join("localhost.pem"),
-                    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                        .join("certs")
-                        .join("localhost-key.pem"),
-                )
-                .await
-                .unwrap();
+                Server::start(config.clone()).await;
+
+                app.manage(AppState::new(AppStateInner { db, config }));
             });
             Ok(())
         })
