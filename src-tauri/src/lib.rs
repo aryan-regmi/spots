@@ -38,6 +38,7 @@ impl ServerConfig {
 }
 
 /// The app state.
+#[derive(Clone)]
 struct AppStateInner {
     db: DatabaseClient,
     config: ServerConfig,

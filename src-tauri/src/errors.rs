@@ -4,16 +4,28 @@ use axum::{
     Json,
 };
 
+// TODO: Update with actual errors!
+//
 /// Represents all the errors from server.
 pub enum ServerError {
-    // TODO: Update with actual errors!
-    _SomeError,
+    EmptyPassword,
+    MaxPasswordLengthExceeded(usize),
+    HashingError,
+    InvalidHashFormat,
+    DatabaseError(String),
+    OtherError(String),
 }
 
 impl ToString for ServerError {
     fn to_string(&self) -> String {
         match self {
-            ServerError::_SomeError => "Some error".into(),
+            ServerError::EmptyPassword => "The password field cannot be empty".into(),
+            ServerError::MaxPasswordLengthExceeded(max_len) => {
+                format!("The password length must not exceed {max_len} charcters")
+            }
+            ServerError::HashingError => "An error occured while hashing the password".into(),
+            ServerError::InvalidHashFormat => "The hashed password was an invalid format".into(),
+            ServerError::DatabaseError(e) => format!("An error occured in the database: {e}"),
         }
     }
 }

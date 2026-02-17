@@ -2,6 +2,7 @@ use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Pool, Sqlite};
 use tauri::{App, Manager};
 
 /// The database client.
+#[derive(Clone)]
 pub struct DatabaseClient {
     pub(crate) pool: Pool<Sqlite>,
 }
