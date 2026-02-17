@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{database::client::DatabaseClient, server::Server};
 use tauri::{async_runtime::Mutex, Manager};
 
@@ -39,11 +41,10 @@ impl ServerConfig {
 
 /// The app state.
 #[derive(Clone)]
-struct AppStateInner {
-    db: DatabaseClient,
-    config: ServerConfig,
+struct AppState {
+    db: Arc<Mutex<DatabaseClient>>,
+    config: Arc<Mutex<ServerConfig>>,
 }
-type AppState = Mutex<AppStateInner>;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -69,10 +70,19 @@ pub fn run() {
                     .await
                     .expect("Failed to setup database");
 
-                // Setup http server
-                Server::start(config.clone()).await;
+                // Setup app state
+                let db = Arc::new(Mutex::new(db));
+                let config = Arc::new(Mutex::new(config));
 
-                app.manage(AppState::new(AppStateInner { db, config }));
+                // Setup http server
+                Server::start(AppState {
+                    db: db.clone(),
+                    config: config.clone(),
+                })
+                .await;
+
+                // Manage state in Tauri
+                app.manage(AppState { db, config });
             });
             Ok(())
         })

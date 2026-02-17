@@ -1,20 +1,21 @@
 use std::{net::SocketAddr, path::PathBuf, str::FromStr, sync::Arc};
 
-use axum::{http::HeaderValue, Extension, Router};
+use axum::{http::HeaderValue, Router};
 use axum_server::tls_rustls::RustlsConfig;
-use tauri::{App, Manager};
 use tower_http::cors::CorsLayer;
 
 use crate::{
     handlers::{auth_handler, user_handler},
-    AppState, ServerConfig,
+    AppState,
 };
 
 #[derive(Debug)]
 pub struct Server;
 
 impl Server {
-    pub async fn start(app: &App, config: ServerConfig) {
+    pub async fn start(app_state: AppState) {
+        let config = app_state.config.lock().await.clone();
+
         // Configure TLS
         let config_http = RustlsConfig::from_pem_file(
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -47,7 +48,7 @@ impl Server {
             ]);
 
         // Start server
-        let server_app = Self::create_router(app).await.layer(cors);
+        let server_app = Self::create_router(app_state).await.layer(cors);
         let addr = SocketAddr::from_str(&format!("127.0.0.1:{}", config.port))
             .expect("Invalid socket address");
         let mut server = axum_server::bind_rustls(addr, config_http);
@@ -59,12 +60,10 @@ impl Server {
     }
 
     /// Creates the router for the HTTP server.
-    async fn create_router(app: &App) -> Router {
-        let state = { app.state::<AppState>().lock().await.clone() };
+    async fn create_router(state: AppState) -> Router {
         let api_route = Router::new()
             .nest("/auth", auth_handler::handler())
-            .nest("/user", user_handler::handler())
-            .layer(Extension(Arc::new(AppState::new(state))));
-        Router::new().nest("/api/v1", api_route)
+            .nest("/user", user_handler::handler());
+        Router::new().with_state(state).nest("/api/v1", api_route)
     }
 }
