@@ -4,8 +4,6 @@ use axum::{
     Json,
 };
 
-// TODO: Update with actual errors!
-//
 /// Represents all the errors from server.
 pub enum HttpErrorMessage {
     EmptyPassword,
@@ -69,9 +67,9 @@ impl HttpError {
     }
 
     /// An [HttpError] representing a server error.
-    pub fn server_error(message: HttpErrorMessage) -> Self {
+    pub fn server_error(message: impl Into<String>) -> Self {
         HttpError {
-            message: message.to_string(),
+            message: message.into(),
             status: StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

@@ -1,9 +1,4 @@
-use axum::{
-    extract::{Request, State},
-    http::header,
-    middleware::Next,
-    response::IntoResponse,
-};
+use axum::{extract::Request, http::header, middleware::Next, response::IntoResponse, Extension};
 use axum_extra::extract::CookieJar;
 use futures::TryFutureExt;
 use uuid::Uuid;
@@ -23,7 +18,7 @@ pub struct JWTAuthMiddleware {
 
 /// Middelware function for role-based authorization.
 pub async fn authorize(
-    State(app_state): State<AppState>,
+    Extension(app_state): Extension<AppState>,
     cookie_jar: CookieJar,
     mut req: Request,
     next: Next,
@@ -60,10 +55,18 @@ pub async fn authorize(
     // Get user from DB
     let db = app_state.db.lock().await;
     let user = Uuid::parse_str(&decoded_jwt)
-        .map(|id| db.get_user(Some(id), None))
-        .map_err(|e| HttpError::unauthorized(HttpErrorMessage::DatabaseError(e.to_string())))?
-        .await
-        .map_err(|e| HttpError::unauthorized(HttpErrorMessage::DatabaseError(e.to_string())));
+        .map_err(|_| HttpError::unauthorized(HttpErrorMessage::InvalidToken))
+        .map(|id| {
+            db.get_user(Some(id), None).map_err(|e| {
+                HttpError::unauthorized(HttpErrorMessage::DatabaseError(e.to_string()))
+            })
+        })?
+        .await?
+        .ok_or_else(|| HttpError::unauthorized(HttpErrorMessage::InvalidUser))?;
+
+    // Insert the authenticated user into the request
+    req.extensions_mut()
+        .insert(JWTAuthMiddleware { user: user });
 
     Ok(next.run(req).await)
 }

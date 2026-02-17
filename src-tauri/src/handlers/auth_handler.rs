@@ -15,13 +15,13 @@ use axum::{
     http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
     routing::post,
-    Json, Router,
+    Extension, Json, Router,
 };
 use axum_extra::extract::cookie::Cookie;
 use validator::Validate;
 
 /// Handles all auth related API calls.
-pub fn handler() -> Router<AppState> {
+pub fn handler() -> Router {
     Router::new()
         .route("/register", post(register))
         .route("/login", post(login))
@@ -29,7 +29,7 @@ pub fn handler() -> Router<AppState> {
 
 /// Registers the given user in the database.
 pub async fn register(
-    State(app_state): State<AppState>,
+    Extension(app_state): Extension<AppState>,
     Json(body): Json<RegisterUserDto>,
 ) -> Result<impl IntoResponse, HttpError> {
     // Validate the request body
@@ -71,7 +71,7 @@ pub async fn register(
 }
 
 pub async fn login(
-    State(app_state): State<AppState>,
+    Extension(app_state): Extension<AppState>,
     Json(body): Json<LoginUserDto>,
 ) -> Result<impl IntoResponse, HttpError> {
     // Validate the request body
@@ -86,7 +86,7 @@ pub async fn login(
         .get_user(None, Some(&body.username))
         .await
         .map_err(|e| HttpError::server_error(HttpErrorMessage::DatabaseError(e.to_string())))?
-        .ok_or_else(|| HttpError::server_error(HttpErrorMessage::InvalidLogin))?;
+        .ok_or_else(|| HttpError::unauthorized(HttpErrorMessage::InvalidLogin))?;
 
     // Compare passwords
     let passwords_match = compare_password(&body.password, &user.password_hash)
@@ -102,7 +102,7 @@ pub async fn login(
             config.jwt_secret.as_bytes(),
             config.jwt_maxage_secs,
         )
-        .map_err(|e| HttpError::server_error(HttpErrorMessage::OtherError(e.to_string())))?;
+        .map_err(|e| HttpError::server_error(e.to_string()))?;
 
         // Create cookie
         let cookie_duration =

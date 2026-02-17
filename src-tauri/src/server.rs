@@ -1,12 +1,12 @@
 use std::{net::SocketAddr, path::PathBuf, str::FromStr};
 
-use axum::{http::HeaderValue, Router};
+use axum::{http::HeaderValue, Extension, Router};
 use axum_server::tls_rustls::RustlsConfig;
 use tower_http::cors::CorsLayer;
 
 use crate::{
     handlers::{auth_handler, user_handler},
-    AppState,
+    middleware, AppState,
 };
 
 /// Axum server configurations.
@@ -78,7 +78,7 @@ impl Server {
         let server_app = Self::create_router()
             .await
             .layer(cors)
-            .with_state(app_state);
+            .layer(Extension(app_state));
         let addr = SocketAddr::from_str(&format!("127.0.0.1:{}", config.port))
             .expect("Invalid socket address");
         let mut server = axum_server::bind_rustls(addr, config_http);
@@ -90,11 +90,22 @@ impl Server {
     }
 
     /// Creates the router for the HTTP server.
-    async fn create_router() -> Router<AppState> {
-        // TODO: Add auth middleware
+    async fn create_router() -> Router {
         let api_route = Router::new()
             .nest("/auth", auth_handler::handler())
-            .nest("/user", user_handler::handler());
+            .nest(
+                "/user",
+                user_handler::handler()
+                    .layer(axum::middleware::from_fn(middleware::auth::authorize)),
+            )
+            .nest(
+                "/playlist",
+                Router::new().layer(axum::middleware::from_fn(middleware::auth::authorize)),
+            )
+            .nest(
+                "/track",
+                Router::new().layer(axum::middleware::from_fn(middleware::auth::authorize)),
+            );
         Router::new().nest("/api/v1", api_route)
     }
 }
