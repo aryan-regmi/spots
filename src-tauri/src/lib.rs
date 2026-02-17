@@ -4,6 +4,7 @@ use crate::{
     database::client::DatabaseClient,
     server::{Server, ServerConfig},
 };
+use dotenvy::dotenv;
 use tauri::{async_runtime::Mutex, Manager};
 
 mod database;
@@ -23,6 +24,8 @@ struct AppState {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    dotenv().expect("Unable to load in environment variables.");
+
     // Setup tracing
     tracing_subscriber::fmt()
         .with_max_level(tracing::level_filters::LevelFilter::DEBUG)

@@ -114,18 +114,18 @@ pub async fn login(
             .build();
 
         // Create response
-        let filter_user = FilterUserDto::new(&user);
-        let response = axum::response::Json(LoginUserResponseDto {
-            status: "success".into(),
-            user: filter_user,
-            token: jwt,
-        });
         let mut headers = HeaderMap::new();
         headers.append(
             header::SET_COOKIE,
             cookie.to_string().parse().expect("Invalid cookie"),
         );
-        let mut response = response.into_response();
+        let filter_user = FilterUserDto::new(&user);
+        let mut response = axum::response::Json(LoginUserResponseDto {
+            status: "success".into(),
+            user: filter_user,
+            token: jwt,
+        })
+        .into_response();
         response.headers_mut().extend(headers);
 
         Ok(response)
