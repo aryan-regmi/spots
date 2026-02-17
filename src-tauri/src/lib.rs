@@ -1,10 +1,5 @@
-use std::path::PathBuf;
-
 use crate::{database::client::DatabaseClient, server::Server};
-use axum::http::HeaderValue;
-use axum_server::tls_rustls::RustlsConfig;
 use tauri::{async_runtime::Mutex, Manager};
-use tower_http::cors::CorsLayer;
 
 mod database;
 mod errors;
