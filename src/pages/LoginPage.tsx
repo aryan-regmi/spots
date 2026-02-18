@@ -7,10 +7,17 @@ import {
   onMount,
   Show,
 } from 'solid-js';
-import { A, createAsync, useAction, useNavigate } from '@solidjs/router';
+import {
+  A,
+  createAsync,
+  redirect,
+  useAction,
+  useNavigate,
+} from '@solidjs/router';
 import { useAuth } from '@/services/auth/provider';
 import { useLogger } from '@/services/logger/provider';
 import { ErrorMessages } from '@/components/ErrorMessages';
+import { Logger } from '@/utils/logger';
 
 /** Type of styles in the login page. */
 type styles = {
@@ -82,23 +89,22 @@ const LoginPageStyles: styles = {
 
 /** The login page. */
 export function LoginPage() {
-  const logger = useLogger();
   const navigate = useNavigate();
-  const auth = useAuth();
-  const authUserQuery = createAsync(() => auth.getAuthUserQuery());
-  const validateLogin = useAction(auth.validateAction);
-  const authenticate = useAction(auth.authenticateAction);
 
   /** Redirects to the dashboard if already authenticated. */
-  createEffect(() => {
-    const authUser = authUserQuery();
-    if (authUser instanceof AuthError) {
-      logger.error(`InvalidQueryResult: ${authUser.message}`);
-      return;
-    }
-    if (authUser != null && authUser != undefined) {
-      logger.info('User already authenticated: redirecting to dashboard');
-      navigate('/user/dashboard', { replace: true });
+  createEffect(async () => {
+    const authToken = await cookieStore.get('auth-token');
+    if (authToken) {
+      Logger.info(
+        `User already authenticated: redirecting to dashboard`,
+        'FRONTEND:LoginPage'
+      );
+
+      // TODO:
+      // Get auth user id
+      const authUserId = 'TODO!!';
+
+      navigate(`/user/${authUserId}/dashboard`, { replace: true });
     }
   });
 
