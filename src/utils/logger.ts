@@ -2,23 +2,23 @@ import { invoke } from '@tauri-apps/api/core';
 
 /** Provides logging implementations by calling rust functions. */
 export const Logger = {
-  debug: (msg: string, spanId: string = 'FRONTEND') => {
-    return invoke('debug', { msg, spanId });
+  debug: (msg: string) => {
+    return invoke('debug', { msg });
   },
 
-  trace: (msg: string, spanId: string = 'FRONTEND') => {
-    return invoke('trace', { msg, spanId });
+  trace: (msg: string) => {
+    return invoke('trace', { msg });
   },
 
-  info: (msg: string, spanId: string = 'FRONTEND') => {
-    return invoke('info', { msg, spanId });
+  info: (msg: string) => {
+    return invoke('info', { msg });
   },
 
-  warn: (msg: string, spanId: string = 'FRONTEND') => {
-    return invoke('warn', { msg, spanId });
+  warn: (msg: string) => {
+    return invoke('warn', { msg });
   },
 
-  error: (msg: string, spanId: string = 'FRONTEND') => {
-    return invoke('error', { msg, spanId });
+  error: (msg: string) => {
+    return invoke('error', { msg });
   },
 };

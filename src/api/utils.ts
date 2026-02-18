@@ -21,7 +21,6 @@ export function apiCall(
 //
 /** The base URL for the API. */
 const API_BASE_URL = 'https://localhost:8055/api/v1';
-const API_BASE_URL = 'http://localhost:8055/api/v1';
 
 /** Fetches a response from the given url. */
 async function rawApiCall(url: string, options?: any) {
