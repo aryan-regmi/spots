@@ -32,9 +32,6 @@ pub trait UserExt {
         user_id: Uuid,
         new_password_hash: impl Into<String>,
     ) -> Result<User, sqlx::Error>;
-
-    /// Gets the currently authenticated user.
-    async fn get_auth_user(&self) -> Result<Option<User>, sqlx::Error>;
 }
 
 impl UserExt for DatabaseClient {
@@ -76,16 +73,14 @@ impl UserExt for DatabaseClient {
                 password_hash,
                 created_at,
                 updated_at,
-                is_auth
             ) 
-            VALUES ($1, $2, $3, $4, $5, $6) 
+            VALUES ($1, $2, $3, $4, $5) 
             RETURNING 
                 id,
                 username,
                 password_hash,
                 created_at,
                 updated_at,
-                is_auth
             "#,
         )
         .bind(user_id.to_string())
@@ -109,20 +104,19 @@ impl UserExt for DatabaseClient {
         let user: User = sqlx::query_as(
             r#"
             UPDATE users 
-            SET username = $2, updated_at = $3
-            WHERE id = $1
+            SET username = $1, updated_at = $2
+            WHERE id = $3
             RETURNING 
                 id,
                 username,
                 password_hash,
                 created_at,
                 updated_at,
-                is_auth
             "#,
         )
-        .bind(user_id.to_string())
         .bind(new_username.into())
         .bind(updated_at.to_string())
+        .bind(user_id.to_string())
         .fetch_one(&self.pool)
         .await?;
 
@@ -146,7 +140,6 @@ impl UserExt for DatabaseClient {
                 password_hash,
                 created_at,
                 updated_at,
-                is_auth
             "#,
         )
         .bind(user_id.to_string())
@@ -155,14 +148,6 @@ impl UserExt for DatabaseClient {
         .fetch_one(&self.pool)
         .await?;
 
-        Ok(user)
-    }
-
-    async fn get_auth_user(&self) -> Result<Option<User>, sqlx::Error> {
-        let user: Option<User> = sqlx::query_as("SELECT * FROM users WHERE is_auth = $1")
-            .bind(true)
-            .fetch_optional(&self.pool)
-            .await?;
         Ok(user)
     }
 }
