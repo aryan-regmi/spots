@@ -17,6 +17,7 @@ use axum::{
     Extension, Json, Router,
 };
 use axum_extra::extract::cookie::Cookie;
+use tracing::info;
 use validator::Validate;
 
 /// Handles all auth related API calls.
@@ -24,7 +25,7 @@ pub fn handler() -> Router {
     Router::new()
         .route("/register", post(register))
         .route("/login", post(login))
-        .route("/auth-user-id", get(login))
+        .route("/auth-user-id", get(auth_user_id))
 }
 
 /// Registers the given user.
@@ -150,5 +151,6 @@ pub async fn auth_user_id(
         .map_err(|e| HttpError::server_error(HttpErrorMessage::DatabaseError(e.to_string())))?
         .map(|id| id.to_string());
     let response = axum::response::Json(user_id).into_response();
-    Ok(response)
+    // Ok(response)
+    Ok(axum::response::Json("Hello"))
 }

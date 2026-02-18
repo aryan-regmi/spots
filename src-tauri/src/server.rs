@@ -65,12 +65,13 @@ impl Server {
 
         // Configure CORS
         info!("Configuring CORS");
+        // FIXME: Update config struct with frontend port instead of hardcoded value
+        let origins = [
+            "http://localhost:1420".parse().unwrap(),
+            "https://localhost:1420".parse().unwrap(),
+        ];
         let cors = CorsLayer::new()
-            .allow_origin(
-                format!("http://localhost:{}", config.port)
-                    .parse::<HeaderValue>()
-                    .unwrap(),
-            )
+            .allow_origin(origins)
             .allow_headers([
                 axum::http::header::AUTHORIZATION,
                 axum::http::header::ACCEPT,
@@ -81,6 +82,8 @@ impl Server {
                 axum::http::Method::GET,
                 axum::http::Method::POST,
                 axum::http::Method::PUT,
+                axum::http::Method::DELETE,
+                axum::http::Method::OPTIONS,
             ]);
         info!("CORS configured");
 
