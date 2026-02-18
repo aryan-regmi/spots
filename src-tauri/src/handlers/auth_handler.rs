@@ -11,10 +11,9 @@ use crate::{
     AppState,
 };
 use axum::{
-    extract::State,
     http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
-    routing::post,
+    routing::{get, post},
     Extension, Json, Router,
 };
 use axum_extra::extract::cookie::Cookie;
@@ -25,9 +24,10 @@ pub fn handler() -> Router {
     Router::new()
         .route("/register", post(register))
         .route("/login", post(login))
+        .route("/auth-user-id", get(login))
 }
 
-/// Registers the given user in the database.
+/// Registers the given user.
 pub async fn register(
     Extension(app_state): Extension<AppState>,
     Json(body): Json<RegisterUserDto>,
@@ -70,6 +70,7 @@ pub async fn register(
     }
 }
 
+/// Logs the user in.
 pub async fn login(
     Extension(app_state): Extension<AppState>,
     Json(body): Json<LoginUserDto>,
@@ -134,4 +135,20 @@ pub async fn login(
             HttpErrorMessage::InvalidLogin.to_string(),
         ))
     }
+}
+
+/// Gets the authenticated user's ID.
+pub async fn auth_user_id(
+    Extension(app_state): Extension<AppState>,
+) -> Result<impl IntoResponse, HttpError> {
+    let user_id = app_state
+        .db
+        .lock()
+        .await
+        .get_auth_user_id()
+        .await
+        .map_err(|e| HttpError::server_error(HttpErrorMessage::DatabaseError(e.to_string())))?
+        .map(|id| id.to_string());
+    let response = axum::response::Json(user_id).into_response();
+    Ok(response)
 }

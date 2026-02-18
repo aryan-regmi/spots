@@ -32,6 +32,9 @@ pub trait UserExt {
         user_id: Uuid,
         new_password_hash: impl Into<String>,
     ) -> Result<User, sqlx::Error>;
+
+    /// Gets the currently authenticated user's ID.
+    async fn get_auth_user_id(&self) -> Result<Option<Uuid>, sqlx::Error>;
 }
 
 impl UserExt for DatabaseClient {
@@ -149,5 +152,10 @@ impl UserExt for DatabaseClient {
         .await?;
 
         Ok(user)
+    }
+
+    async fn get_auth_user_id(&self) -> Result<Option<Uuid>, sqlx::Error> {
+        let user: Option<User> = sqlx::query_as(r#""#).fetch_optional(&self.pool).await?;
+        Ok(user.map(|u| u.id))
     }
 }
