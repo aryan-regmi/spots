@@ -1,89 +1,82 @@
-import { apiCall } from '@/api/utils';
-import { action, query, redirect } from '@solidjs/router';
-import { LoginUserResponseDto } from './dtos';
+import {
+  LoginUserDto,
+  LoginUserResponseDto,
+  RegisterUserDto,
+} from '@/api/dtos';
+import { invoke } from '@tauri-apps/api/core';
+import { ApiErrorResponse, ApiResponse } from './utils';
+import { errAsync, ResultAsync } from 'neverthrow';
+import { useStore } from '@/utils/tauriStore';
 
-/** Registers a user. */
-export const registerUserAction = action(async (formData: FormData) => {
-  return registerUser(formData).andThen((_) => {
-    // Create new login form data
-    let loginFormData = formData;
-    loginFormData.delete('passwordConfirm');
-
-    // Log the user in and redirect
-    return loginUser(loginFormData);
-  });
-}, 'registerUser');
-
-/** Logs the user in. */
-export const loginUserAction = action(async (formData: FormData) => {
-  return loginUser(formData);
-}, 'loginUser');
-
-/** Logs out the currently logged in user. */
-export function logoutUser() {
-  cookieStore.delete('auth-token');
-  redirect('/');
+function registerUser(user: RegisterUserDto) {
+  const callBackend = ResultAsync.fromPromise(
+    registerUserBackend(user),
+    (err) => err as ApiErrorResponse
+  );
 }
 
-/** Gets the authenticated user's ID. */
-export const getAuthUserIdQuery = query(async () => {
-  return getAuthUserId();
-}, 'authUserId');
+function loginUser(user: LoginUserDto) {
+  const storeCtx = useStore();
+  if (storeCtx === undefined || storeCtx.store() === undefined) {
+    return errAsync({
+      status: 'Failure',
+      value: 'Store must be initalized',
+    } as ApiErrorResponse);
+  }
+  const store = storeCtx.store()!;
 
-/** Makes the API request to register a new user. */
-function registerUser(formData: FormData) {
-  // Extract form data
-  const username = formData.get('username')?.toString();
-  const password = formData.get('password')?.toString();
-  const passwordConfirm = formData.get('passwordConfirm')?.toString();
+  // Calls the rust command
+  const callBackend = ResultAsync.fromPromise(
+    loginUserBackend(user),
+    (err) => err as ApiErrorResponse
+  );
 
-  // Makes the API request
-  const makeRequest = apiCall('/auth/register', {
-    method: 'post',
-    body: JSON.stringify({ username, password, passwordConfirm }),
-    cache: 'no-cache',
-  });
-
-  return makeRequest;
-}
-
-/** Makes the API request to log a user in. */
-function loginUser(formData: FormData) {
-  // Extract form data
-  const username = formData.get('username')?.toString();
-  const password = formData.get('password')?.toString();
-
-  // Makes the API request
-  const makeRequest = apiCall('/auth/login', {
-    method: 'post',
-    body: JSON.stringify({ username, password }),
-    cache: 'no-cache',
-  });
-
-  // Gets the JWT from the response
-  const getJwt = (response: Response) =>
-    response.json() as Promise<LoginUserResponseDto>;
-
-  // Sets the cookie and redirects to the dashboard
-  const handleResponse = (body: LoginUserResponseDto) => {
-    cookieStore.set('auth-token', body.token);
-    redirect(`/user/${body.user.id}/dashboard`, {
-      revalidate: [getAuthUserIdQuery.key],
-    });
+  // Gets the `LoginUserResponseDto` from the response
+  const extractResponse = (res: ApiResponse<LoginUserResponseDto>) => {
+    if (res.status !== 'Success') {
+      return {
+        status: 'Failure',
+        value: '`login_user` returned an invalid response',
+      } as ApiErrorResponse;
+    }
+    return res.value;
   };
 
-  return makeRequest.map(getJwt).map(handleResponse);
+  // Sets the auth token and user ID in the store
+  const setAuthToken = (data: LoginUserResponseDto) => {
+    return storeCtx
+      .setValue(store, {
+        key: 'auth-token',
+        value: data.token,
+      })
+      .andThen(() =>
+        storeCtx.setValue(store, { key: 'auth-user-id', value: data.user.id })
+      );
+  };
+
+  // TODO: finish
 }
 
-/** Gets the authenticated user's ID. */
-function getAuthUserId() {
-  // Makes the API request
-  const makeRequest = apiCall('/auth/auth-user-id', {
-    method: 'get',
-  });
+// TODO: Add logout
+//  - Remember to unset store values!
 
-  // Gets user id from the response
-  const getUserId = (response: Response) => response.json() as Promise<string>;
+async function loginUserBackend(user: LoginUserDto) {
+  try {
+    return await invoke<ApiResponse<LoginUserResponseDto>>('login_user', {
+      user,
+    });
+  } catch (e) {
+    const err = e as ApiErrorResponse;
+    throw err;
+  }
+}
 
-  return makeRequest.map(getUserId);
+/** Calls the backend `register_user` command. */
+async function registerUserBackend(user: RegisterUserDto) {
+  try {
+    return await invoke<ApiResponse<void>>('register_user', { user });
+  } catch (e) {
+    const err = e as ApiErrorResponse;
+    throw err;
+  }
 }

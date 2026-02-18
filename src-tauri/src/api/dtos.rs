@@ -6,6 +6,7 @@ use crate::{api::utils::token::Token, database::models::User};
 
 /// The DTO used to register a user.
 #[derive(Debug, Clone, Validate, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RegisterUserDto {
     #[validate(
         length(min = 3, message = "The username must be at least 3 characters"),
@@ -30,6 +31,7 @@ pub struct RegisterUserDto {
 
 /// The DTO used to login a user.
 #[derive(Debug, Clone, Validate, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginUserDto {
     #[validate(
         length(min = 3, message = "The username must be at least 3 characters"),
@@ -48,6 +50,7 @@ pub struct LoginUserDto {
 
 /// The DTO returned after loggin in a user.
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginUserResponseDto {
     pub user: FilterUserDto,
     pub token: String,
