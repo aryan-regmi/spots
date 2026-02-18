@@ -6,7 +6,7 @@ use crate::{
 };
 use dotenvy::dotenv;
 use tauri::{async_runtime::Mutex, Manager};
-use tracing_subscriber::{layer::SubscriberExt, EnvFilter};
+use tracing_subscriber::EnvFilter;
 
 mod database;
 mod errors;
@@ -55,13 +55,15 @@ pub fn run() {
                 // Setup app state
                 let db = Arc::new(Mutex::new(db));
                 let config = Arc::new(Mutex::new(config));
-
-                // Setup http server
-                Server::start(AppState {
+                let app_state = AppState {
                     db: db.clone(),
                     config: config.clone(),
-                })
-                .await;
+                };
+
+                // Setup http server
+                tauri::async_runtime::spawn(async move {
+                    Server::start(app_state).await;
+                });
 
                 // Manage state in Tauri
                 app.manage(AppState { db, config });

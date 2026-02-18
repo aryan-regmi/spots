@@ -6,15 +6,16 @@ import { Route, Router } from '@solidjs/router';
 import { SignupPage } from '@/pages/SignupPage';
 
 // TODO: Add isolation app (check tauri docs)
+// TODO: Add erro boundary
 function App() {
   return (
     <main class="container">
       <Router>
         <Route path={'/'} component={LoginPage} />
-        <Route path={'/signup'} component={SignupPage} />
-        <Route path="/user/:id" component={NavMusicLayout}>
-          <Route path="/dashboard" component={DashboardPage} />
-        </Route>
+        {/* <Route path={'/signup'} component={SignupPage} /> */}
+        {/* <Route path="/user/:id" component={NavMusicLayout}> */}
+        {/*   <Route path="/dashboard" component={DashboardPage} /> */}
+        {/* </Route> */}
       </Router>
     </main>
   );

@@ -1,23 +1,8 @@
-import { AuthError } from '@/services/auth/service';
-import {
-  createEffect,
-  createSignal,
-  ErrorBoundary,
-  JSX,
-  onMount,
-  Show,
-} from 'solid-js';
-import {
-  A,
-  createAsync,
-  redirect,
-  useAction,
-  useNavigate,
-} from '@solidjs/router';
-import { useAuth } from '@/services/auth/provider';
-import { useLogger } from '@/services/logger/provider';
+import { createEffect, JSX } from 'solid-js';
+import { A, createAsync, useNavigate, useSubmission } from '@solidjs/router';
 import { ErrorMessages } from '@/components/ErrorMessages';
 import { Logger } from '@/utils/logger';
+import { getAuthUserIdQuery, loginUserAction } from '@/api/auth';
 
 /** Type of styles in the login page. */
 type styles = {
@@ -90,103 +75,33 @@ const LoginPageStyles: styles = {
 /** The login page. */
 export function LoginPage() {
   const navigate = useNavigate();
+  const getAuthUserId = createAsync(() => getAuthUserIdQuery());
+  const formSubmission = useSubmission(loginUserAction);
 
   /** Redirects to the dashboard if already authenticated. */
   createEffect(async () => {
     const authToken = await cookieStore.get('auth-token');
     if (authToken) {
-      Logger.info(
-        `User already authenticated: redirecting to dashboard`,
-        'FRONTEND:LoginPage'
+      Logger.info(`User already authenticated: redirecting to dashboard`);
+
+      // Get auth user id
+      const authUserId = getAuthUserId()?.match(
+        (id) => id,
+        (err) => {
+          Logger.error(`Unable to get auth user ID: ${err}`);
+          throw err;
+        }
       );
 
-      // TODO:
-      // Get auth user id
-      const authUserId = 'TODO!!';
-
-      navigate(`/user/${authUserId}/dashboard`, { replace: true });
+      // Redirect to dashboard
+      if (authUserId) {
+        navigate(`/user/${authUserId}/dashboard`, { replace: true });
+      }
     }
   });
 
-  /** Determines if the login page is in a busy state. */
-  const [isBusy, setIsBusy] = createSignal(false);
-
-  /** List of error messages. */
-  const [errMsgs, setErrMsgs] = createSignal<(string | Error)[]>([]);
-
-  /** List of unique error messages. */
-  const uniqueErrMsgs = () => [
-    ...new Set(
-      errMsgs().map((e) =>
-        e instanceof AuthError ? `${e.name}: ${e.kind}: ${e.message}` : e
-      )
-    ),
-  ];
-
-  /** Determines if the button should be disabled */
-  const isBtnDisabled = () => isBusy() || uniqueErrMsgs().length > 0;
-
-  /** Handles login button click. */
-  const handleLoginClicked: JSX.EventHandler<
-    HTMLFormElement,
-    SubmitEvent
-  > = async (e) => {
-    setIsBusy(true);
-    e.preventDefault();
-
-    // Validate and authenticate in backend
-    const formData = new FormData(e.currentTarget);
-    const username = formData.get('username')?.toString();
-    const password = formData.get('password')?.toString();
-    if (username && password) {
-      // Validate
-      logger.info('Validating login');
-      const isValid = await validateLogin(username, password);
-      if (isValid instanceof AuthError) {
-        setErrMsgs((prev) => [...prev, isValid]);
-        setIsBusy(false);
-        return;
-      }
-
-      // Authenticate and redirect to dashboard
-      if (isValid) {
-        logger.info('Login validated');
-        logger.info('Authenticating user');
-        const authenticatedResult = await authenticate(username);
-        if (authenticatedResult instanceof AuthError) {
-          setErrMsgs((prev) => [...prev, authenticatedResult]);
-          setIsBusy(false);
-        } else {
-          logger.info('User authenticated');
-          navigate('/user/dashboard', { replace: true });
-          setIsBusy(false);
-        }
-        return;
-      }
-
-      // Inputs are invalid
-      logger.info('Invalid inputs');
-      setErrMsgs((prev) => [...prev, 'Login was not found']);
-      setIsBusy(false);
-      return;
-    }
-
-    // Empty inputs
-    setErrMsgs((prev) => [...prev, 'Username and password must not be empty']);
-    setIsBusy(false);
-    return;
-  };
-
-  // TODO: Add real error fallback component + Error display
   return (
-    <ErrorBoundary
-      fallback={(error, reset) => (
-        <div>
-          <p>{error.message}</p>
-          <button onClick={reset}>Try Again</button>
-        </div>
-      )}
-    >
+    <>
       <div class="col" style={LoginPageStyles.containerStyle}>
         {/* Header */}
         <div style={LoginPageStyles.headerStyle}>
@@ -197,32 +112,30 @@ export function LoginPage() {
         <form
           class="col"
           style={LoginPageStyles.formStyle}
-          onsubmit={handleLoginClicked}
+          action={loginUserAction}
         >
           <input
             name="username"
             style={LoginPageStyles.inputStyle}
             type="text"
             placeholder="Username"
-            oninput={() => setErrMsgs([])}
           />
           <input
             name="password"
             style={LoginPageStyles.inputStyle}
             type="password"
             placeholder="Password"
-            oninput={() => setErrMsgs([])}
           />
           <button
             type="submit"
-            disabled={isBtnDisabled()}
+            disabled={formSubmission.pending}
             style={
-              isBtnDisabled()
+              formSubmission.pending
                 ? LoginPageStyles.submitBtnDisabledStyle
                 : LoginPageStyles.submitBtnStyle
             }
           >
-            {isBusy() ? 'Logging in...' : 'Log In'}
+            {formSubmission.pending ? 'Logging in...' : 'Log In'}
           </button>
         </form>
 
@@ -235,8 +148,9 @@ export function LoginPage() {
           New user? <A href="/signup">Sign Up</A>
         </div>
       </div>
+
       {/* Error Messages */}
-      <ErrorMessages errors={uniqueErrMsgs()} />
-    </ErrorBoundary>
+      <ErrorMessages errors={[]} />
+    </>
   );
 }

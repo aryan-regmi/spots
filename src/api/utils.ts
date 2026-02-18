@@ -1,6 +1,5 @@
 import { Logger } from '@/utils/logger';
-import { fetch } from '@tauri-apps/plugin-http';
-import { errAsync, okAsync, ResultAsync } from 'neverthrow';
+import { ResultAsync } from 'neverthrow';
 
 /** Represents an API error.  */
 export type ApiError = { message: string };
@@ -11,7 +10,7 @@ export function apiCall(
   options?: any
 ): ResultAsync<Response, ApiError> {
   return ResultAsync.fromPromise<Response, ApiError>(
-    rawApiCall(`${API_BASE_URL}/${url}`, options),
+    rawApiCall(`${API_BASE_URL}${url}`, options),
     (err) => ({
       message: `${err}`,
     })
@@ -22,6 +21,7 @@ export function apiCall(
 //
 /** The base URL for the API. */
 const API_BASE_URL = 'https://localhost:8055/api/v1';
+const API_BASE_URL = 'http://localhost:8055/api/v1';
 
 /** Fetches a response from the given url. */
 async function rawApiCall(url: string, options?: any) {
@@ -54,7 +54,7 @@ async function rawApiCall(url: string, options?: any) {
 
     return await response.json();
   } catch (err) {
-    Logger.error(`API Error: ${err}`, 'API_CALL');
+    Logger.error(`API Error: ${err}`);
     throw err;
   }
 }

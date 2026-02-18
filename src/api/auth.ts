@@ -1,5 +1,5 @@
 import { apiCall } from '@/api/utils';
-import { action, redirect } from '@solidjs/router';
+import { action, query, redirect } from '@solidjs/router';
 import { LoginUserResponseDto } from './dtos';
 
 /** Registers a user. */
@@ -24,6 +24,11 @@ export function logoutUser() {
   cookieStore.delete('auth-token');
   redirect('/');
 }
+
+/** Gets the authenticated user's ID. */
+export const getAuthUserIdQuery = query(async () => {
+  return getAuthUserId();
+}, 'authUserId');
 
 /** Makes the API request to register a new user. */
 function registerUser(formData: FormData) {
@@ -55,15 +60,30 @@ function loginUser(formData: FormData) {
     cache: 'no-cache',
   });
 
-  // Gets the JWT from the request
+  // Gets the JWT from the response
   const getJwt = (response: Response) =>
     response.json() as Promise<LoginUserResponseDto>;
 
   // Sets the cookie and redirects to the dashboard
   const handleResponse = (body: LoginUserResponseDto) => {
     cookieStore.set('auth-token', body.token);
-    redirect(`/user/${body.user.id}/dashboard`);
+    redirect(`/user/${body.user.id}/dashboard`, {
+      revalidate: [getAuthUserIdQuery.key],
+    });
   };
 
   return makeRequest.map(getJwt).map(handleResponse);
+}
+
+/** Gets the authenticated user's ID. */
+function getAuthUserId() {
+  // Makes the API request
+  const makeRequest = apiCall('/auth/auth-user-id', {
+    method: 'get',
+  });
+
+  // Gets user id from the response
+  const getUserId = (response: Response) => response.json() as Promise<string>;
+
+  return makeRequest.map(getUserId);
 }
