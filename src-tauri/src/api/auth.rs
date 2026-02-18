@@ -67,12 +67,12 @@ async fn login_user(
 
     // Log the user in if passwords match
     if password_match {
+        let config = state.api_config.lock().await.clone();
+
         // Create auth token
-        let token = Token {
-            value: todo!(),
-            issued_at: todo!(),
-            expires_at: todo!(),
-        };
+        let token = Token::try_new(config, &existing_user.id.to_string());
+
+        //
     }
 
     todo!()

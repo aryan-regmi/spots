@@ -118,17 +118,146 @@ pub mod password {
 }
 
 pub mod token {
-    use chrono::NaiveDateTime;
-    use serde::Serialize;
 
-    #[derive(Debug, Clone, Serialize)]
+    use std::fmt::Display;
+
+    use base64::{prelude::BASE64_STANDARD, Engine};
+    use chrono::{Duration, Utc};
+    use ring::aead::{Aad, BoundKey, Nonce, NonceSequence, UnboundKey, AES_256_GCM, NONCE_LEN};
+    use serde::{Deserialize, Serialize};
+
+    use crate::{api::utils::ApiConfig, errors::SpotsError};
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Token {
-        value: String,
-        issued_at: NaiveDateTime,
-        expires_at: NaiveDateTime,
+        user_id: String,
+        issued_at: usize,
+        expires_at: usize,
+    }
+
+    impl Display for Token {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_fmt(format_args!(
+                "Token {{ value: {}, issued_at: {}, expires_at: {} }}",
+                self.user_id, self.issued_at, self.expires_at
+            ))
+        }
     }
 
     impl Token {
-        pub fn new(user_id: &str) {}
+        /// Creates a new encrypted token for the user with the given ID.
+        pub fn try_new(
+            config: ApiConfig,
+            user_id: impl Into<String>,
+        ) -> Result<String, SpotsError> {
+            let user_id = user_id.into();
+            if user_id.is_empty() {
+                return Err(SpotsError::EmptyUserId);
+            }
+
+            // Setup token metadata
+            let now = Utc::now();
+            let issued_at = now.timestamp() as usize;
+            let expires_at =
+                (now + Duration::minutes(config.token_maxage_mins)).timestamp() as usize;
+            let token = serde_json::to_string(&Token {
+                user_id,
+                issued_at,
+                expires_at,
+            })
+            .map_err(|e| SpotsError::TokenCreationFailed(e.to_string()))?;
+
+            // Create an encrypted token
+            let encrypted_token = {
+                let key = UnboundKey::new(&AES_256_GCM, &config.token_secret_key.as_bytes()[0..32])
+                    .map_err(|e| {
+                        SpotsError::TokenCreationFailed(format!("UnboundKey creation failed: {e}"))
+                    })?;
+                let mut cipher =
+                    ring::aead::SealingKey::new(key, NonceSequenceGenerator { counter: 0 });
+                let padding = AES_256_GCM.tag_len().checked_sub(token.len());
+                let mut encrypt_buffer = token.clone().into_bytes();
+                if let Some(padding) = padding {
+                    (0..padding).for_each(|_| encrypt_buffer.push(0));
+                }
+                cipher
+                    .seal_in_place_append_tag(Aad::empty(), &mut encrypt_buffer)
+                    .map_err(|e| {
+                        SpotsError::TokenCreationFailed(format!("Cipher sealing failed: {e}"))
+                    })?;
+                encrypt_buffer
+            };
+
+            Ok(BASE64_STANDARD.encode(encrypted_token))
+        }
+
+        /// Decrypts the given (encrypted) token.
+        pub fn decrypt(config: ApiConfig, token: String) -> Result<String, SpotsError> {
+            // Setup keys/cipher
+            let key = UnboundKey::new(&AES_256_GCM, &config.token_secret_key.as_bytes()[0..32])
+                .map_err(|e| {
+                    SpotsError::TokenDecryptionFailed(format!("UnboundKey creation failed: {e}"))
+                })?;
+            let mut cipher =
+                ring::aead::OpeningKey::new(key, NonceSequenceGenerator { counter: 0 });
+
+            // Decrypt
+            let mut to_decrypt = BASE64_STANDARD.decode(token).map_err(|e| {
+                SpotsError::TokenDecryptionFailed(format!("Base64 decoding failed: {e}"))
+            })?;
+            let decrypted = cipher
+                .open_in_place(Aad::empty(), &mut to_decrypt)
+                .map_err(|e| {
+                    SpotsError::TokenDecryptionFailed(format!("Decryption failed: {e}"))
+                })?;
+
+            Ok(String::from_utf8_lossy(decrypted)
+                .trim_matches(|c: char| c.is_control())
+                .to_string())
+        }
+
+        // pub fn () {
+        //
+        // }
+    }
+
+    /// Generates a `NonceSequence`.
+    struct NonceSequenceGenerator {
+        counter: u64,
+    }
+
+    impl NonceSequence for NonceSequenceGenerator {
+        fn advance(&mut self) -> Result<Nonce, ring::error::Unspecified> {
+            let mut nonce_bytes = self.counter.to_ne_bytes().to_vec();
+            nonce_bytes.extend_from_slice(&mut self.counter.to_ne_bytes());
+            let mut nonce = [0u8; NONCE_LEN];
+            for (idx, b) in nonce.iter_mut().enumerate() {
+                *b = nonce_bytes[idx];
+            }
+            self.counter += 1;
+            Ok(Nonce::assume_unique_for_key(nonce))
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use dotenvy::dotenv;
+    use serde_json::json;
+
+    use crate::api::utils::token::Token;
+
+    use super::*;
+
+    #[test]
+    fn test_encrypt_decrypt() -> Result<(), SpotsError> {
+        dotenv().unwrap();
+        let config = ApiConfig::new();
+        let encrypted = Token::try_new(config.clone(), "Me")?;
+        let decrypted = Token::decrypt(config, encrypted)?;
+        let decrypted: serde_json::Value = serde_json::from_str(&decrypted).unwrap();
+        assert_eq!(*decrypted.get("user_id").unwrap(), json!("Me"));
+
+        Ok(())
     }
 }
