@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
+use crate::api::utils::ApiResponse;
+
 /// Represents all backend errors.
 #[derive(Debug, Clone, Serialize)]
 pub enum SpotsError {
@@ -15,6 +17,12 @@ pub enum SpotsError {
     InvalidLogin,
     TokenCreationFailed(String),
     TokenDecryptionFailed(String),
+}
+
+impl Into<ApiResponse<SpotsError>> for SpotsError {
+    fn into(self) -> ApiResponse<SpotsError> {
+        ApiResponse::failure(self)
+    }
 }
 
 impl Display for SpotsError {

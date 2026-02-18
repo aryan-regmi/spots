@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
-use crate::{api::utils::ApiConfig, database::client::DatabaseClient};
 use dotenvy::dotenv;
 use tauri::{async_runtime::Mutex, Manager};
 use tracing_subscriber::EnvFilter;
+
+use crate::{api::utils::ApiConfig, database::client::DatabaseClient};
 
 mod api;
 mod database;
@@ -36,6 +37,8 @@ pub fn run() {
             logger::info,
             logger::warn,
             logger::error,
+            api::auth::register_user,
+            api::auth::login_user,
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {

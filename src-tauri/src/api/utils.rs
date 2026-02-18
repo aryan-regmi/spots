@@ -39,7 +39,7 @@ where
 }
 
 /// The result type returned by API functions.
-pub type ApiResult<T> = Result<ApiResponse<T>, SpotsError>;
+pub type ApiResult<T> = Result<ApiResponse<T>, ApiResponse<SpotsError>>;
 
 /// API configurations.
 #[derive(Debug, Clone)]
@@ -145,7 +145,7 @@ pub mod token {
     }
 
     impl Token {
-        /// Creates a new encrypted token for the user with the given ID.
+        /// Creates a new encrypted auth token for the user with the given ID.
         pub fn try_new(
             config: ApiConfig,
             user_id: impl Into<String>,
@@ -160,39 +160,60 @@ pub mod token {
             let issued_at = now.timestamp() as usize;
             let expires_at =
                 (now + Duration::minutes(config.token_maxage_mins)).timestamp() as usize;
-            let token = serde_json::to_string(&Token {
+            let token = Token {
                 user_id,
                 issued_at,
                 expires_at,
-            })
-            .map_err(|e| SpotsError::TokenCreationFailed(e.to_string()))?;
-
-            // Create an encrypted token
-            let encrypted_token = {
-                let key = UnboundKey::new(&AES_256_GCM, &config.token_secret_key.as_bytes()[0..32])
-                    .map_err(|e| {
-                        SpotsError::TokenCreationFailed(format!("UnboundKey creation failed: {e}"))
-                    })?;
-                let mut cipher =
-                    ring::aead::SealingKey::new(key, NonceSequenceGenerator { counter: 0 });
-                let padding = AES_256_GCM.tag_len().checked_sub(token.len());
-                let mut encrypt_buffer = token.clone().into_bytes();
-                if let Some(padding) = padding {
-                    (0..padding).for_each(|_| encrypt_buffer.push(0));
-                }
-                cipher
-                    .seal_in_place_append_tag(Aad::empty(), &mut encrypt_buffer)
-                    .map_err(|e| {
-                        SpotsError::TokenCreationFailed(format!("Cipher sealing failed: {e}"))
-                    })?;
-                encrypt_buffer
             };
 
-            Ok(BASE64_STANDARD.encode(encrypted_token))
+            Token::encrypt(config, token)
+        }
+
+        /// Gets the user ID from the encrypted token.
+        pub fn get_user_id(
+            &self,
+            config: ApiConfig,
+            encrypted_token: String,
+        ) -> Result<String, SpotsError> {
+            let token_str = Token::decrypt(config, encrypted_token)?;
+            let token: Token = serde_json::from_str(&token_str)
+                .map_err(|e| SpotsError::TokenDecryptionFailed(e.to_string()))?;
+            Ok(token.user_id)
+        }
+
+        /// Encrypts the given token.
+        fn encrypt(config: ApiConfig, token: Token) -> Result<String, SpotsError> {
+            // Create key & cipher to encrypt the token
+            let key = UnboundKey::new(&AES_256_GCM, &config.token_secret_key.as_bytes()[0..32])
+                .map_err(|e| {
+                    SpotsError::TokenCreationFailed(format!("UnboundKey creation failed: {e}"))
+                })?;
+            let mut cipher =
+                ring::aead::SealingKey::new(key, NonceSequenceGenerator { counter: 0 });
+
+            // Get token as a JSON string
+            let token_str = serde_json::to_string(&token)
+                .map_err(|e| SpotsError::TokenCreationFailed(e.to_string()))?;
+
+            // Prepare buffer to store encrypted token by padding it to the required size for
+            // the AES_256_GCM algorithim
+            let mut encrypt_buffer = token_str.clone().into_bytes();
+            let padding = AES_256_GCM.tag_len().checked_sub(token_str.len());
+            if let Some(padding) = padding {
+                (0..padding).for_each(|_| encrypt_buffer.push(0));
+            }
+
+            // Encrypt the token into `encrypt_buffer`
+            cipher
+                .seal_in_place_append_tag(Aad::empty(), &mut encrypt_buffer)
+                .map_err(|e| {
+                    SpotsError::TokenCreationFailed(format!("Cipher sealing failed: {e}"))
+                })?;
+            Ok(BASE64_STANDARD.encode(encrypt_buffer))
         }
 
         /// Decrypts the given (encrypted) token.
-        pub fn decrypt(config: ApiConfig, token: String) -> Result<String, SpotsError> {
+        fn decrypt(config: ApiConfig, token: String) -> Result<String, SpotsError> {
             // Setup keys/cipher
             let key = UnboundKey::new(&AES_256_GCM, &config.token_secret_key.as_bytes()[0..32])
                 .map_err(|e| {
@@ -215,10 +236,6 @@ pub mod token {
                 .trim_matches(|c: char| c.is_control())
                 .to_string())
         }
-
-        // pub fn () {
-        //
-        // }
     }
 
     /// Generates a `NonceSequence`.
@@ -238,26 +255,26 @@ pub mod token {
             Ok(Nonce::assume_unique_for_key(nonce))
         }
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use dotenvy::dotenv;
-    use serde_json::json;
+    #[cfg(test)]
+    mod tests {
+        use dotenvy::dotenv;
+        use serde_json::json;
 
-    use crate::api::utils::token::Token;
+        use crate::api::utils::token::Token;
 
-    use super::*;
+        use super::*;
 
-    #[test]
-    fn test_encrypt_decrypt() -> Result<(), SpotsError> {
-        dotenv().unwrap();
-        let config = ApiConfig::new();
-        let encrypted = Token::try_new(config.clone(), "Me")?;
-        let decrypted = Token::decrypt(config, encrypted)?;
-        let decrypted: serde_json::Value = serde_json::from_str(&decrypted).unwrap();
-        assert_eq!(*decrypted.get("user_id").unwrap(), json!("Me"));
+        #[test]
+        fn test_encrypt_decrypt() -> Result<(), SpotsError> {
+            dotenv().unwrap();
+            let config = ApiConfig::new();
+            let encrypted = Token::try_new(config.clone(), "Me")?;
+            let decrypted = Token::decrypt(config, encrypted)?;
+            let decrypted: serde_json::Value = serde_json::from_str(&decrypted).unwrap();
+            assert_eq!(*decrypted.get("user_id").unwrap(), json!("Me"));
 
-        Ok(())
+            Ok(())
+        }
     }
 }

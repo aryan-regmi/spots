@@ -50,7 +50,7 @@ pub struct LoginUserDto {
 #[derive(Debug, Clone, Serialize)]
 pub struct LoginUserResponseDto {
     pub user: FilterUserDto,
-    pub token: Token,
+    pub token: String,
 }
 
 /// DTO for filtered user info.
