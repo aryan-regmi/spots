@@ -19,6 +19,12 @@ export const loginUserAction = action(async (formData: FormData) => {
   return loginUser(formData);
 }, 'loginUser');
 
+/** Logs out the currently logged in user. */
+export function logoutUser() {
+  cookieStore.delete('auth-token');
+  redirect('/');
+}
+
 /** Makes the API request to register a new user. */
 function registerUser(formData: FormData) {
   // Extract form data
