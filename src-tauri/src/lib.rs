@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::database::client::DatabaseClient;
+use crate::{api::utils::ApiConfig, database::client::DatabaseClient};
 use dotenvy::dotenv;
 use tauri::{async_runtime::Mutex, Manager};
 use tracing_subscriber::EnvFilter;
@@ -14,6 +14,7 @@ mod logger;
 #[derive(Clone)]
 struct AppState {
     db: Arc<Mutex<DatabaseClient>>,
+    api_config: Arc<Mutex<ApiConfig>>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -38,6 +39,9 @@ pub fn run() {
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {
+                // Setup API
+                let api_config = Arc::new(Mutex::new(ApiConfig::new()));
+
                 // Setup database
                 let db = DatabaseClient::try_new(&app)
                     .await
@@ -45,8 +49,10 @@ pub fn run() {
 
                 // Setup app state
                 let db = Arc::new(Mutex::new(db));
-                let app_state = AppState { db };
+                let app_state = AppState { db, api_config };
                 app.manage(app_state);
+
+                // Setup API
             });
             Ok(())
         })
