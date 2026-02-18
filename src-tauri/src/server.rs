@@ -3,6 +3,7 @@ use std::{net::SocketAddr, path::PathBuf, str::FromStr};
 use axum::{http::HeaderValue, Extension, Router};
 use axum_server::tls_rustls::RustlsConfig;
 use tower_http::cors::CorsLayer;
+use tracing::{error, info, span, Level};
 
 use crate::{
     handlers::{auth_handler, user_handler},
@@ -41,9 +42,14 @@ pub struct Server;
 
 impl Server {
     pub async fn start(app_state: AppState) {
+        let span = span!(Level::INFO, "SERVER");
+        let _guard = span.enter();
+
+        info!("Starting HTTP server");
         let config = app_state.config.lock().await.clone();
 
         // Configure TLS
+        info!("Configuring TLS");
         let config_http = RustlsConfig::from_pem_file(
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .join("ssl-keys")
@@ -53,9 +59,12 @@ impl Server {
                 .join("server-private-key.pem"),
         )
         .await
+        .inspect_err(|e| error!("Failed to configure TLS: {e}"))
         .unwrap();
+        info!("TLS configured");
 
         // Configure CORS
+        info!("Configuring CORS");
         let cors = CorsLayer::new()
             .allow_origin(
                 format!("http://localhost:{}", config.port)
@@ -73,6 +82,7 @@ impl Server {
                 axum::http::Method::POST,
                 axum::http::Method::PUT,
             ]);
+        info!("CORS configured");
 
         // Start server
         let server_app = Self::create_router()
@@ -86,6 +96,7 @@ impl Server {
         server
             .serve(server_app.into_make_service())
             .await
+            .map(|_| info!("Server started"))
             .expect("Unable to serve app");
     }
 

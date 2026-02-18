@@ -6,6 +6,7 @@ use crate::{
 };
 use dotenvy::dotenv;
 use tauri::{async_runtime::Mutex, Manager};
+use tracing_subscriber::{layer::SubscriberExt, EnvFilter};
 
 mod database;
 mod errors;
@@ -28,7 +29,10 @@ pub fn run() {
 
     // Setup tracing
     tracing_subscriber::fmt()
-        .with_max_level(tracing::level_filters::LevelFilter::DEBUG)
+        .with_target(false)
+        .with_env_filter(EnvFilter::new(
+            "spots_lib=trace,sqlx=error,sqlx::query=error",
+        ))
         .init();
 
     tauri::Builder::default()
