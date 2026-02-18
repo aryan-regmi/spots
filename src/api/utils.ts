@@ -52,8 +52,10 @@ async function rawApiCall(url: string, options?: any) {
     }
 
     return await response.json();
-  } catch (err) {
-    Logger.error(`API Error: ${err}`);
+  } catch (e) {
+    const err = e as Error;
+    const errInfo = { kind: err.name, message: err.message, stack: err.stack };
+    Logger.error(`${JSON.stringify(errInfo)}`);
     throw err;
   }
 }
