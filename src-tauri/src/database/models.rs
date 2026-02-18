@@ -22,6 +22,9 @@ pub struct User {
 
     /// Timestamp for when the user was last updated.
     pub updated_at: Option<NaiveDateTime>,
+
+    /// If the user is currently authenticated or not.
+    pub is_auth: bool,
 }
 
 impl<'r> FromRow<'r, SqliteRow> for User {

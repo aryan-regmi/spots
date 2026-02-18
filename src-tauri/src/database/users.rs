@@ -33,8 +33,8 @@ pub trait UserExt {
         new_password_hash: impl Into<String>,
     ) -> Result<User, sqlx::Error>;
 
-    /// Gets the currently authenticated user's ID.
-    async fn get_auth_user_id(&self) -> Result<Option<Uuid>, sqlx::Error>;
+    /// Gets the currently authenticated user.
+    async fn get_auth_user(&self) -> Result<Option<User>, sqlx::Error>;
 }
 
 impl UserExt for DatabaseClient {
@@ -45,9 +45,8 @@ impl UserExt for DatabaseClient {
     ) -> Result<Option<User>, sqlx::Error> {
         let user: Option<User> = sqlx::query_as(
             r#"
-            SELECT 
-                * 
-            FROM users 
+            SELECT *
+            FROM users
             WHERE
                 ($1::text IS NULL OR id = $1) AND
                 ($2::text IS NULL OR username = $2)
@@ -77,14 +76,16 @@ impl UserExt for DatabaseClient {
                 password_hash,
                 created_at,
                 updated_at,
+                is_auth
             ) 
-            VALUES ($1, $2, $3, $4, $5) 
+            VALUES ($1, $2, $3, $4, $5, $6) 
             RETURNING 
                 id,
                 username,
                 password_hash,
                 created_at,
-                updated_at
+                updated_at,
+                is_auth
             "#,
         )
         .bind(user_id.to_string())
@@ -92,6 +93,7 @@ impl UserExt for DatabaseClient {
         .bind(password_hash.into())
         .bind(created_at.to_string())
         .bind(updated_at.to_string())
+        .bind(false)
         .fetch_one(&self.pool)
         .await?;
 
@@ -114,7 +116,8 @@ impl UserExt for DatabaseClient {
                 username,
                 password_hash,
                 created_at,
-                updated_at
+                updated_at,
+                is_auth
             "#,
         )
         .bind(user_id.to_string())
@@ -142,7 +145,8 @@ impl UserExt for DatabaseClient {
                 username,
                 password_hash,
                 created_at,
-                updated_at
+                updated_at,
+                is_auth
             "#,
         )
         .bind(user_id.to_string())
@@ -154,8 +158,11 @@ impl UserExt for DatabaseClient {
         Ok(user)
     }
 
-    async fn get_auth_user_id(&self) -> Result<Option<Uuid>, sqlx::Error> {
-        let user: Option<User> = sqlx::query_as(r#""#).fetch_optional(&self.pool).await?;
-        Ok(user.map(|u| u.id))
+    async fn get_auth_user(&self) -> Result<Option<User>, sqlx::Error> {
+        let user: Option<User> = sqlx::query_as("SELECT * FROM users WHERE is_auth = $1")
+            .bind(true)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(user)
     }
 }

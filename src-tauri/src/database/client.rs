@@ -25,7 +25,7 @@ impl DatabaseClient {
         let db_url = path
             .to_str()
             .ok_or_else(|| String::from("Invalid database URL"))?;
-        info!("Database path created");
+        info!("Database path created: {}", db_url);
 
         // Create database
         info!("Creating database");
