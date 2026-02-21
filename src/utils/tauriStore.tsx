@@ -1,8 +1,15 @@
 import { Logger } from '@/utils/logger';
 import { ResultAsync } from 'neverthrow';
-import { createContext, createResource, Resource, useContext } from 'solid-js';
-import { createError, SpotsError } from '@/utils/errors';
+import {
+  createContext,
+  createResource,
+  Resource,
+  ResourceReturn,
+  useContext,
+} from 'solid-js';
+import { createError, errorToString, SpotsError } from '@/utils/errors';
 import { load, Store } from '@tauri-apps/plugin-store';
+import { AUTH_TOKEN_KEY, AUTH_USERID_KEY } from '@/api/auth';
 
 /** The path of the store. */
 export const STORE_PATH = 'spots-store.json';
@@ -71,6 +78,44 @@ export function StoreProvider(props: { children: any }) {
 /** Exposes the `StoreContext` */
 export function useStore() {
   return useContext(StoreContext);
+}
+
+/** Extracts the auth token from the store. */
+export function getAuthTokenResource(
+  storeCtx: StoreInnerContext
+): ResourceReturn<string | undefined> {
+  return createResource(async () => {
+    if (storeCtx.store()) {
+      return await storeCtx
+        .getValue<string>(storeCtx.store()!, AUTH_TOKEN_KEY)
+        .match(
+          (token) => token,
+          (err) => {
+            Logger.error(errorToString(err));
+            return undefined;
+          }
+        );
+    }
+  });
+}
+
+/** Extracts the auth user ID from the store. */
+export function getAuthUserIdResource(
+  storeCtx: StoreInnerContext
+): ResourceReturn<string | undefined> {
+  return createResource(async () => {
+    if (storeCtx.store()) {
+      return await storeCtx
+        .getValue<string>(storeCtx.store()!, AUTH_USERID_KEY)
+        .match(
+          (token) => token,
+          (err) => {
+            Logger.error(errorToString(err));
+            return undefined;
+          }
+        );
+    }
+  });
 }
 
 /** Opens the store. */
