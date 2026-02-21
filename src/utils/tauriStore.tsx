@@ -1,8 +1,8 @@
-import { load, Store } from '@tauri-apps/plugin-store';
-import { err, ok, ResultAsync } from 'neverthrow';
+import { Logger } from '@/utils/logger';
+import { ResultAsync } from 'neverthrow';
 import { createContext, createResource, Resource, useContext } from 'solid-js';
-import { Logger } from './logger';
-import { createError } from './errors';
+import { createError, SpotsError } from '@/utils/errors';
+import { load, Store } from '@tauri-apps/plugin-store';
 
 /** The path of the store. */
 export const STORE_PATH = 'spots-store.json';
@@ -10,8 +10,12 @@ export const STORE_PATH = 'spots-store.json';
 /** Errors returned by the store. */
 export type StoreError =
   | { InvalidStore: 'Store must be initalized' }
-  | { OpenStoreError: 'Unable to open the store' }
-  | { AddEntryError: 'Unable to add entry to the store' };
+  | { OpenError: 'Unable to open the store' }
+  | { AddEntryError: 'Unable to add entry to the store' }
+  | { GetValueError: 'Unable to get value from the store' }
+  | { RemoveEntryError: 'Unable to delete entry from the store' }
+  | { SaveError: 'Unable to save the store data' }
+  | { CloseError: 'Unable to close the store' };
 
 /** The actual context. */
 export type StoreInnerContext = {
@@ -22,14 +26,14 @@ export type StoreInnerContext = {
       key: string;
       value: T;
     }
-  ) => ResultAsync<void, StoreError>;
+  ) => ResultAsync<void, SpotsError>;
   getValue: <T>(
     store: Store,
     key: string
-  ) => ResultAsync<T | undefined, StoreError>;
-  removeEntry: (store: Store, key: string) => ResultAsync<boolean, StoreError>;
-  saveStore: (store: Store) => ResultAsync<void, StoreError>;
-  closeStore: (store: Store) => ResultAsync<void, StoreError>;
+  ) => ResultAsync<T | undefined, SpotsError>;
+  removeEntry: (store: Store, key: string) => ResultAsync<boolean, SpotsError>;
+  saveStore: (store: Store) => ResultAsync<void, SpotsError>;
+  closeStore: (store: Store) => ResultAsync<void, SpotsError>;
 };
 
 /** The `Store` context. */
@@ -82,7 +86,7 @@ function openStore() {
     }),
     (e) =>
       createError(
-        { OpenStoreError: 'Unable to open the store' },
+        { OpenError: 'Unable to open the store' },
         {
           store: STORE_PATH,
           error: e,
@@ -119,7 +123,11 @@ function getValue<T>(store: Store, key: string) {
         reject(e as Error);
       }
     }),
-    makeStoreError
+    (e) =>
+      createError(
+        { GetValueError: 'Unable to get value from the store' },
+        { store, key, error: e }
+      )
   );
 }
 
@@ -137,7 +145,11 @@ function removeEntry(store: Store, key: string) {
         reject(e as Error);
       }
     }),
-    makeStoreError
+    (e) =>
+      createError(
+        { RemoveEntryError: 'Unable to delete entry from the store' },
+        { store, key, error: e }
+      )
   );
 }
 
@@ -151,7 +163,11 @@ function saveStore(store: Store) {
         reject(e as Error);
       }
     }),
-    makeStoreError
+    (e) =>
+      createError(
+        { SaveError: 'Unable to save the store data' },
+        { store, error: e }
+      )
   );
 }
 
@@ -165,6 +181,10 @@ function closeStore(store: Store) {
         reject(e as Error);
       }
     }),
-    makeStoreError
+    (e) =>
+      createError(
+        { CloseError: 'Unable to close the store' },
+        { store, error: e }
+      )
   );
 }

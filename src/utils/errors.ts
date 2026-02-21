@@ -1,11 +1,11 @@
 import { StoreError } from '@/utils/tauriStore';
 
 /** Represents an error in the application. */
-export type SpotsError = {
+export interface SpotsError {
   kind: SpotsErrorKind;
   message: string;
   info?: any;
-};
+}
 
 /** The various error types in the application. */
 export type SpotsErrorKind = StoreError;
@@ -20,10 +20,50 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
     };
   }
 
-  if ('OpenStoreError' in kind) {
+  if ('OpenError' in kind) {
     return {
       kind,
-      message: kind.OpenStoreError,
+      message: kind.OpenError,
+      info,
+    };
+  }
+
+  if ('AddEntryError' in kind) {
+    return {
+      kind,
+      message: kind.AddEntryError,
+      info,
+    };
+  }
+
+  if ('GetValueError' in kind) {
+    return {
+      kind,
+      message: kind.GetValueError,
+      info,
+    };
+  }
+
+  if ('RemoveEntryError' in kind) {
+    return {
+      kind,
+      message: kind.RemoveEntryError,
+      info,
+    };
+  }
+
+  if ('SaveError' in kind) {
+    return {
+      kind,
+      message: kind.SaveError,
+      info,
+    };
+  }
+
+  if ('CloseError' in kind) {
+    return {
+      kind,
+      message: kind.CloseError,
       info,
     };
   }
