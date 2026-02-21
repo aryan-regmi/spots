@@ -4,7 +4,11 @@ import { ErrorMessages } from '@/components/ErrorMessages';
 import { Logger } from '@/utils/logger';
 import { createEffect, JSX } from 'solid-js';
 import { errorToString } from '@/utils/errors';
-import { useStore } from '@/utils/tauriStore';
+import {
+  getAuthTokenResource,
+  getAuthUserIdResource,
+  useStore,
+} from '@/utils/tauriStore';
 
 /** The login page. */
 export function LoginPage() {
@@ -16,35 +20,17 @@ export function LoginPage() {
   if (storeCtx === undefined || storeCtx.store() === undefined) {
     return;
   }
+  const [authToken] = getAuthTokenResource(storeCtx);
+  const [authUserId] = getAuthUserIdResource(storeCtx);
 
   /** Redirects to the dashboard if already authenticated. */
   createEffect(async () => {
-    const authToken = await storeCtx
-      .getValue<string>(storeCtx.store()!, AUTH_TOKEN_KEY)
-      .match(
-        (token) => token,
-        (err) => {
-          Logger.error(errorToString(err));
-          return undefined;
-        }
-      );
-    if (authToken) {
+    if (authToken()) {
       Logger.info(`User already authenticated: redirecting to dashboard`);
 
-      // Get auth user id
-      const authUserId = await storeCtx
-        .getValue<string>(storeCtx.store()!, AUTH_USERID_KEY)
-        .match(
-          (id) => id,
-          (err) => {
-            Logger.error(errorToString(err));
-            return undefined;
-          }
-        );
-
       // Redirect to dashboard
-      if (authUserId) {
-        navigate(`/user/${authUserId}/dashboard`, { replace: true });
+      if (authUserId()) {
+        navigate(`/user/${authUserId()}/dashboard`, { replace: true });
       }
     }
   });
