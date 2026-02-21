@@ -1,25 +1,24 @@
-import { useAuth } from '@/services/auth/provider';
-import { createAsync, useNavigate } from '@solidjs/router';
+import { Logger } from '@/utils/logger';
 import { Shimmer } from '@shimmer-from-structure/solid';
-import { JSX, onMount } from 'solid-js';
-import { AuthError } from '@/services/auth/service';
-import { useLogger } from '@/services/logger/provider';
+import { createEffect, JSX } from 'solid-js';
+import { getAuthTokenResource, useStore } from '@/utils/tauriStore';
+import { useNavigate } from '@solidjs/router';
 
+/** Defines the layout with a navbar and minit music player. */
 export function NavMusicLayout(props: { children?: any }) {
-  const logger = useLogger();
   const navigate = useNavigate();
-  const auth = useAuth();
-  const authUserQuery = createAsync(() => auth.getAuthUserQuery());
+  const storeCtx = useStore();
+
+  // Make sure store is initalized
+  if (storeCtx === undefined || storeCtx.store() === undefined) {
+    return;
+  }
+  const [authToken] = getAuthTokenResource(storeCtx);
 
   /** Redirects to login if not authenticated */
-  onMount(() => {
-    const authUser = authUserQuery();
-    if (authUser === null || authUser instanceof AuthError) {
-      if (authUser instanceof AuthError) {
-        logger.info(`InvalidAuthUser: ${authUser.message}`);
-      } else {
-        logger.info('InvalidAuthUser: No authenticated user found');
-      }
+  createEffect(async () => {
+    if (!authToken()) {
+      Logger.info('Authenticated user not found: redirecting to login');
       navigate('/', { replace: true });
       return;
     }
@@ -27,7 +26,7 @@ export function NavMusicLayout(props: { children?: any }) {
 
   return (
     <>
-      <Shimmer loading={authUserQuery() === undefined}>
+      <Shimmer loading={authToken() === undefined}>
         {props.children}
         <Navbar currentPath="/user/dashboard" />
       </Shimmer>
@@ -35,8 +34,11 @@ export function NavMusicLayout(props: { children?: any }) {
   );
 }
 
+/** The navbar component. */
 function Navbar(props: { currentPath?: string }) {
   const navigate = useNavigate();
+
+  const styles = NavbarStyles();
 
   //  TODO: Add actual nav icons
   //
@@ -47,6 +49,52 @@ function Navbar(props: { currentPath?: string }) {
     { label: 'Library', path: '/user/library', icon: '📚' },
   ];
 
+  return (
+    <nav style={styles.containerStyle}>
+      {navItems.map((item, index) => (
+        <>
+          <div
+            style={styles.buttonWrapperStyle}
+            onMouseEnter={(e) => {
+              const button = e.currentTarget.querySelector('button');
+              if (button) {
+                button.style.transform = 'scale(1.05)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              const button = e.currentTarget.querySelector('button');
+              if (button) {
+                button.style.transform = 'scale(1)';
+              }
+            }}
+          >
+            <button
+              style={styles.navButtonStyle(props.currentPath === item.path)}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(item.path);
+              }}
+            >
+              <span>{item.icon}</span>
+              <span style={styles.labelStyle}>{item.label}</span>
+            </button>
+          </div>
+          {index < navItems.length - 1 && (
+            <div
+              style={{
+                width: '1px',
+                height: '2rem',
+                'background-color': 'rgba(100, 100, 100, 0.2)',
+              }}
+            ></div>
+          )}
+        </>
+      ))}
+    </nav>
+  );
+}
+
+function NavbarStyles() {
   /** Style for the navbar container. */
   const containerStyle: JSX.CSSProperties = {
     position: 'fixed',
@@ -99,49 +147,14 @@ function Navbar(props: { currentPath?: string }) {
     'font-size': '0.75rem',
     'font-weight': '500',
   };
-  return (
-    <nav style={containerStyle}>
-      {navItems.map((item, index) => (
-        <>
-          <div
-            style={buttonWrapperStyle}
-            onMouseEnter={(e) => {
-              const button = e.currentTarget.querySelector('button');
-              if (button) {
-                button.style.transform = 'scale(1.05)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              const button = e.currentTarget.querySelector('button');
-              if (button) {
-                button.style.transform = 'scale(1)';
-              }
-            }}
-          >
-            <button
-              style={navButtonStyle(props.currentPath === item.path)}
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(item.path);
-              }}
-            >
-              <span>{item.icon}</span>
-              <span style={labelStyle}>{item.label}</span>
-            </button>
-          </div>
-          {index < navItems.length - 1 && (
-            <div
-              style={{
-                width: '1px',
-                height: '2rem',
-                'background-color': 'rgba(100, 100, 100, 0.2)',
-              }}
-            ></div>
-          )}
-        </>
-      ))}
-    </nav>
-  );
+
+  return {
+    containerStyle,
+    buttonWrapperStyle,
+    navButtonStyle,
+    labelStyle,
+  };
 }
 
+/** The mini music player component. */
 function MiniPlayer() {}
