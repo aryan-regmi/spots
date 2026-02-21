@@ -1,8 +1,115 @@
-import { createEffect, JSX } from 'solid-js';
-import { A, createAsync, useNavigate, useSubmission } from '@solidjs/router';
+import { A, useNavigate, useSubmission } from '@solidjs/router';
+import { AUTH_TOKEN_KEY, AUTH_USERID_KEY, loginUserAction } from '@/api/auth';
 import { ErrorMessages } from '@/components/ErrorMessages';
 import { Logger } from '@/utils/logger';
-import { getAuthUserIdQuery, loginUserAction } from '@/api/auth';
+import { createEffect, JSX } from 'solid-js';
+import { errorToString } from '@/utils/errors';
+import { useStore } from '@/utils/tauriStore';
+
+/** The login page. */
+export function LoginPage() {
+  const navigate = useNavigate();
+  const storeCtx = useStore();
+  const formSubmission = useSubmission(loginUserAction);
+
+  // Make sure store is initalized
+  if (storeCtx === undefined || storeCtx.store() === undefined) {
+    return;
+  }
+
+  /** Redirects to the dashboard if already authenticated. */
+  createEffect(async () => {
+    const authToken = await storeCtx
+      .getValue<string>(storeCtx.store()!, AUTH_TOKEN_KEY)
+      .match(
+        (token) => token,
+        (err) => {
+          Logger.error(errorToString(err));
+          return undefined;
+        }
+      );
+    if (authToken) {
+      Logger.info(`User already authenticated: redirecting to dashboard`);
+
+      // Get auth user id
+      const authUserId = await storeCtx
+        .getValue<string>(storeCtx.store()!, AUTH_USERID_KEY)
+        .match(
+          (id) => id,
+          (err) => {
+            Logger.error(errorToString(err));
+            return undefined;
+          }
+        );
+
+      // Redirect to dashboard
+      if (authUserId) {
+        navigate(`/user/${authUserId}/dashboard`, { replace: true });
+      }
+    }
+  });
+
+  /** Handles form submission results */
+  createEffect(async () => {
+    // FIXME: Handle form errors etc
+  });
+
+  // TODO: Add client-side validation (use Zod)
+
+  return (
+    <>
+      <div class="col" style={LoginPageStyles.containerStyle}>
+        {/* Header */}
+        <div style={LoginPageStyles.headerStyle}>
+          <h1>Spots</h1>
+        </div>
+
+        {/* Login form */}
+        <form
+          class="col"
+          style={LoginPageStyles.formStyle}
+          action={loginUserAction}
+        >
+          <input
+            name="username"
+            style={LoginPageStyles.inputStyle}
+            type="text"
+            placeholder="Username"
+          />
+          <input
+            name="password"
+            style={LoginPageStyles.inputStyle}
+            type="password"
+            placeholder="Password"
+          />
+          <button
+            type="submit"
+            disabled={formSubmission.pending}
+            style={
+              formSubmission.pending
+                ? LoginPageStyles.submitBtnDisabledStyle
+                : LoginPageStyles.submitBtnStyle
+            }
+          >
+            {formSubmission.pending ? 'Logging in...' : 'Log In'}
+          </button>
+        </form>
+
+        {/* Signup link */}
+        <div
+          style={{
+            'font-size': '0.8rem',
+          }}
+        >
+          New user? <A href="/signup">Sign Up</A>
+        </div>
+      </div>
+
+      {/* Error Messages */}
+      <ErrorMessages errors={[]} />
+    </>
+  );
+}
 
 /** Type of styles in the login page. */
 type styles = {
@@ -71,86 +178,3 @@ const LoginPageStyles: styles = {
     cursor: 'not-allowed',
   },
 };
-
-/** The login page. */
-export function LoginPage() {
-  const navigate = useNavigate();
-  const getAuthUserId = createAsync(() => getAuthUserIdQuery());
-  const formSubmission = useSubmission(loginUserAction);
-
-  /** Redirects to the dashboard if already authenticated. */
-  createEffect(async () => {
-    const authToken = await cookieStore.get('auth-token');
-    if (authToken) {
-      Logger.info(`User already authenticated: redirecting to dashboard`);
-
-      // Get auth user id
-      const authUserId = getAuthUserId()?.match(
-        (id) => id,
-        (err) => {
-          Logger.error(`Unable to get auth user ID: ${err}`);
-          throw err;
-        }
-      );
-
-      // Redirect to dashboard
-      if (authUserId) {
-        navigate(`/user/${authUserId}/dashboard`, { replace: true });
-      }
-    }
-  });
-
-  return (
-    <>
-      <div class="col" style={LoginPageStyles.containerStyle}>
-        {/* Header */}
-        <div style={LoginPageStyles.headerStyle}>
-          <h1>Spots</h1>
-        </div>
-
-        {/* Login form */}
-        <form
-          class="col"
-          style={LoginPageStyles.formStyle}
-          action={loginUserAction}
-        >
-          <input
-            name="username"
-            style={LoginPageStyles.inputStyle}
-            type="text"
-            placeholder="Username"
-          />
-          <input
-            name="password"
-            style={LoginPageStyles.inputStyle}
-            type="password"
-            placeholder="Password"
-          />
-          <button
-            type="submit"
-            disabled={formSubmission.pending}
-            style={
-              formSubmission.pending
-                ? LoginPageStyles.submitBtnDisabledStyle
-                : LoginPageStyles.submitBtnStyle
-            }
-          >
-            {formSubmission.pending ? 'Logging in...' : 'Log In'}
-          </button>
-        </form>
-
-        {/* Signup link */}
-        <div
-          style={{
-            'font-size': '0.8rem',
-          }}
-        >
-          New user? <A href="/signup">Sign Up</A>
-        </div>
-      </div>
-
-      {/* Error Messages */}
-      <ErrorMessages errors={[]} />
-    </>
-  );
-}
