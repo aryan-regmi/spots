@@ -1,3 +1,4 @@
+import { AuthAPIError } from '@/api/auth';
 import { StoreError } from '@/utils/tauriStore';
 
 /** Represents an error in the application. */
@@ -8,7 +9,7 @@ export interface SpotsError {
 }
 
 /** The various error types in the application. */
-export type SpotsErrorKind = StoreError;
+export type SpotsErrorKind = StoreError | AuthAPIError;
 
 /** Creates a new `SpotsError`. */
 export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
@@ -64,6 +65,38 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
     return {
       kind,
       message: kind.CloseError,
+      info,
+    };
+  }
+
+  if ('InvalidRegisterUserFormData' in kind) {
+    return {
+      kind,
+      message: kind.InvalidRegisterUserFormData,
+      info,
+    };
+  }
+
+  if ('InvalidLoginUserFormData' in kind) {
+    return {
+      kind,
+      message: kind.InvalidLoginUserFormData,
+      info,
+    };
+  }
+
+  if ('RegisterUserError' in kind) {
+    return {
+      kind,
+      message: kind.RegisterUserError,
+      info,
+    };
+  }
+
+  if ('LoginUserError' in kind) {
+    return {
+      kind,
+      message: kind.LoginUserError,
       info,
     };
   }
