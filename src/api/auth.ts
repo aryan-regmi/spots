@@ -5,7 +5,7 @@ import {
 } from '@/api/dtos';
 import { invoke } from '@tauri-apps/api/core';
 import { ApiErrorResponse, ApiResponse } from './utils';
-import { errAsync, okAsync, ResultAsync } from 'neverthrow';
+import { errAsync, okAsync, Result, ResultAsync } from 'neverthrow';
 import { useStore } from '@/utils/tauriStore';
 import { action, redirect } from '@solidjs/router';
 import { createError, SpotsError } from '@/utils/errors';
@@ -39,7 +39,7 @@ export const registerUserAction = action(async (registerFormData: FormData) => {
   }
 
   const user: RegisterUserDto = { username, password, passwordConfirm };
-  return registerUser(user).mapErr((e) => {
+  const result = await registerUser(user).mapErr((e) => {
     if (typeof e === 'object' && 'status' in e) {
       const err = e as ApiErrorResponse;
       return createError(
@@ -51,6 +51,14 @@ export const registerUserAction = action(async (registerFormData: FormData) => {
       return err;
     }
   });
+
+  // Redirects to the user's dashboard.
+  if (result.isOk()) {
+    const user_id = result.value;
+    throw redirect(`/user/${user_id}/dashboard`);
+  }
+
+  return result as Result<void | string, SpotsError>;
 }, 'registerUser');
 
 /** Action to login a user, given login user form data. */
@@ -67,13 +75,30 @@ export const loginUserAction = action(async (loginFormData: FormData) => {
   }
 
   const user: LoginUserDto = { username, password };
-  return loginUser(user);
+  const result = await loginUser(user);
+
+  // Redirects to the user's dashboard.
+  if (result.isOk()) {
+    const user_id = result.value;
+    throw redirect(`/user/${user_id}/dashboard`);
+  }
+
+  return result as Result<void | string, SpotsError>;
 }, 'loginUser');
 
 /** Action to logout the currently authenticated user. */
-export const logoutUserAction = action(async () => logoutUser());
+export const logoutUserAction = action(async () => {
+  const result = await logoutUser();
 
-/** Registers the user then redirects to the dashboard. */
+  // Redirects to the login page
+  if (result.isOk()) {
+    throw redirect(`/`);
+  }
+
+  return result;
+});
+
+/** Registers the user then logs them in. */
 function registerUser(user: RegisterUserDto) {
   // Calls the rust command
   const callBackend = ResultAsync.fromPromise(
@@ -82,15 +107,15 @@ function registerUser(user: RegisterUserDto) {
   );
 
   // Logs the new user in
-  const loginAndRedirect = () => {
+  const login = () => {
     let login_user: LoginUserDto = user;
     return loginUser(login_user);
   };
 
-  return callBackend.andThen(loginAndRedirect);
+  return callBackend.andThen(login);
 }
 
-/** Authenticates the user then redirects to the dashboard. */
+/** Authenticates the user then updates the store with the auth token. */
 function loginUser(user: LoginUserDto) {
   const storeCtx = useStore();
   if (storeCtx === undefined || storeCtx.store() === undefined) {
@@ -138,19 +163,12 @@ function loginUser(user: LoginUserDto) {
       });
   };
 
-  // Redirects to the user's dashboard.
-  const redirectToDashboard = (user_id: string) => {
-    redirect(`/user/${user_id}/dashboard`);
-    return okAsync();
-  };
-
   return callBackend
     .map(extractResponse)
-    .andThen((data) => data.andThen(setAuthToken))
-    .andThen(redirectToDashboard);
+    .andThen((data) => data.andThen(setAuthToken));
 }
 
-/** Unauthenticates the logged in user and redirects to login page. */
+/** Unauthenticates the logged in user. */
 function logoutUser() {
   const storeCtx = useStore();
   if (storeCtx === undefined || storeCtx.store() === undefined) {
@@ -162,13 +180,7 @@ function logoutUser() {
   storeCtx.removeEntry(store, AUTH_TOKEN_KEY);
   storeCtx.removeEntry(store, AUTH_USERID_KEY);
 
-  // Redirects to the login page
-  const redirectToLogin = () => {
-    redirect(`/`);
-    return;
-  };
-
-  return okAsync<void, SpotsError>().map(redirectToLogin);
+  return okAsync<void, SpotsError>();
 }
 
 /** Calls the backend `login_user` command. */

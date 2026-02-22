@@ -1,14 +1,14 @@
 import { A, useNavigate, useSubmission } from '@solidjs/router';
-import { AUTH_TOKEN_KEY, AUTH_USERID_KEY, loginUserAction } from '@/api/auth';
+import { loginUserAction } from '@/api/auth';
 import { ErrorMessages } from '@/components/ErrorMessages';
 import { Logger } from '@/utils/logger';
 import { createEffect, JSX } from 'solid-js';
-import { errorToString } from '@/utils/errors';
 import {
   getAuthTokenResource,
   getAuthUserIdResource,
   useStore,
 } from '@/utils/tauriStore';
+import { Shimmer } from '@shimmer-from-structure/solid';
 
 /** The login page. */
 export function LoginPage() {
@@ -17,7 +17,8 @@ export function LoginPage() {
   const formSubmission = useSubmission(loginUserAction);
 
   // Make sure store is initalized
-  if (storeCtx === undefined || storeCtx.store() === undefined) {
+  if (storeCtx === undefined) {
+    Logger.error('Store must be initalized inside a `<StoreProvider>');
     return;
   }
   const [authToken] = getAuthTokenResource(storeCtx);
@@ -38,12 +39,19 @@ export function LoginPage() {
   /** Handles form submission results */
   createEffect(async () => {
     // FIXME: Handle form errors etc
+    const result = formSubmission.result?.match(
+      (s) => s,
+      (err) => {
+        Logger.info(`FORM RESULT: ${JSON.stringify(err)}`);
+      }
+    );
+    console.log(result);
   });
 
   // TODO: Add client-side validation (use Zod)
 
   return (
-    <>
+    <Shimmer loading={storeCtx.store() === undefined}>
       <div class="col" style={LoginPageStyles.containerStyle}>
         {/* Header */}
         <div style={LoginPageStyles.headerStyle}>
@@ -55,6 +63,7 @@ export function LoginPage() {
           class="col"
           style={LoginPageStyles.formStyle}
           action={loginUserAction}
+          method="post"
         >
           <input
             name="username"
@@ -93,7 +102,7 @@ export function LoginPage() {
 
       {/* Error Messages */}
       <ErrorMessages errors={[]} />
-    </>
+    </Shimmer>
   );
 }
 
