@@ -4,19 +4,22 @@ import { LoginPage } from '@/pages/LoginPage';
 import { NavMusicLayout } from '@/pages/NavMusicLayout';
 import { Route, Router } from '@solidjs/router';
 import { SignupPage } from '@/pages/SignupPage';
+import { StoreProvider } from './utils/tauriStore';
 
 // TODO: Add isolation app (check tauri docs)
-// TODO: Add erro boundary
+// TODO: Add error boundary
 function App() {
   return (
     <main class="container">
-      <Router>
-        <Route path={'/'} component={LoginPage} />
-        {/* <Route path={'/signup'} component={SignupPage} /> */}
-        {/* <Route path="/user/:id" component={NavMusicLayout}> */}
-        {/*   <Route path="/dashboard" component={DashboardPage} /> */}
-        {/* </Route> */}
-      </Router>
+      <StoreProvider>
+        <Router>
+          <Route path={'/'} component={LoginPage} />
+          {/* <Route path={'/signup'} component={SignupPage} /> */}
+          {/* <Route path="/user/:id" component={NavMusicLayout}> */}
+          {/*   <Route path="/dashboard" component={DashboardPage} /> */}
+          {/* </Route> */}
+        </Router>
+      </StoreProvider>
     </main>
   );
 }
