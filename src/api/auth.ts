@@ -6,7 +6,7 @@ import {
 import { invoke } from '@tauri-apps/api/core';
 import { ApiErrorResponse, ApiResponse } from './utils';
 import { errAsync, okAsync, Result, ResultAsync } from 'neverthrow';
-import { useStore } from '@/utils/tauriStore';
+import { StoreInnerContext, useStore } from '@/utils/tauriStore';
 import { action, redirect } from '@solidjs/router';
 import { createError, SpotsError } from '@/utils/errors';
 
@@ -26,6 +26,8 @@ export type AuthAPIError =
 
 /** Action to register a user, given register user form data. */
 export const registerUserAction = action(async (registerFormData: FormData) => {
+  const storeCtx = useStore();
+
   const username = registerFormData.get('username')?.toString();
   const password = registerFormData.get('password')?.toString();
   const passwordConfirm = registerFormData.get('passwordConfirm')?.toString();
@@ -39,7 +41,7 @@ export const registerUserAction = action(async (registerFormData: FormData) => {
   }
 
   const user: RegisterUserDto = { username, password, passwordConfirm };
-  const result = await registerUser(user).mapErr((e) => {
+  const result = await registerUser(user, storeCtx).mapErr((e) => {
     if (typeof e === 'object' && 'status' in e) {
       const err = e as ApiErrorResponse;
       return createError(
@@ -62,33 +64,37 @@ export const registerUserAction = action(async (registerFormData: FormData) => {
 }, 'registerUser');
 
 /** Action to login a user, given login user form data. */
-export const loginUserAction = action(async (loginFormData: FormData) => {
-  const username = loginFormData.get('username')?.toString();
-  const password = loginFormData.get('password')?.toString();
-  if (!username || !password) {
-    return errAsync<void, SpotsError>(
-      createError({
-        InvalidLoginUserFormData:
-          'The login user form must have `username` and `password` fields',
-      })
-    );
-  }
+export const loginUserAction = action(
+  async (storeCtx: StoreInnerContext, loginFormData: FormData) => {
+    const username = loginFormData.get('username')?.toString();
+    const password = loginFormData.get('password')?.toString();
+    if (!username || !password) {
+      return errAsync<void, SpotsError>(
+        createError({
+          InvalidLoginUserFormData:
+            'The login user form must have `username` and `password` fields',
+        })
+      );
+    }
 
-  const user: LoginUserDto = { username, password };
-  const result = await loginUser(user);
+    const user: LoginUserDto = { username, password };
+    const result = await loginUser(user, storeCtx);
 
-  // Redirects to the user's dashboard.
-  if (result.isOk()) {
-    const user_id = result.value;
-    throw redirect(`/user/${user_id}/dashboard`);
-  }
+    // Redirects to the user's dashboard.
+    if (result.isOk()) {
+      const user_id = result.value;
+      throw redirect(`/user/${user_id}/dashboard`);
+    }
 
-  return result as Result<void | string, SpotsError>;
-}, 'loginUser');
+    return result as Result<void | string, SpotsError>;
+  },
+  'loginUser'
+);
 
 /** Action to logout the currently authenticated user. */
 export const logoutUserAction = action(async () => {
-  const result = await logoutUser();
+  const storeCtx = useStore();
+  const result = await logoutUser(storeCtx);
 
   // Redirects to the login page
   if (result.isOk()) {
@@ -99,7 +105,7 @@ export const logoutUserAction = action(async () => {
 });
 
 /** Registers the user then logs them in. */
-function registerUser(user: RegisterUserDto) {
+function registerUser(user: RegisterUserDto, storeCtx: StoreInnerContext) {
   // Calls the rust command
   const callBackend = ResultAsync.fromPromise(
     registerUserBackend(user),
@@ -109,15 +115,14 @@ function registerUser(user: RegisterUserDto) {
   // Logs the new user in
   const login = () => {
     let login_user: LoginUserDto = user;
-    return loginUser(login_user);
+    return loginUser(login_user, storeCtx);
   };
 
   return callBackend.andThen(login);
 }
 
 /** Authenticates the user then updates the store with the auth token. */
-function loginUser(user: LoginUserDto) {
-  const storeCtx = useStore();
+function loginUser(user: LoginUserDto, storeCtx: StoreInnerContext) {
   if (storeCtx === undefined || storeCtx.store() === undefined) {
     return errAsync(createError({ InvalidStore: 'Store must be initalized' }));
   }
@@ -169,8 +174,7 @@ function loginUser(user: LoginUserDto) {
 }
 
 /** Unauthenticates the logged in user. */
-function logoutUser() {
-  const storeCtx = useStore();
+function logoutUser(storeCtx: StoreInnerContext) {
   if (storeCtx === undefined || storeCtx.store() === undefined) {
     return errAsync(createError({ InvalidStore: 'Store must be initalized' }));
   }

@@ -45,7 +45,6 @@ export function LoginPage() {
         Logger.info(`FORM RESULT: ${JSON.stringify(err)}`);
       }
     );
-    console.log(result);
   });
 
   // TODO: Add client-side validation (use Zod)
@@ -62,7 +61,7 @@ export function LoginPage() {
         <form
           class="col"
           style={LoginPageStyles.formStyle}
-          action={loginUserAction}
+          action={loginUserAction.with(storeCtx)}
           method="post"
         >
           <input
