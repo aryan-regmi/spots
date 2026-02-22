@@ -1,9 +1,11 @@
 import { Logger } from '@/utils/logger';
 import { ResultAsync } from 'neverthrow';
 import {
+  Accessor,
   createContext,
+  createEffect,
   createResource,
-  Resource,
+  createSignal,
   ResourceReturn,
   useContext,
 } from 'solid-js';
@@ -26,7 +28,7 @@ export type StoreError =
 
 /** The actual context. */
 export type StoreInnerContext = {
-  store: Resource<Store | undefined>;
+  store: Accessor<Store | undefined>;
   addEntry: <T>(
     store: Store,
     entry: {
@@ -48,14 +50,15 @@ export const StoreContext = createContext<StoreInnerContext>();
 
 /** Provides the `Store` context. */
 export function StoreProvider(props: { children: any }) {
-  const [store] = createResource(async () => {
-    return openStore().match(
-      (store) => store,
-      (error) => {
-        Logger.error(`Failed to open store: ${JSON.stringify(error)}`);
-        return undefined;
-      }
-    );
+  const [store, setStore] = createSignal<Store | undefined>();
+
+  createEffect(async () => {
+    const opened = await openStore();
+    if (opened.isOk()) {
+      setStore(opened.value);
+    } else {
+      Logger.error(`Failed to open store: ${opened.error.message}`);
+    }
   });
 
   /** Create services for the provider. */
@@ -77,7 +80,9 @@ export function StoreProvider(props: { children: any }) {
 
 /** Exposes the `StoreContext` */
 export function useStore() {
-  return useContext(StoreContext);
+  const ctx = useContext(StoreContext);
+  if (!ctx) throw new Error('useStore must be used within a StoreProvider');
+  return ctx;
 }
 
 /** Extracts the auth token from the store. */
