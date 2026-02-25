@@ -1,11 +1,206 @@
+import { registerUserAction } from '@/api/auth';
 import { ErrorMessages } from '@/components/ErrorMessages';
-import { useAuth } from '@/services/auth/provider';
-import { AuthError } from '@/services/auth/service';
-import { useLogger } from '@/services/logger/provider';
-import { A, useAction, useNavigate } from '@solidjs/router';
-import { createSignal, ErrorBoundary, JSX } from 'solid-js';
+import { extractError, SpotsError } from '@/utils/errors';
+import { Logger } from '@/utils/logger';
+import { useStore } from '@/utils/tauriStore';
+import { A, useNavigate, useSubmission } from '@solidjs/router';
+import { createEffect, createSignal, ErrorBoundary, JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import * as z from 'zod';
+
+/** Various types of errors. */
+type Errors = {
+  usernameErrors: string[];
+  passwordErrors: string[];
+  passwordConfirmErrors: string[];
+};
+
+export function SignupPage() {
+  const storeCtx = useStore();
+  const formSubmission = useSubmission(registerUserAction);
+
+  // Make sure store is initalized
+  if (storeCtx === undefined) {
+    Logger.error('Store must be initalized inside a `<StoreProvider>');
+    return;
+  }
+
+  const [passwordData, setPasswordData] = createSignal('');
+
+  /** Determines if the login page is in a busy state. */
+  const [isBusy, setIsBusy] = createSignal(false);
+
+  /** List of validation errors. */
+  const [errMsgs, setErrMsgs] = createStore<Errors>({
+    usernameErrors: [],
+    passwordErrors: [],
+    passwordConfirmErrors: [],
+  });
+
+  const [serverErrors, setServerErrors] = createSignal<SpotsError[]>([]);
+
+  /** Determines if the button should be disabled */
+  const isBtnDisabled = () =>
+    isBusy() ||
+    serverErrors().length > 0 ||
+    errMsgs.passwordErrors.length > 0 ||
+    errMsgs.usernameErrors.length > 0;
+
+  /** Handles form submission results */
+  createEffect(async () => {
+    formSubmission.result?.match(
+      (userId) => {
+        Logger.info(`Created user: ${userId}`);
+      },
+      (err) => {
+        setServerErrors((prev) => [...prev, err]);
+        const errData = extractError(err);
+        Logger.error(
+          `ServerError: ${errData.kind}: ${errData.message}: ${errData.info}`
+        );
+      }
+    );
+  });
+
+  /** Validates the username using `UsernameSchema`.*/
+  async function validateUsername(username: string) {
+    const validation = await UsernameSchema.safeParseAsync(username);
+    if (validation.success) {
+      return true;
+    }
+    const errObj = JSON.parse(validation.error.message);
+    setErrMsgs('usernameErrors', (prev) => [
+      ...prev,
+      `Invalid username: ${errObj[errObj.length - 1].message}`,
+    ]);
+    return false;
+  }
+
+  /** Validates the password using `PasswordSchema`.*/
+  async function validatePassword(password: string) {
+    const validation = await PasswordSchema.safeParseAsync(password);
+    if (validation.success) {
+      return true;
+    }
+
+    const errObj = JSON.parse(validation.error.message);
+    setErrMsgs('passwordErrors', (prev) => [
+      ...prev,
+      `Invalid password: ${errObj[errObj.length - 1].message}`,
+    ]);
+    return false;
+  }
+
+  return (
+    <ErrorBoundary
+      fallback={(error, reset) => (
+        <div>
+          <p>{error.message}</p>
+          <button onClick={reset}>Try Again</button>
+        </div>
+      )}
+    >
+      <div class="col" style={SignupPageStyles.containerStyle}>
+        {/* Header */}
+        <div style={SignupPageStyles.headerStyle}>
+          <h1>Spots</h1>
+        </div>
+
+        {/* Signup form */}
+        <form
+          class="col"
+          style={SignupPageStyles.formStyle}
+          action={registerUserAction.with(storeCtx)}
+          method="post"
+        >
+          <input
+            name="username"
+            style={SignupPageStyles.inputStyle}
+            type="text"
+            placeholder="Username"
+            oninput={async (e) => {
+              setErrMsgs('usernameErrors', []);
+              await validateUsername(e.currentTarget.value);
+            }}
+          />
+
+          <input
+            name="password"
+            style={SignupPageStyles.inputStyle}
+            type="password"
+            placeholder="Password"
+            oninput={async (e) => {
+              setErrMsgs('passwordErrors', []);
+              await validatePassword(e.currentTarget.value);
+              setPasswordData(e.currentTarget.value);
+            }}
+          />
+
+          <input
+            name="passwordConfirm"
+            style={SignupPageStyles.inputStyle}
+            type="password"
+            placeholder="Confirm Password"
+            oninput={async (e) => {
+              setErrMsgs('passwordConfirmErrors', []);
+              if (passwordData() != e.currentTarget.value) {
+                setErrMsgs('passwordConfirmErrors', (prev) => [
+                  ...prev,
+                  `Passwords must match`,
+                ]);
+              }
+            }}
+          />
+
+          <button
+            type="submit"
+            disabled={isBtnDisabled()}
+            style={
+              isBtnDisabled()
+                ? SignupPageStyles.submitBtnDisabledStyle
+                : SignupPageStyles.submitBtnStyle
+            }
+          >
+            {isBusy() ? 'Creating login...' : 'Sign Up'}
+          </button>
+        </form>
+
+        {/* Login link */}
+        <div
+          style={{
+            'font-size': '0.8rem',
+          }}
+        >
+          Already have a user? <A href="/">Log In</A>
+        </div>
+      </div>
+
+      {/* Error Messages */}
+      <ErrorMessages errors={serverErrors} setErrors={setServerErrors} />
+    </ErrorBoundary>
+  );
+}
+
+/** Schema to parse username. */
+const UsernameSchema = z
+  .string()
+  .max(64, 'Username can be a max of 64 characters')
+  .min(1, 'Username must not be empty')
+  .regex(
+    /^[a-zA-Z0-9_-]+$/,
+    'Username must not be empty and must be only alpha-numeric characters'
+  );
+
+/** Schema to parse password. */
+const PasswordSchema = z
+  .string()
+  .max(128, 'Password can be a max of 64 characters')
+  .min(8, 'Password must be at least 8 characters long')
+  .refine((value) => {
+    const containsSpecialCharacter = /\W/.test(value);
+    const containsUppercase = /[A-Z]/.test(value);
+    return containsUppercase && containsSpecialCharacter;
+  }, 'Password must contain a special character and and uppercase character');
 
 /** Type of styles in the signup page. */
 type styles = {
@@ -73,218 +268,3 @@ const SignupPageStyles: styles = {
     cursor: 'not-allowed',
   },
 };
-
-/** Various types of errors. */
-type Errors = {
-  usernameErrors: (string | Error)[];
-  passwordErrors: (string | Error)[];
-  serverErrors: (string | Error)[];
-};
-
-export function SignupPage() {
-  const logger = useLogger();
-  const navigate = useNavigate();
-  const auth = useAuth();
-  const createLogin = useAction(auth.createLoginAction);
-  const authenticate = useAction(auth.authenticateAction);
-
-  /** Determines if the login page is in a busy state. */
-  const [isBusy, setIsBusy] = createSignal(false);
-
-  /** Determines if the button should be disabled */
-  const isBtnDisabled = () =>
-    isBusy() ||
-    errMsgs.serverErrors.length > 0 ||
-    errMsgs.passwordErrors.length > 0 ||
-    errMsgs.usernameErrors.length > 0;
-
-  /** List of error messages. */
-  const [errMsgs, setErrMsgs] = createStore<Errors>({
-    usernameErrors: [],
-    passwordErrors: [],
-    serverErrors: [],
-  });
-
-  /** Handles the signup button click, */
-  const handleSignupClicked: JSX.EventHandler<
-    HTMLFormElement,
-    SubmitEvent
-  > = async (e) => {
-    setIsBusy(true);
-    e.preventDefault();
-
-    // Get form data
-    const formData = new FormData(e.currentTarget);
-    const username = formData.get('username')?.toString();
-    const password = formData.get('password')?.toString();
-
-    // Validate inputs and then send to backend to validate
-    if (username && password) {
-      // Validate username and password
-      const isValid = await Promise.all([
-        usernameIsValid(username ?? ''),
-        passwordIsValid(password ?? ''),
-      ]).then(
-        ([validUsername, validPassword]) => validUsername && validPassword
-      );
-
-      if (isValid) {
-        // Create login
-        const created = await createLogin(username, password);
-        if (created instanceof AuthError) {
-          logger.info(`${created.name}:${created.kind}:${created.message}`);
-          setErrMsgs('serverErrors', (prev) => [...prev, created]);
-          setIsBusy(false);
-          return;
-        }
-
-        // Authenticate and redirect to dashboard
-        const authenticated = await authenticate(username);
-        if (authenticated instanceof AuthError) {
-          setErrMsgs('serverErrors', (prev) => [...prev, authenticated]);
-          setIsBusy(false);
-          return;
-        }
-        logger.info('User authenticated');
-        navigate('/user/dashboard', { replace: true });
-        setIsBusy(false);
-        return;
-      }
-
-      // Invalid input (handled by `[]IsValid` functions)
-      setIsBusy(false);
-      return;
-    }
-
-    // Invalid inputs
-    setIsBusy(false);
-    return;
-  };
-
-  /** Validates the username using `UsernameSchema`.*/
-  async function usernameIsValid(username: string) {
-    const validation = await UsernameSchema.safeParseAsync(username);
-    if (validation.success) {
-      return true;
-    }
-    const errObj = JSON.parse(validation.error.message);
-    setErrMsgs('usernameErrors', (prev) => [
-      ...prev,
-      `Invalid username: ${errObj[errObj.length - 1].message}`,
-    ]);
-    return false;
-  }
-
-  /** Validates the password using `PasswordSchema`.*/
-  async function passwordIsValid(password: string) {
-    const validation = await PasswordSchema.safeParseAsync(password);
-    if (validation.success) {
-      return true;
-    }
-
-    const errObj = JSON.parse(validation.error.message);
-    setErrMsgs('passwordErrors', (prev) => [
-      ...prev,
-      `Invalid password: ${errObj[errObj.length - 1].message}`,
-    ]);
-    return false;
-  }
-
-  return (
-    <ErrorBoundary
-      fallback={(error, reset) => (
-        <div>
-          <p>{error.message}</p>
-          <button onClick={reset}>Try Again</button>
-        </div>
-      )}
-    >
-      <div class="col" style={SignupPageStyles.containerStyle}>
-        {/* Header */}
-        <div style={SignupPageStyles.headerStyle}>
-          <h1>Spots</h1>
-        </div>
-
-        {/* Signup form */}
-        <form
-          class="col"
-          style={SignupPageStyles.formStyle}
-          onSubmit={handleSignupClicked}
-        >
-          <input
-            name="username"
-            style={SignupPageStyles.inputStyle}
-            type="text"
-            placeholder="Username"
-            oninput={async (e) => {
-              setErrMsgs('usernameErrors', []);
-              await usernameIsValid(e.currentTarget.value);
-            }}
-          />
-
-          <input
-            name="password"
-            style={SignupPageStyles.inputStyle}
-            type="password"
-            placeholder="Password"
-            oninput={async (e) => {
-              setErrMsgs('passwordErrors', []);
-              await passwordIsValid(e.currentTarget.value);
-            }}
-          />
-
-          <button
-            type="submit"
-            disabled={isBtnDisabled()}
-            style={
-              isBtnDisabled()
-                ? SignupPageStyles.submitBtnDisabledStyle
-                : SignupPageStyles.submitBtnStyle
-            }
-          >
-            {isBusy() ? 'Creating login...' : 'Sign Up'}
-          </button>
-        </form>
-
-        {/* Login link */}
-        <div
-          style={{
-            'font-size': '0.8rem',
-          }}
-        >
-          Already have a user? <A href="/">Log In</A>
-        </div>
-      </div>
-
-      {/* Error Messages */}
-      <ErrorMessages
-        errors={[
-          ...errMsgs.serverErrors,
-          ...errMsgs.usernameErrors,
-          ...errMsgs.passwordErrors,
-        ]}
-      />
-    </ErrorBoundary>
-  );
-}
-
-/** Schema to parse username. */
-const UsernameSchema = z
-  .string()
-  .max(64, 'Username can be a max of 64 characters')
-  .min(1, 'Username must not be empty')
-  .regex(
-    /^[a-zA-Z0-9_-]+$/,
-    'Username must not be empty and must be only alpha-numeric characters'
-  );
-
-/** Schema to parse password. */
-const PasswordSchema = z
-  .string()
-  .max(128, 'Password can be a max of 64 characters')
-  .min(8, 'Password must be at least 8 characters long')
-  .refine((value) => {
-    const containsSpecialCharacter = /\W/.test(value);
-    const containsUppercase = /[A-Z]/.test(value);
-    return containsUppercase && containsSpecialCharacter;
-  }, 'Password must contain a special character and and uppercase character');
