@@ -18,6 +18,8 @@ export function ErrorMessages(props: {
     'box-sizing': 'border-box',
     'align-self': 'center',
     'margin-bottom': '7rem',
+    'max-width': '95%',
+    width: '95%',
   };
 
   const errorStyle: JSX.CSSProperties = {
@@ -28,6 +30,8 @@ export function ErrorMessages(props: {
     'text-align': 'center',
     cursor: 'pointer',
     'backdrop-filter': 'blur(10px)',
+    'white-space': 'normal',
+    'word-wrap': 'break-word',
   };
 
   const dismissError: JSX.EventHandler<HTMLElement, MouseEvent> = (e) => {
