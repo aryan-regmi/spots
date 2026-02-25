@@ -25,43 +25,43 @@ export type AuthAPIError =
   | { LoginUserError: 'Invalid user login' };
 
 /** Action to register a user, given register user form data. */
-export const registerUserAction = action(async (registerFormData: FormData) => {
-  const storeCtx = useStore();
-
-  const username = registerFormData.get('username')?.toString();
-  const password = registerFormData.get('password')?.toString();
-  const passwordConfirm = registerFormData.get('passwordConfirm')?.toString();
-  if (!username || !password || !passwordConfirm) {
-    return errAsync<void, SpotsError>(
-      createError({
-        InvalidRegisterUserFormData:
-          'The `username`, `password`, and `passwordConfirm` fields must not be empty',
-      })
-    );
-  }
-
-  const user: RegisterUserDto = { username, password, passwordConfirm };
-  const result = await registerUser(user, storeCtx).mapErr((e) => {
-    if (typeof e === 'object' && 'status' in e) {
-      const err = e as ApiErrorResponse;
-      return createError(
-        { RegisterUserError: 'Unable to register user' },
-        { status: err.status, error: err.value }
+export const registerUserAction = action(
+  async (storeCtx: StoreInnerContext, registerFormData: FormData) => {
+    const username = registerFormData.get('username')?.toString();
+    const password = registerFormData.get('password')?.toString();
+    const passwordConfirm = registerFormData.get('passwordConfirm')?.toString();
+    if (!username || !password || !passwordConfirm) {
+      return errAsync<void, SpotsError>(
+        createError({
+          InvalidRegisterUserFormData:
+            'The `username`, `password`, and `passwordConfirm` fields must not be empty',
+        })
       );
-    } else {
-      const err = e as SpotsError;
-      return err;
     }
-  });
 
-  // Redirects to the user's dashboard.
-  if (result.isOk()) {
-    const user_id = result.value;
-    throw redirect(`/user/${user_id}/dashboard`);
-  }
+    const user: RegisterUserDto = { username, password, passwordConfirm };
+    const result = await registerUser(user, storeCtx).mapErr((e) => {
+      if (typeof e === 'object' && 'status' in e) {
+        const err = e as ApiErrorResponse;
+        return createError(
+          { RegisterUserError: 'Unable to register user' },
+          { status: err.status, error: err.value }
+        );
+      } else {
+        return e;
+      }
+    });
 
-  return result as Result<void | string, SpotsError>;
-}, 'registerUser');
+    // Redirects to the user's dashboard.
+    if (result.isOk()) {
+      const user_id = result.value;
+      throw redirect(`/user/${user_id}/dashboard`);
+    }
+
+    return result as Result<void | string, SpotsError>;
+  },
+  'registerUser'
+);
 
 /** Action to login a user, given login user form data. */
 export const loginUserAction = action(
