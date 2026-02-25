@@ -142,7 +142,7 @@ const LoginPageStyles: styles = {
     'align-items': 'center',
     'align-content': 'center',
     gap: '7em',
-    'backdrop-filter': 'blur(20px)',
+    // 'backdrop-filter': 'blur(20px)',
   },
 
   headerStyle: {

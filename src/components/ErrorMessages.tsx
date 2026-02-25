@@ -17,8 +17,7 @@ export function ErrorMessages(props: {
     'overflow-y': 'auto',
     'box-sizing': 'border-box',
     'align-self': 'center',
-    'backdrop-filter': 'none',
-    'box-shadow': 'none',
+    'margin-bottom': '7rem',
   };
 
   const errorStyle: JSX.CSSProperties = {
@@ -28,6 +27,7 @@ export function ErrorMessages(props: {
     'border-radius': '0.5rem',
     'text-align': 'center',
     cursor: 'pointer',
+    'backdrop-filter': 'blur(10px)',
   };
 
   const dismissError: JSX.EventHandler<HTMLElement, MouseEvent> = (e) => {
@@ -55,9 +55,8 @@ export function ErrorMessages(props: {
           const errorData = extractError(error);
           return (
             <div style={errorStyle} onClick={dismissError}>
-              <span style={{ 'padding-left': '2rem' }}>
-                <strong>{errorData.kind}</strong>: {errorData.message}
-              </span>
+              <strong>{errorData.kind}</strong>: {errorData.message}
+              <span style={{ 'margin-left': '1rem' }}>❌</span>
             </div>
           );
         }}
