@@ -9,7 +9,7 @@ import {
   ResourceReturn,
   useContext,
 } from 'solid-js';
-import { createError, errorToString, SpotsError } from '@/utils/errors';
+import { createError, extractError, SpotsError } from '@/utils/errors';
 import { load, Store } from '@tauri-apps/plugin-store';
 import { AUTH_TOKEN_KEY, AUTH_USERID_KEY } from '@/api/auth';
 
@@ -57,7 +57,7 @@ export function StoreProvider(props: { children: any }) {
     if (opened.isOk()) {
       setStore(opened.value);
     } else {
-      Logger.error(`Failed to open store: ${opened.error.message}`);
+      Logger.error(`Failed to open store: ${opened.error.kind}`);
     }
   });
 
@@ -96,7 +96,10 @@ export function getAuthTokenResource(
         .match(
           (token) => token,
           (err) => {
-            Logger.error(errorToString(err));
+            const errData = extractError(err);
+            Logger.error(
+              `${errData.kind}: ${errData.message}: ${errData.info}`
+            );
             return undefined;
           }
         );
@@ -115,7 +118,10 @@ export function getAuthUserIdResource(
         .match(
           (token) => token,
           (err) => {
-            Logger.error(errorToString(err));
+            const errData = extractError(err);
+            Logger.error(
+              `${errData.kind}: ${errData.message}: ${errData.info}`
+            );
             return undefined;
           }
         );

@@ -9,7 +9,7 @@ import {
   useStore,
 } from '@/utils/tauriStore';
 import { Shimmer } from '@shimmer-from-structure/solid';
-import { errorToString } from '@/utils/errors';
+import { extractError } from '@/utils/errors';
 
 /** The login page. */
 export function LoginPage() {
@@ -42,13 +42,17 @@ export function LoginPage() {
 
   /** Handles form submission results */
   createEffect(async () => {
-    const result = formSubmission.result?.match(
+    formSubmission.result?.match(
       (userId) => {
         Logger.info(`Logged in user: ${userId}`);
       },
       (err) => {
-        Logger.error(`ServerError: ${errorToString(err)}`);
-        setServerErrors((prev) => [...prev, errorToString(err)]);
+        const errData = extractError(err);
+        Logger.error(
+          `ServerError: ${errData.kind}: ${errData.message}: ${errData.info}`
+        );
+        const displayError = `${errData.kind}: ${errData.message}`.trim();
+        setServerErrors((prev) => [...prev, displayError]);
       }
     );
   });
@@ -106,7 +110,7 @@ export function LoginPage() {
       </div>
 
       {/* Error Messages */}
-      <ErrorMessages errors={[]} />
+      <ErrorMessages errors={serverErrors} setErrors={setServerErrors} />
     </Shimmer>
   );
 }
