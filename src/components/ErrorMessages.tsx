@@ -1,20 +1,23 @@
-import { Accessor, createSignal, For, JSX, Setter } from 'solid-js';
+import { extractError, SpotsError } from '@/utils/errors';
+import { Accessor, For, JSX, Setter } from 'solid-js';
 
 /** Component to display error messages. */
 export function ErrorMessages(props: {
-  errors: Accessor<string[]>;
-  setErrors: Setter<string[]>;
+  errors: Accessor<SpotsError[]>;
+  setErrors: Setter<SpotsError[]>;
 }) {
-  const uniqueErrors = () => [...new Set(props.errors())];
+  const uniqueErrors = () => [
+    ...new Set(props.errors().map((e) => JSON.stringify(e))),
+  ];
 
   const containerStyle: JSX.CSSProperties = {
+    'white-space': 'pre',
     position: 'fixed',
     bottom: 0,
     'overflow-y': 'auto',
-    width: '95%',
     'box-sizing': 'border-box',
     'align-self': 'center',
-    'backdrop-filter': 'blur(10px)',
+    'backdrop-filter': 'none',
     'box-shadow': 'none',
   };
 
@@ -29,18 +32,32 @@ export function ErrorMessages(props: {
 
   const dismissError: JSX.EventHandler<HTMLElement, MouseEvent> = (e) => {
     const errMsg = e.currentTarget.innerText;
-    if (props.errors().includes(errMsg)) {
-      props.setErrors((prev) => prev.filter((e) => e != errMsg));
+    let err: SpotsError;
+    if (
+      uniqueErrors().filter((s, idx) => {
+        err = JSON.parse(uniqueErrors()[idx]);
+        return s.includes(errMsg.split(':')[0]);
+      }).length > 0
+    ) {
+      props.setErrors((prev) => {
+        return prev.filter((e) => {
+          return JSON.stringify(e.kind) !== JSON.stringify(err.kind);
+        });
+      });
     }
   };
 
   return (
     <div style={containerStyle}>
       <For each={uniqueErrors()}>
-        {(error) => {
+        {(errorString) => {
+          const error: SpotsError = JSON.parse(errorString);
+          const errorData = extractError(error);
           return (
             <div style={errorStyle} onClick={dismissError}>
-              {error}
+              <span style={{ 'padding-left': '2rem' }}>
+                <strong>{errorData.kind}</strong>: {errorData.message}
+              </span>
             </div>
           );
         }}

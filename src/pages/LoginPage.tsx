@@ -9,7 +9,7 @@ import {
   useStore,
 } from '@/utils/tauriStore';
 import { Shimmer } from '@shimmer-from-structure/solid';
-import { extractError } from '@/utils/errors';
+import { extractError, SpotsError } from '@/utils/errors';
 
 /** The login page. */
 export function LoginPage() {
@@ -26,7 +26,7 @@ export function LoginPage() {
   const [authUserId] = getAuthUserIdResource(storeCtx);
 
   /** Errors from the server. */
-  const [serverErrors, setServerErrors] = createSignal<string[]>([]);
+  const [serverErrors, setServerErrors] = createSignal<SpotsError[]>([]);
 
   /** Redirects to the dashboard if already authenticated. */
   createEffect(async () => {
@@ -47,12 +47,11 @@ export function LoginPage() {
         Logger.info(`Logged in user: ${userId}`);
       },
       (err) => {
+        setServerErrors((prev) => [...prev, err]);
         const errData = extractError(err);
         Logger.error(
           `ServerError: ${errData.kind}: ${errData.message}: ${errData.info}`
         );
-        const displayError = `${errData.kind}: ${errData.message}`.trim();
-        setServerErrors((prev) => [...prev, displayError]);
       }
     );
   });
