@@ -94,7 +94,17 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   throw new Error(`Unhandled error kind: ${JSON.stringify(kind)}`);
 }
 
-/** Turns the error into a string. */
-export function errorToString(err: SpotsError) {
-  return `${err.kind}: ${JSON.stringify(err.info)}`;
+/** Extracts error information into strings. */
+export function extractError(err: SpotsError) {
+  const errString = JSON.stringify(err).split(':');
+  const kind = errString[1].split('{')[1].replace('"', '').replace('"', '');
+  console.log(kind);
+  const message = errString[2].split('}')[0].replace('"', '').replace('"', '');
+  console.log(message);
+  const data = {
+    kind,
+    message,
+    info: JSON.stringify(err.info),
+  };
+  return data;
 }
