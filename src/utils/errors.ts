@@ -4,7 +4,6 @@ import { StoreError } from '@/utils/tauriStore';
 /** Represents an error in the application. */
 export interface SpotsError {
   kind: SpotsErrorKind;
-  message: string;
   info?: any;
 }
 
@@ -16,7 +15,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('InvalidStore' in kind) {
     return {
       kind,
-      message: kind.InvalidStore,
       info,
     };
   }
@@ -24,7 +22,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('OpenError' in kind) {
     return {
       kind,
-      message: kind.OpenError,
       info,
     };
   }
@@ -32,7 +29,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('AddEntryError' in kind) {
     return {
       kind,
-      message: kind.AddEntryError,
       info,
     };
   }
@@ -40,7 +36,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('GetValueError' in kind) {
     return {
       kind,
-      message: kind.GetValueError,
       info,
     };
   }
@@ -48,7 +43,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('RemoveEntryError' in kind) {
     return {
       kind,
-      message: kind.RemoveEntryError,
       info,
     };
   }
@@ -56,7 +50,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('SaveError' in kind) {
     return {
       kind,
-      message: kind.SaveError,
       info,
     };
   }
@@ -64,7 +57,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('CloseError' in kind) {
     return {
       kind,
-      message: kind.CloseError,
       info,
     };
   }
@@ -72,7 +64,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('InvalidRegisterUserFormData' in kind) {
     return {
       kind,
-      message: kind.InvalidRegisterUserFormData,
       info,
     };
   }
@@ -80,7 +71,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('InvalidLoginUserFormData' in kind) {
     return {
       kind,
-      message: kind.InvalidLoginUserFormData,
       info,
     };
   }
@@ -88,7 +78,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('RegisterUserError' in kind) {
     return {
       kind,
-      message: kind.RegisterUserError,
       info,
     };
   }
@@ -96,7 +85,6 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
   if ('LoginUserError' in kind) {
     return {
       kind,
-      message: kind.LoginUserError,
       info,
     };
   }
@@ -108,5 +96,5 @@ export function createError(kind: SpotsErrorKind, info?: any): SpotsError {
 
 /** Turns the error into a string. */
 export function errorToString(err: SpotsError) {
-  return `${err.kind}: ${err.message}: ${JSON.stringify(err.info)}`;
+  return `${err.kind}: ${JSON.stringify(err.info)}`;
 }
