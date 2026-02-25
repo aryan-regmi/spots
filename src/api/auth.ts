@@ -16,13 +16,13 @@ export const AUTH_USERID_KEY = 'auth-user-id';
 /** Errors returned by the auth API. */
 export type AuthAPIError =
   | {
-      InvalidRegisterUserFormData: 'The register user form must have `username`, `password`, and `passwordConfirm` fields';
+      InvalidRegisterUserFormData: 'The `username`, `password`, and `passwordConfirm` fields must not be empty';
     }
   | {
-      InvalidLoginUserFormData: 'The login user form must have `username` and `password` fields';
+      InvalidLoginUserFormData: 'The `username` and `password` fields must not be empty';
     }
   | { RegisterUserError: 'Unable to register user' }
-  | { LoginUserError: 'Unable to login user' };
+  | { LoginUserError: 'Invalid user login' };
 
 /** Action to register a user, given register user form data. */
 export const registerUserAction = action(async (registerFormData: FormData) => {
@@ -35,7 +35,7 @@ export const registerUserAction = action(async (registerFormData: FormData) => {
     return errAsync<void, SpotsError>(
       createError({
         InvalidRegisterUserFormData:
-          'The register user form must have `username`, `password`, and `passwordConfirm` fields',
+          'The `username`, `password`, and `passwordConfirm` fields must not be empty',
       })
     );
   }
@@ -72,7 +72,7 @@ export const loginUserAction = action(
       return errAsync<void, SpotsError>(
         createError({
           InvalidLoginUserFormData:
-            'The login user form must have `username` and `password` fields',
+            'The `username` and `password` fields must not be empty',
         })
       );
     }
@@ -133,10 +133,7 @@ function loginUser(user: LoginUserDto, storeCtx: StoreInnerContext) {
     loginUserBackend(user),
     (err) => err as ApiErrorResponse
   ).mapErr((err) =>
-    createError(
-      { LoginUserError: 'Unable to login user' },
-      { error: err.value }
-    )
+    createError({ LoginUserError: 'Invalid user login' }, { error: err.value })
   );
 
   // Gets the `LoginUserResponseDto` from the response
@@ -144,7 +141,7 @@ function loginUser(user: LoginUserDto, storeCtx: StoreInnerContext) {
     if (res.status !== 'Success') {
       return errAsync(
         createError(
-          { LoginUserError: 'Unable to login user' },
+          { LoginUserError: 'Invalid user login' },
           { error: res.value }
         )
       );
