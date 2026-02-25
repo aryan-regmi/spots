@@ -2,13 +2,14 @@ import { A, useNavigate, useSubmission } from '@solidjs/router';
 import { loginUserAction } from '@/api/auth';
 import { ErrorMessages } from '@/components/ErrorMessages';
 import { Logger } from '@/utils/logger';
-import { createEffect, JSX } from 'solid-js';
+import { createEffect, createSignal, JSX } from 'solid-js';
 import {
   getAuthTokenResource,
   getAuthUserIdResource,
   useStore,
 } from '@/utils/tauriStore';
 import { Shimmer } from '@shimmer-from-structure/solid';
+import { errorToString } from '@/utils/errors';
 
 /** The login page. */
 export function LoginPage() {
@@ -24,6 +25,9 @@ export function LoginPage() {
   const [authToken] = getAuthTokenResource(storeCtx);
   const [authUserId] = getAuthUserIdResource(storeCtx);
 
+  /** Errors from the server. */
+  const [serverErrors, setServerErrors] = createSignal<string[]>([]);
+
   /** Redirects to the dashboard if already authenticated. */
   createEffect(async () => {
     if (authToken()) {
@@ -38,11 +42,13 @@ export function LoginPage() {
 
   /** Handles form submission results */
   createEffect(async () => {
-    // FIXME: Handle form errors etc
     const result = formSubmission.result?.match(
-      (s) => s,
+      (userId) => {
+        Logger.info(`Logged in user: ${userId}`);
+      },
       (err) => {
-        Logger.info(`FORM RESULT: ${JSON.stringify(err)}`);
+        Logger.error(`ServerError: ${errorToString(err)}`);
+        setServerErrors((prev) => [...prev, errorToString(err)]);
       }
     );
   });
