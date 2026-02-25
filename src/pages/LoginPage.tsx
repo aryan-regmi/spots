@@ -17,6 +17,8 @@ export function LoginPage() {
   const storeCtx = useStore();
   const formSubmission = useSubmission(loginUserAction);
 
+  // TODO: Add isBusy & isBtnDisabled from SignupPage
+
   // Make sure store is initalized
   if (storeCtx === undefined) {
     Logger.error('Store must be initalized inside a `<StoreProvider>');
@@ -142,7 +144,6 @@ const LoginPageStyles: styles = {
     'align-items': 'center',
     'align-content': 'center',
     gap: '7em',
-    // 'backdrop-filter': 'blur(20px)',
   },
 
   headerStyle: {
