@@ -1,34 +1,48 @@
-import { For, JSX } from 'solid-js';
+import { Accessor, createSignal, For, JSX, Setter } from 'solid-js';
 
 /** Component to display error messages. */
-export function ErrorMessages(props: { errors: (string | Error)[] }) {
+export function ErrorMessages(props: {
+  errors: Accessor<string[]>;
+  setErrors: Setter<string[]>;
+}) {
+  const uniqueErrors = () => [...new Set(props.errors())];
+
   const containerStyle: JSX.CSSProperties = {
     position: 'fixed',
     bottom: 0,
     'overflow-y': 'auto',
-    padding: '2rem',
+    width: '95%',
     'box-sizing': 'border-box',
     'align-self': 'center',
+    'backdrop-filter': 'blur(10px)',
+    'box-shadow': 'none',
   };
 
   const errorStyle: JSX.CSSProperties = {
     'background-color': 'rgba(100, 20, 40, 0.8)',
     padding: '1rem',
-    width: '95%',
     'margin-bottom': '1rem',
     'border-radius': '0.5rem',
     'text-align': 'center',
-    'backdrop-filter': 'blur(10px)',
-    'box-shadow': 'none',
+    cursor: 'pointer',
+  };
+
+  const dismissError: JSX.EventHandler<HTMLElement, MouseEvent> = (e) => {
+    const errMsg = e.currentTarget.innerText;
+    if (props.errors().includes(errMsg)) {
+      props.setErrors((prev) => prev.filter((e) => e != errMsg));
+    }
   };
 
   return (
     <div style={containerStyle}>
-      <For each={props.errors}>
+      <For each={uniqueErrors()}>
         {(error) => {
-          let errMsg: string;
-          error instanceof Error ? (errMsg = error.message) : (errMsg = error);
-          return <div style={errorStyle}>{errMsg}</div>;
+          return (
+            <div style={errorStyle} onClick={dismissError}>
+              {error}
+            </div>
+          );
         }}
       </For>
     </div>
