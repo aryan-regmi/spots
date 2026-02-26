@@ -2,7 +2,7 @@ import { A, useNavigate, useSubmission } from '@solidjs/router';
 import { loginUserAction } from '@/api/auth';
 import { ErrorMessages } from '@/components/ErrorMessages';
 import { Logger } from '@/utils/logger';
-import { createEffect, createSignal, JSX } from 'solid-js';
+import { createEffect, createSignal, JSX, onMount } from 'solid-js';
 import {
   getAuthTokenResource,
   getAuthUserIdResource,
@@ -16,23 +16,29 @@ export function LoginPage() {
   const navigate = useNavigate();
   const storeCtx = useStore();
   const formSubmission = useSubmission(loginUserAction);
-
-  // TODO: Add isBusy & isBtnDisabled from SignupPage
-
-  // Make sure store is initalized
-  if (storeCtx === undefined) {
-    Logger.error('Store must be initalized inside a `<StoreProvider>');
-    return;
-  }
   const [authToken] = getAuthTokenResource(storeCtx);
   const [authUserId] = getAuthUserIdResource(storeCtx);
+
+  const styles = loginPageStyles();
 
   /** Errors from the server. */
   const [serverErrors, setServerErrors] = createSignal<SpotsError[]>([]);
 
+  /** Determines if the button should be disabled */
+  const isBtnDisabled = () =>
+    serverErrors().length > 0 || formSubmission.pending;
+
   /** Redirects to the dashboard if already authenticated. */
-  createEffect(async () => {
-    if (authToken()) {
+  createEffect(() => {
+    if (
+      storeCtx.store() === undefined || // Wait for store to be initialized
+      authToken.loading || // Wait for auth token to resolve
+      authUserId.loading // Wait for auth user ID to resolve
+    ) {
+      return;
+    }
+
+    if (authToken() !== undefined) {
       Logger.info(`User already authenticated: redirecting to dashboard`);
 
       // Redirect to dashboard
@@ -59,41 +65,49 @@ export function LoginPage() {
   });
 
   // TODO: Add client-side validation (use Zod)
+  //  - Check for empty inputs?
 
   return (
-    <Shimmer loading={storeCtx.store() === undefined}>
-      <div class="col" style={LoginPageStyles.containerStyle}>
+    <Shimmer
+      loading={
+        storeCtx === undefined ||
+        storeCtx.store() === undefined ||
+        authToken.loading ||
+        authUserId.loading
+      }
+    >
+      <div class="col" style={styles.containerStyle}>
         {/* Header */}
-        <div style={LoginPageStyles.headerStyle}>
+        <div style={styles.headerStyle}>
           <h1>Spots</h1>
         </div>
 
         {/* Login form */}
         <form
           class="col"
-          style={LoginPageStyles.formStyle}
+          style={styles.formStyle}
           action={loginUserAction.with(storeCtx)}
           method="post"
         >
           <input
             name="username"
-            style={LoginPageStyles.inputStyle}
+            style={styles.inputStyle}
             type="text"
             placeholder="Username"
           />
           <input
             name="password"
-            style={LoginPageStyles.inputStyle}
+            style={styles.inputStyle}
             type="password"
             placeholder="Password"
           />
           <button
             type="submit"
-            disabled={formSubmission.pending}
+            disabled={isBtnDisabled()}
             style={
-              formSubmission.pending
-                ? LoginPageStyles.submitBtnDisabledStyle
-                : LoginPageStyles.submitBtnStyle
+              isBtnDisabled()
+                ? styles.submitBtnDisabledStyle
+                : styles.submitBtnStyle
             }
           >
             {formSubmission.pending ? 'Logging in...' : 'Log In'}
@@ -116,69 +130,55 @@ export function LoginPage() {
   );
 }
 
-/** Type of styles in the login page. */
-type styles = {
-  /** Style for the main container. */
-  containerStyle: JSX.CSSProperties;
-
-  /** Style for the header. */
-  headerStyle: JSX.CSSProperties;
-
-  /** Style for the form. */
-  formStyle: JSX.CSSProperties;
-
-  /** Style for the form inputs. */
-  inputStyle: JSX.CSSProperties;
-
-  /** Style for the login button. */
-  submitBtnStyle: JSX.CSSProperties;
-
-  /** Style for the disabled login button. */
-  submitBtnDisabledStyle: JSX.CSSProperties;
-};
-
 /** All styles for the login page.  */
-const LoginPageStyles: styles = {
-  containerStyle: {
+function loginPageStyles() {
+  const containerStyle: JSX.CSSProperties = {
     padding: '2rem',
     'align-items': 'center',
     'align-content': 'center',
     gap: '7em',
-  },
+  };
 
-  headerStyle: {
+  const headerStyle: JSX.CSSProperties = {
     'background-color': 'rgba(20, 50, 100, 0.8)',
     'border-radius': '1rem',
     width: '95%',
     'margin-top': '10rem',
-  },
+  };
 
-  formStyle: {
+  const formStyle: JSX.CSSProperties = {
     gap: '2rem',
     'font-size': '1.2rem',
     'margin-bottom': '-3rem',
-  },
+  };
 
-  inputStyle: {
+  const inputStyle: JSX.CSSProperties = {
     width: '20rem',
     'background-color': 'black',
     color: 'rgba(200, 200, 255, 0.9)',
     'border-radius': '2rem',
     'box-shadow': '0 1px 1px',
-  },
+  };
 
-  submitBtnStyle: {
+  const submitBtnStyle: JSX.CSSProperties = {
     'background-color': 'rgba(50, 50, 150, 1)',
     'margin-top': '3rem',
     'box-shadow': '0 1px 1px black',
     'border-radius': '1rem',
-  },
+  };
 
-  submitBtnDisabledStyle: {
+  const submitBtnDisabledStyle: JSX.CSSProperties = {
     'background-color': 'rgba(50, 50, 55, 1)',
-    'margin-top': '3rem',
-    'box-shadow': '0 1px 1px black',
-    'border-radius': '1rem',
     cursor: 'not-allowed',
-  },
-};
+    ...submitBtnStyle,
+  };
+
+  return {
+    containerStyle,
+    headerStyle,
+    formStyle,
+    inputStyle,
+    submitBtnStyle,
+    submitBtnDisabledStyle,
+  };
+}

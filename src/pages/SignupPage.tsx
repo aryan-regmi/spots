@@ -4,6 +4,7 @@ import { extractError, SpotsError } from '@/utils/errors';
 import { Logger } from '@/utils/logger';
 import { useStore } from '@/utils/tauriStore';
 import { A, useSubmission } from '@solidjs/router';
+import { Shimmer } from '@shimmer-from-structure/solid';
 import { createEffect, createSignal, JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import * as z from 'zod';
@@ -18,12 +19,6 @@ type Errors = {
 export function SignupPage() {
   const storeCtx = useStore();
   const formSubmission = useSubmission(registerUserAction);
-
-  // Make sure store is initalized
-  if (storeCtx === undefined) {
-    Logger.error('Store must be initalized inside a `<StoreProvider>');
-    return;
-  }
 
   /** Stores the password input. */
   const [passwordInput, setPasswordInput] = createSignal<string | undefined>();
@@ -127,7 +122,7 @@ export function SignupPage() {
   };
 
   return (
-    <>
+    <Shimmer loading={storeCtx === undefined || storeCtx.store() === undefined}>
       {/* Main contents */}
       <div class="col" style={SignupPageStyles.containerStyle}>
         {/* Header */}
@@ -196,7 +191,7 @@ export function SignupPage() {
 
       {/* Error Messages */}
       <ErrorMessages errors={serverErrors} setErrors={setServerErrors} />
-    </>
+    </Shimmer>
   );
 }
 

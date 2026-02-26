@@ -1,6 +1,6 @@
 import { Logger } from '@/utils/logger';
 import { Shimmer } from '@shimmer-from-structure/solid';
-import { createEffect, JSX } from 'solid-js';
+import { createEffect, JSX, onMount } from 'solid-js';
 import { getAuthTokenResource, useStore } from '@/utils/tauriStore';
 import { useNavigate } from '@solidjs/router';
 
@@ -8,16 +8,19 @@ import { useNavigate } from '@solidjs/router';
 export function NavMusicLayout(props: { children?: any }) {
   const navigate = useNavigate();
   const storeCtx = useStore();
-
-  // Make sure store is initalized
-  if (storeCtx === undefined || storeCtx.store() === undefined) {
-    return;
-  }
   const [authToken] = getAuthTokenResource(storeCtx);
 
   /** Redirects to login if not authenticated */
-  createEffect(async () => {
-    if (!authToken()) {
+  onMount(async () => {
+    if (
+      storeCtx === undefined ||
+      storeCtx.store() === undefined ||
+      authToken.loading
+    ) {
+      return;
+    }
+
+    if (authToken() === undefined) {
       Logger.info('Authenticated user not found: redirecting to login');
       navigate('/', { replace: true });
       return;
@@ -26,7 +29,13 @@ export function NavMusicLayout(props: { children?: any }) {
 
   return (
     <>
-      <Shimmer loading={authToken() === undefined}>
+      <Shimmer
+        loading={
+          storeCtx === undefined ||
+          storeCtx.store() === undefined ||
+          authToken.loading
+        }
+      >
         {props.children}
         <Navbar currentPath="/user/dashboard" />
       </Shimmer>
@@ -38,7 +47,7 @@ export function NavMusicLayout(props: { children?: any }) {
 function Navbar(props: { currentPath?: string }) {
   const navigate = useNavigate();
 
-  const styles = NavbarStyles();
+  const styles = navbarStyles();
 
   //  TODO: Add actual nav icons
   //
@@ -94,7 +103,7 @@ function Navbar(props: { currentPath?: string }) {
   );
 }
 
-function NavbarStyles() {
+function navbarStyles() {
   /** Style for the navbar container. */
   const containerStyle: JSX.CSSProperties = {
     position: 'fixed',

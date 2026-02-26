@@ -6,6 +6,8 @@ import {
   createEffect,
   createResource,
   createSignal,
+  onCleanup,
+  onMount,
   ResourceReturn,
   useContext,
 } from 'solid-js';
@@ -27,7 +29,7 @@ export type StoreError =
   | { CloseError: 'Unable to close the store' };
 
 /** The actual context. */
-export type StoreInnerContext = {
+export type StoreContext = {
   store: Accessor<Store | undefined>;
   addEntry: <T>(
     store: Store,
@@ -46,19 +48,28 @@ export type StoreInnerContext = {
 };
 
 /** The `Store` context. */
-export const StoreContext = createContext<StoreInnerContext>();
+export const StoreCtx = createContext<StoreContext>();
 
 /** Provides the `Store` context. */
 export function StoreProvider(props: { children: any }) {
   const [store, setStore] = createSignal<Store | undefined>();
 
-  createEffect(async () => {
+  /** Opens the store when the provider is mounted. */
+  onMount(async () => {
     const opened = await openStore();
     if (opened.isOk()) {
       setStore(opened.value);
+      Logger.info('Opened store');
     } else {
       Logger.error(`Failed to open store: ${opened.error.kind}`);
     }
+  });
+
+  /** Saves the store when unmounted. */
+  onCleanup(async () => {
+    await store()?.save();
+    store()?.close();
+    Logger.info('Closed store');
   });
 
   /** Create services for the provider. */
@@ -72,61 +83,65 @@ export function StoreProvider(props: { children: any }) {
   };
 
   return (
-    <StoreContext.Provider value={services}>
-      {props.children}
-    </StoreContext.Provider>
+    <StoreCtx.Provider value={services}>{props.children}</StoreCtx.Provider>
   );
 }
 
 /** Exposes the `StoreContext` */
 export function useStore() {
-  const ctx = useContext(StoreContext);
+  const ctx = useContext(StoreCtx);
   if (!ctx) throw new Error('useStore must be used within a StoreProvider');
   return ctx;
 }
 
 /** Extracts the auth token from the store. */
 export function getAuthTokenResource(
-  storeCtx: StoreInnerContext
+  storeCtx: StoreContext
 ): ResourceReturn<string | undefined> {
-  return createResource(async () => {
-    if (storeCtx.store()) {
-      return await storeCtx
-        .getValue<string>(storeCtx.store()!, AUTH_TOKEN_KEY)
-        .match(
-          (token) => token,
-          (err) => {
-            const errData = extractError(err);
-            Logger.error(
-              `${errData.kind}: ${errData.message}: ${errData.info}`
-            );
-            return undefined;
-          }
-        );
+  return createResource(
+    () => storeCtx.store(),
+    async () => {
+      if (storeCtx.store()) {
+        return await storeCtx
+          .getValue<string>(storeCtx.store()!, AUTH_TOKEN_KEY)
+          .match(
+            (token) => token,
+            (err) => {
+              const errData = extractError(err);
+              Logger.error(
+                `${errData.kind}: ${errData.message}: ${errData.info}`
+              );
+              return undefined;
+            }
+          );
+      }
     }
-  });
+  );
 }
 
 /** Extracts the auth user ID from the store. */
 export function getAuthUserIdResource(
-  storeCtx: StoreInnerContext
+  storeCtx: StoreContext
 ): ResourceReturn<string | undefined> {
-  return createResource(async () => {
-    if (storeCtx.store()) {
-      return await storeCtx
-        .getValue<string>(storeCtx.store()!, AUTH_USERID_KEY)
-        .match(
-          (token) => token,
-          (err) => {
-            const errData = extractError(err);
-            Logger.error(
-              `${errData.kind}: ${errData.message}: ${errData.info}`
-            );
-            return undefined;
-          }
-        );
+  return createResource(
+    () => storeCtx.store(),
+    async () => {
+      if (storeCtx.store()) {
+        return await storeCtx
+          .getValue<string>(storeCtx.store()!, AUTH_USERID_KEY)
+          .match(
+            (token) => token,
+            (err) => {
+              const errData = extractError(err);
+              Logger.error(
+                `${errData.kind}: ${errData.message}: ${errData.info}`
+              );
+              return undefined;
+            }
+          );
+      }
     }
-  });
+  );
 }
 
 /** Opens the store. */
