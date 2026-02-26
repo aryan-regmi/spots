@@ -126,11 +126,6 @@ function registerUser(user: RegisterUserDto, storeCtx: StoreContext) {
 
 /** Authenticates the user then updates the store with the auth token. */
 function loginUser(user: LoginUserDto, storeCtx: StoreContext) {
-  if (storeCtx === undefined || storeCtx.store() === undefined) {
-    return errAsync(createError({ InvalidStore: 'Store must be initalized' }));
-  }
-  const store = storeCtx.store()!;
-
   // Calls the rust command
   const callBackend = ResultAsync.fromPromise(
     loginUserBackend(user),
@@ -154,29 +149,34 @@ function loginUser(user: LoginUserDto, storeCtx: StoreContext) {
 
   // Sets the auth token and user ID in the store
   const setAuthToken = (data: LoginUserResponseDto) => {
-    return ResultAsync.combine([
-      storeCtx.addEntry(store, { key: AUTH_TOKEN_KEY, value: data.token }),
-      storeCtx.addEntry(store, { key: AUTH_USERID_KEY, value: data.user.id }),
-    ]).andThen(() => storeCtx.saveStore(store));
+    return storeCtx.openStore().andThen((store) =>
+      ResultAsync.combine([
+        storeCtx.addEntry(store, {
+          key: AUTH_TOKEN_KEY,
+          value: data.token,
+        }),
+        storeCtx.addEntry(store, {
+          key: AUTH_USERID_KEY,
+          value: data.user.id,
+        }),
+      ]).andThen(() => storeCtx.saveStore(store))
+    );
   };
 
-  return callBackend
-    .map(extractResponse)
-    .andThen((data) => data.andThen(setAuthToken));
+  return callBackend.andThen(extractResponse).andThen(setAuthToken);
 }
 
 /** Unauthenticates the logged in user. */
 function logoutUser(storeCtx: StoreContext) {
-  if (storeCtx === undefined || storeCtx.store() === undefined) {
-    return errAsync(createError({ InvalidStore: 'Store must be initalized' }));
-  }
-  const store = storeCtx.store()!;
-
   // Remove auth entries from store, then save it
-  return ResultAsync.combine([
-    storeCtx.removeEntry(store, AUTH_TOKEN_KEY),
-    storeCtx.removeEntry(store, AUTH_USERID_KEY),
-  ]).andThen(() => storeCtx.saveStore(store));
+  return storeCtx
+    .openStore()
+    .andThen((store) =>
+      ResultAsync.combine([
+        storeCtx.removeEntry(store, AUTH_TOKEN_KEY),
+        storeCtx.removeEntry(store, AUTH_USERID_KEY),
+      ]).andThen(() => storeCtx.saveStore(store))
+    );
 }
 
 /** Calls the backend `login_user` command. */

@@ -12,11 +12,7 @@ export function NavMusicLayout(props: { children?: any }) {
 
   /** Redirects to login if not authenticated */
   onMount(async () => {
-    if (
-      storeCtx === undefined ||
-      storeCtx.store() === undefined ||
-      authToken.loading
-    ) {
+    if (authToken.loading) {
       return;
     }
 
@@ -29,13 +25,7 @@ export function NavMusicLayout(props: { children?: any }) {
 
   return (
     <>
-      <Shimmer
-        loading={
-          storeCtx === undefined ||
-          storeCtx.store() === undefined ||
-          authToken.loading
-        }
-      >
+      <Shimmer loading={authToken.loading}>
         {props.children}
         <Navbar currentPath="/user/dashboard" />
       </Shimmer>
@@ -166,4 +156,4 @@ function navbarStyles() {
 }
 
 /** The mini music player component. */
-function MiniPlayer() {}
+function MiniPlayer() { }

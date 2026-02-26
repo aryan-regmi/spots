@@ -1,10 +1,8 @@
 import { Logger } from '@/utils/logger';
-import { okAsync, ResultAsync } from 'neverthrow';
+import { ResultAsync } from 'neverthrow';
 import {
-  Accessor,
   createContext,
   createResource,
-  createSignal,
   onCleanup,
   onMount,
   ResourceReturn,
@@ -29,7 +27,7 @@ export type StoreError =
 
 /** The actual context. */
 export type StoreContext = {
-  store: Accessor<Store | undefined>;
+  openStore: () => ResultAsync<Store, SpotsError>;
   addEntry: <T>(
     store: Store,
     entry: {
@@ -51,42 +49,34 @@ export const StoreCtx = createContext<StoreContext>();
 
 /** Provides the `Store` context. */
 export function StoreProvider(props: { children: any }) {
-  const [store, setStore] = createSignal<Store | undefined>();
-
   /** Opens the store when the provider is mounted. */
   onMount(async () => {
     const opened = await openStore();
     if (opened.isOk()) {
-      setStore(opened.value);
-      Logger.info('Opened store');
+      Logger.info(`Opened store: ${STORE_PATH}`);
     } else {
       Logger.error(`Failed to open store: ${opened.error.kind}`);
     }
   });
 
   /** Saves the store when unmounted. */
-  onCleanup(async () => {
-    if (store()) {
-      await saveStore(store()!)
-        .andThen(() => {
-          Logger.info(`Store saved: ${STORE_PATH}`);
-          return closeStore(store()!);
-        })
-        .match(
-          (_ok) => Logger.info('Store closed'),
-          (err) => {
-            const errData = extractError(err);
-            Logger.error(
-              `${errData.kind}: ${errData.message}: ${errData.info}`
-            );
-          }
-        );
-    }
+  onCleanup(() => {
+    openStore()
+      .andThen((store) => saveStore(store).map(() => store))
+      .andTee(() => Logger.info(`Store saved: ${STORE_PATH}`))
+      .andThen(closeStore)
+      .match(
+        (_ok) => Logger.info('Store closed'),
+        (err) => {
+          const errData = extractError(err);
+          Logger.error(`${errData.kind}: ${errData.message}: ${errData.info}`);
+        }
+      );
   });
 
   /** Create services for the provider. */
   const services = {
-    store,
+    openStore,
     addEntry,
     getValue,
     removeEntry,
@@ -111,22 +101,21 @@ export function getAuthTokenResource(
   storeCtx: StoreContext
 ): ResourceReturn<string | undefined> {
   return createResource(
-    () => storeCtx.store(),
+    () => storeCtx.openStore(),
     async () => {
-      if (storeCtx.store()) {
-        return await storeCtx
-          .getValue<string>(storeCtx.store()!, AUTH_TOKEN_KEY)
-          .match(
-            (token) => token,
-            (err) => {
-              const errData = extractError(err);
-              Logger.error(
-                `${errData.kind}: ${errData.message}: ${errData.info}`
-              );
-              return undefined;
-            }
-          );
-      }
+      return await storeCtx
+        .openStore()
+        .andThen((store) => storeCtx.getValue<string>(store, AUTH_TOKEN_KEY))
+        .match(
+          (token) => token,
+          (err) => {
+            const errData = extractError(err);
+            Logger.error(
+              `${errData.kind}: ${errData.message}: ${errData.info}`
+            );
+            return undefined;
+          }
+        );
     }
   );
 }
@@ -136,81 +125,55 @@ export function getAuthUserIdResource(
   storeCtx: StoreContext
 ): ResourceReturn<string | undefined> {
   return createResource(
-    () => storeCtx.store(),
+    () => storeCtx.openStore(),
     async () => {
-      if (storeCtx.store()) {
-        return await storeCtx
-          .getValue<string>(storeCtx.store()!, AUTH_USERID_KEY)
-          .match(
-            (token) => token,
-            (err) => {
-              const errData = extractError(err);
-              Logger.error(
-                `${errData.kind}: ${errData.message}: ${errData.info}`
-              );
-              return undefined;
-            }
-          );
-      }
+      return await storeCtx
+        .openStore()
+        .andThen((store) => storeCtx.getValue<string>(store, AUTH_USERID_KEY))
+        .match(
+          (token) => token,
+          (err) => {
+            const errData = extractError(err);
+            Logger.error(
+              `${errData.kind}: ${errData.message}: ${errData.info}`
+            );
+            return undefined;
+          }
+        );
     }
   );
 }
 
 /** Opens the store. */
 function openStore() {
-  return ResultAsync.fromPromise(
-    new Promise<Store>((resolve, reject) => {
-      try {
-        const store = load(STORE_PATH);
-        store.then(resolve);
-      } catch (e) {
-        reject(e as Error);
+  return ResultAsync.fromPromise(load(STORE_PATH), (e) =>
+    createError(
+      { OpenError: 'Unable to open the store' },
+      {
+        store: STORE_PATH,
+        error: e,
       }
-    }),
-    (e) =>
-      createError(
-        { OpenError: 'Unable to open the store' },
-        {
-          store: STORE_PATH,
-          error: e,
-        }
-      )
+    )
   );
 }
 
 /** Sets a value in the store. */
 function addEntry<T>(store: Store, entry: { key: string; value: T }) {
-  return ResultAsync.fromPromise(
-    new Promise<void>((resolve, reject) => {
-      try {
-        store.set(entry.key, entry.value).then(resolve);
-      } catch (e) {
-        reject(e as Error);
-      }
-    }),
-    (e) =>
-      createError(
-        { AddEntryError: 'Unable to add entry to the store' },
-        { store, key: entry.key, error: e }
-      )
+  return ResultAsync.fromPromise(store.set(entry.key, entry.value), (e) =>
+    createError(
+      { AddEntryError: 'Unable to add entry to the store' },
+      { store, key: entry.key, error: e }
+    )
   );
 }
 
 /** Gets the value for the given key. */
 function getValue<T>(store: Store, key: string) {
-  return ResultAsync.fromPromise(
-    new Promise<T | undefined>((resolve, reject) => {
-      try {
-        store.get<T>(key).then(resolve);
-      } catch (e) {
-        reject(e as Error);
-      }
-    }),
-    (e) =>
-      createError(
-        { GetValueError: 'Unable to get value from the store' },
-        { store, key, error: e }
-      )
+  return ResultAsync.fromPromise(store.get<T>(key), (e) =>
+    createError(
+      { GetValueError: 'Unable to get value from the store' },
+      { store, key, error: e }
+    )
   );
 }
 
@@ -220,54 +183,30 @@ function getValue<T>(store: Store, key: string) {
  * Returns `true` if there was an entry to delete, else `false`.
  * */
 function removeEntry(store: Store, key: string) {
-  return ResultAsync.fromPromise(
-    new Promise<boolean>((resolve, reject) => {
-      try {
-        store.delete(key).then(resolve);
-      } catch (e) {
-        reject(e as Error);
-      }
-    }),
-    (e) =>
-      createError(
-        { RemoveEntryError: 'Unable to delete entry from the store' },
-        { store, key, error: e }
-      )
+  return ResultAsync.fromPromise(store.delete(key), (e) =>
+    createError(
+      { RemoveEntryError: 'Unable to delete entry from the store' },
+      { store, key, error: e }
+    )
   );
 }
 
 /** Saves the store. */
 function saveStore(store: Store) {
-  return ResultAsync.fromPromise(
-    new Promise<void>((resolve, reject) => {
-      try {
-        store.save().then(resolve);
-      } catch (e) {
-        reject(e as Error);
-      }
-    }),
-    (e) =>
-      createError(
-        { SaveError: 'Unable to save the store data' },
-        { store, error: e }
-      )
+  return ResultAsync.fromPromise(store.save(), (e) =>
+    createError(
+      { SaveError: 'Unable to save the store data' },
+      { store, error: e }
+    )
   );
 }
 
 /** Closes the store. */
 function closeStore(store: Store) {
-  return ResultAsync.fromPromise(
-    new Promise<void>((resolve, reject) => {
-      try {
-        store.close().then(resolve);
-      } catch (e) {
-        reject(e as Error);
-      }
-    }),
-    (e) =>
-      createError(
-        { CloseError: 'Unable to close the store' },
-        { store, error: e }
-      )
+  return ResultAsync.fromPromise(store.close(), (e) =>
+    createError(
+      { CloseError: 'Unable to close the store' },
+      { store, error: e }
+    )
   );
 }

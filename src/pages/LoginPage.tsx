@@ -2,7 +2,7 @@ import { A, useNavigate, useSubmission } from '@solidjs/router';
 import { loginUserAction } from '@/api/auth';
 import { ErrorMessages } from '@/components/ErrorMessages';
 import { Logger } from '@/utils/logger';
-import { createEffect, createSignal, JSX, onMount } from 'solid-js';
+import { createEffect, createSignal, JSX } from 'solid-js';
 import {
   getAuthTokenResource,
   getAuthUserIdResource,
@@ -18,7 +18,6 @@ export function LoginPage() {
   const formSubmission = useSubmission(loginUserAction);
   const [authToken] = getAuthTokenResource(storeCtx);
   const [authUserId] = getAuthUserIdResource(storeCtx);
-
   const styles = loginPageStyles();
 
   /** Errors from the server. */
@@ -30,18 +29,12 @@ export function LoginPage() {
 
   /** Redirects to the dashboard if already authenticated. */
   createEffect(() => {
-    if (
-      storeCtx.store() === undefined || // Wait for store to be initialized
-      authToken.loading || // Wait for auth token to resolve
-      authUserId.loading // Wait for auth user ID to resolve
-    ) {
+    if (authToken.loading || authUserId.loading) {
       return;
     }
 
     if (authToken() !== undefined) {
       Logger.info(`User already authenticated: redirecting to dashboard`);
-
-      // Redirect to dashboard
       if (authUserId()) {
         navigate(`/user/${authUserId()}/dashboard`, { replace: true });
       }
@@ -68,14 +61,7 @@ export function LoginPage() {
   //  - Check for empty inputs?
 
   return (
-    <Shimmer
-      loading={
-        storeCtx === undefined ||
-        storeCtx.store() === undefined ||
-        authToken.loading ||
-        authUserId.loading
-      }
-    >
+    <Shimmer loading={authToken.loading || authUserId.loading}>
       <div class="col" style={styles.containerStyle}>
         {/* Header */}
         <div style={styles.headerStyle}>
