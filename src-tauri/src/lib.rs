@@ -24,7 +24,10 @@ pub fn run() {
 
     // Setup tracing
     tracing_subscriber::fmt()
-        .with_target(false)
+        .json()
+        .with_target(true)
+        .with_current_span(true)
+        .with_span_list(true)
         .with_env_filter(EnvFilter::new(
             "spots_lib=trace,sqlx=error,sqlx::query=error",
         ))

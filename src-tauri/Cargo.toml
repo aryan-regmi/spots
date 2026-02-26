@@ -28,8 +28,10 @@ argon2 = { version = "0.5.3", features = ["std"] }
 chrono = { version = "0.4.26", features = ["serde"] }
 dotenvy = "0.15.7"
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.22", features = ["env-filter", "json"] }
 regex = "1.12.3"
 ring = { version = "0.17.14", features = ["alloc"] }
 base64 = { version = "0.22.1", features = ["std"] }
 tauri-plugin-store = "2"
+anyhow = "1.0.102"
+thiserror = "2.0.18"
