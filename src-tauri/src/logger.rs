@@ -5,36 +5,61 @@ use tracing::{self, span, Level, Span};
 const FRONT_END_SPAN: LazyLock<Span> = LazyLock::new(|| span!(Level::TRACE, "FRONTEND"));
 
 #[tauri::command]
-pub fn debug(msg: String) {
-    let parent = &*FRONT_END_SPAN;
-    let span = span!(parent: parent, Level::DEBUG, "");
-    span.in_scope(|| tracing::debug!("{}", msg));
+pub fn debug(msg: String, data: Option<serde_json::Value>) {
+    if let Some(data) = data {
+        FRONT_END_SPAN.in_scope(|| {
+            tracing::debug!(
+                data = serde_json::to_string_pretty(&data).expect("Invalid data from frontend"),
+                msg
+            )
+        })
+    }
 }
 
 #[tauri::command]
-pub fn trace(msg: String) {
-    let parent = &*FRONT_END_SPAN;
-    let span = span!(parent: parent, Level::TRACE, "");
-    span.in_scope(|| tracing::trace!("{}", msg));
+pub fn trace(msg: String, data: Option<serde_json::Value>) {
+    if let Some(data) = data {
+        FRONT_END_SPAN.in_scope(|| {
+            tracing::trace!(
+                data = serde_json::to_string_pretty(&data).expect("Invalid data from frontend"),
+                msg
+            )
+        })
+    }
 }
 
 #[tauri::command]
-pub fn info(msg: String) {
-    let parent = &*FRONT_END_SPAN;
-    let span = span!(parent: parent, Level::INFO, "");
-    span.in_scope(|| tracing::info!("{}", msg));
+pub fn info(msg: String, data: Option<serde_json::Value>) {
+    if let Some(data) = data {
+        FRONT_END_SPAN.in_scope(|| {
+            tracing::info!(
+                data = serde_json::to_string_pretty(&data).expect("Invalid data from frontend"),
+                msg
+            )
+        })
+    }
 }
 
 #[tauri::command]
-pub fn warn(msg: String) {
-    let parent = &*FRONT_END_SPAN;
-    let span = span!(parent: parent, Level::WARN, "");
-    span.in_scope(|| tracing::warn!("{}", msg));
+pub fn warn(msg: String, data: Option<serde_json::Value>) {
+    if let Some(data) = data {
+        FRONT_END_SPAN.in_scope(|| {
+            tracing::warn!(
+                data = serde_json::to_string_pretty(&data).expect("Invalid data from frontend"),
+                msg
+            )
+        })
+    }
 }
 
 #[tauri::command]
-pub fn error(msg: String) {
-    let parent = &*FRONT_END_SPAN;
-    let span = span!(parent: parent, Level::ERROR, "");
-    span.in_scope(|| tracing::error!("{}", msg));
+pub fn error(msg: String, data: Option<serde_json::Value>) {
+    if let Some(data) = data {
+        FRONT_END_SPAN.in_scope(|| {
+            tracing::error!(
+                data = serde_json::to_string_pretty(&data).expect("Invalid data from frontend"),
+                msg
+            )
+        })
+    }
 }
