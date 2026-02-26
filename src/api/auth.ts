@@ -4,25 +4,14 @@ import {
   RegisterUserDto,
 } from '@/api/dtos';
 import { invoke } from '@tauri-apps/api/core';
-import { ApiErrorResponse, ApiResponse } from './utils';
+import { ApiError, ApiResponse } from './utils';
 import { errAsync, okAsync, Result, ResultAsync } from 'neverthrow';
 import { StoreContext, useStore } from '@/utils/tauriStore';
 import { action, redirect } from '@solidjs/router';
-import { createError, SpotsError } from '@/utils/errors';
+import { SpotsError } from '@/utils/errors';
 
 export const AUTH_TOKEN_KEY = 'auth-token';
 export const AUTH_USERID_KEY = 'auth-user-id';
-
-/** Errors returned by the auth API. */
-export type AuthAPIError =
-  | {
-    InvalidRegisterUserFormData: 'The `username`, `password`, and `passwordConfirm` fields must not be empty';
-  }
-  | {
-    InvalidLoginUserFormData: 'The `username` and `password` fields must not be empty';
-  }
-  | { RegisterUserError: 'Unable to register user' }
-  | { LoginUserError: 'Invalid user login' };
 
 /** Action to register a user, given register user form data. */
 export const registerUserAction = action(
@@ -31,35 +20,24 @@ export const registerUserAction = action(
     const password = registerFormData.get('password')?.toString();
     const passwordConfirm = registerFormData.get('passwordConfirm')?.toString();
     if (!username || !password || !passwordConfirm) {
-      return errAsync<void, SpotsError>(
-        createError({
-          InvalidRegisterUserFormData:
-            'The `username`, `password`, and `passwordConfirm` fields must not be empty',
-        })
-      );
+      return errAsync<void | string, SpotsError | ApiError>({
+        kind: 'InvalidCredentials',
+        message:
+          '`username`, `password`, and `passwordConfirm` must not be empty',
+      });
     }
 
     const user: RegisterUserDto = { username, password, passwordConfirm };
-    const result = await registerUser(user, storeCtx).mapErr((e) => {
-      if (typeof e === 'object' && 'status' in e) {
-        const err = e as ApiErrorResponse;
-        return createError(
-          { RegisterUserError: 'Unable to register user' },
-          { status: err.status, error: err.value }
-        );
-      } else {
-        return e;
-      }
-    });
+    const result = await registerUser(user, storeCtx);
 
     // Redirects to the user's dashboard.
     if (result.isOk()) {
       const user_id = result.value;
       window.history.replaceState(null, '', `/user/${user_id}/dashboard`);
       throw redirect(`/user/${user_id}/dashboard`);
+    } else {
+      return result as Result<void | string, SpotsError | ApiError>;
     }
-
-    return result as Result<void | string, SpotsError>;
   },
   'registerUser'
 );
@@ -70,12 +48,10 @@ export const loginUserAction = action(
     const username = loginFormData.get('username')?.toString();
     const password = loginFormData.get('password')?.toString();
     if (!username || !password) {
-      return errAsync<void, SpotsError>(
-        createError({
-          InvalidLoginUserFormData:
-            'The `username` and `password` fields must not be empty',
-        })
-      );
+      return errAsync<void | string, SpotsError | ApiError>({
+        kind: 'InvalidCredentials',
+        message: '`username` and `password` must not be empty',
+      });
     }
 
     const user: LoginUserDto = { username, password };
@@ -88,7 +64,7 @@ export const loginUserAction = action(
       throw redirect(`/user/${user_id}/dashboard`);
     }
 
-    return result as Result<void | string, SpotsError>;
+    return result as Result<void | string, SpotsError | ApiError>;
   },
   'loginUser'
 );
@@ -111,8 +87,8 @@ export const logoutUserAction = action(async () => {
 function registerUser(user: RegisterUserDto, storeCtx: StoreContext) {
   // Calls the rust command
   const callBackend = ResultAsync.fromPromise(
-    registerUserBackend(user),
-    (err) => err as ApiErrorResponse
+    invoke<ApiResponse<void>>('register_user', { user }),
+    (err) => err as ApiError
   );
 
   // Logs the new user in
@@ -128,23 +104,24 @@ function registerUser(user: RegisterUserDto, storeCtx: StoreContext) {
 function loginUser(user: LoginUserDto, storeCtx: StoreContext) {
   // Calls the rust command
   const callBackend = ResultAsync.fromPromise(
-    loginUserBackend(user),
-    (err) => err as ApiErrorResponse
-  ).mapErr((err) =>
-    createError({ LoginUserError: 'Invalid user login' }, { error: err.value })
+    invoke<ApiResponse<LoginUserResponseDto>>('login_user', {
+      user,
+    }),
+    (err) => err as ApiError
   );
 
   // Gets the `LoginUserResponseDto` from the response
-  const extractResponse = (res: ApiResponse<LoginUserResponseDto>) => {
+  const extractResponse: (
+    res: ApiResponse<LoginUserResponseDto>
+  ) => ResultAsync<LoginUserResponseDto, SpotsError | ApiError> = (res) => {
     if (res.status !== 'Success') {
-      return errAsync(
-        createError(
-          { LoginUserError: 'Invalid user login' },
-          { error: res.value }
-        )
-      );
+      return errAsync({
+        kind: 'ApiRequestFailed',
+        message: 'The API responded with a `Failure`',
+        info: res.value,
+      });
     }
-    return okAsync<LoginUserResponseDto, SpotsError>(res.value);
+    return okAsync(res.value);
   };
 
   // Sets the auth token and user ID in the store
@@ -177,26 +154,4 @@ function logoutUser(storeCtx: StoreContext) {
         storeCtx.removeEntry(store, AUTH_USERID_KEY),
       ]).andThen(() => storeCtx.saveStore(store))
     );
-}
-
-/** Calls the backend `login_user` command. */
-async function loginUserBackend(user: LoginUserDto) {
-  try {
-    return await invoke<ApiResponse<LoginUserResponseDto>>('login_user', {
-      user,
-    });
-  } catch (e) {
-    const err = e as ApiErrorResponse;
-    throw err;
-  }
-}
-
-/** Calls the backend `register_user` command. */
-async function registerUserBackend(user: RegisterUserDto) {
-  try {
-    return await invoke<ApiResponse<void>>('register_user', { user });
-  } catch (e) {
-    const err = e as ApiErrorResponse;
-    throw err;
-  }
 }
