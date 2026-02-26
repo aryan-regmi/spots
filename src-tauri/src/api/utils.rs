@@ -39,7 +39,7 @@ where
 }
 
 /// The result type returned by API functions.
-pub type ApiResult<T> = Result<ApiResponse<T>, ApiResponse<SpotsError>>;
+pub type ApiResult<T> = Result<ApiResponse<T>, SpotsError>;
 
 /// API configurations.
 #[derive(Debug, Clone)]
@@ -90,7 +90,7 @@ pub mod password {
         let salt = SaltString::generate(&mut OsRng);
         let hashed_password = Argon2::default()
             .hash_password(password.as_bytes(), &salt)
-            .map_err(|e| SpotsError::HashingError(e.to_string()))?
+            .map_err(|e| SpotsError::PasswordHashError(e.to_string()))?
             .to_string();
 
         Ok(hashed_password)
@@ -106,8 +106,8 @@ pub mod password {
             return Err(SpotsError::MaxPasswordLengthExceeded(MAX_PASSWORD_LENGTH));
         }
 
-        let parsed_hash =
-            PasswordHash::new(hashed_password).map_err(|_| SpotsError::InvalidHashedPassword)?;
+        let parsed_hash = PasswordHash::new(hashed_password)
+            .map_err(|e| SpotsError::PasswordHashError(e.to_string()))?;
 
         let password_matches = Argon2::default()
             .verify_password(password.as_bytes(), &parsed_hash)
@@ -176,8 +176,11 @@ pub mod token {
             encrypted_token: String,
         ) -> Result<String, SpotsError> {
             let token_str = Token::decrypt(config, encrypted_token)?;
-            let token: Token = serde_json::from_str(&token_str)
-                .map_err(|e| SpotsError::TokenDecryptionFailed(e.to_string()))?;
+            let token: Token =
+                serde_json::from_str(&token_str).map_err(|e| SpotsError::AuthTokenParseError {
+                    token_str,
+                    error: e.to_string(),
+                })?;
             Ok(token.user_id)
         }
 
@@ -185,15 +188,19 @@ pub mod token {
         fn encrypt(config: ApiConfig, token: Token) -> Result<String, SpotsError> {
             // Create key & cipher to encrypt the token
             let key = UnboundKey::new(&AES_256_GCM, &config.token_secret_key.as_bytes()[0..32])
-                .map_err(|e| {
-                    SpotsError::TokenCreationFailed(format!("UnboundKey creation failed: {e}"))
+                .map_err(|e| SpotsError::AuthTokenEncryptError {
+                    token: token.clone(),
+                    error: e.to_string(),
                 })?;
             let mut cipher =
                 ring::aead::SealingKey::new(key, NonceSequenceGenerator { counter: 0 });
 
             // Get token as a JSON string
-            let token_str = serde_json::to_string(&token)
-                .map_err(|e| SpotsError::TokenCreationFailed(e.to_string()))?;
+            let token_str =
+                serde_json::to_string(&token).map_err(|e| SpotsError::AuthTokenSerializeError {
+                    token: token.clone(),
+                    error: e.to_string(),
+                })?;
 
             // Prepare buffer to store encrypted token by padding it to the required size for
             // the AES_256_GCM algorithim
@@ -206,9 +213,12 @@ pub mod token {
             // Encrypt the token into `encrypt_buffer`
             cipher
                 .seal_in_place_append_tag(Aad::empty(), &mut encrypt_buffer)
-                .map_err(|e| {
-                    SpotsError::TokenCreationFailed(format!("Cipher sealing failed: {e}"))
+                .map_err(|e| SpotsError::AuthTokenEncryptError {
+                    token,
+                    error: e.to_string(),
                 })?;
+
+            // Base64 encode the encrypted token
             Ok(BASE64_STANDARD.encode(encrypt_buffer))
         }
 
@@ -216,26 +226,36 @@ pub mod token {
         fn decrypt(config: ApiConfig, token: String) -> Result<String, SpotsError> {
             // Setup keys/cipher
             let key = UnboundKey::new(&AES_256_GCM, &config.token_secret_key.as_bytes()[0..32])
-                .map_err(|e| {
-                    SpotsError::TokenDecryptionFailed(format!("UnboundKey creation failed: {e}"))
+                .map_err(|e| SpotsError::AuthTokenDecryptError {
+                    token_str: token.clone(),
+                    error: e.to_string(),
                 })?;
             let mut cipher =
                 ring::aead::OpeningKey::new(key, NonceSequenceGenerator { counter: 0 });
 
             // Decrypt
-            let mut to_decrypt = BASE64_STANDARD.decode(token).map_err(|e| {
-                SpotsError::TokenDecryptionFailed(format!("Base64 decoding failed: {e}"))
-            })?;
+            let mut decoded =
+                BASE64_STANDARD
+                    .decode(&token)
+                    .map_err(|e| SpotsError::AuthTokenDecodeError {
+                        base64_encoded_token: token.clone(),
+                        error: e.to_string(),
+                    })?;
             let decrypted = cipher
-                .open_in_place(Aad::empty(), &mut to_decrypt)
-                .map_err(|e| {
-                    SpotsError::TokenDecryptionFailed(format!("Decryption failed: {e}"))
+                .open_in_place(Aad::empty(), &mut decoded)
+                .map_err(|e| SpotsError::AuthTokenDecryptError {
+                    token_str: token,
+                    error: e.to_string(),
                 })?;
 
             Ok(String::from_utf8_lossy(decrypted)
                 .trim_matches(|c: char| c.is_control())
                 .to_string())
         }
+
+        // TODO: Make sure token isn't expired
+        //  - Guard all necessary endpoints by the token
+        //      - Iff there is a valid token, the API can be called
     }
 
     /// Generates a `NonceSequence`.

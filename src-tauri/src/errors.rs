@@ -1,58 +1,47 @@
-use std::fmt::Display;
-
 use serde::Serialize;
+use thiserror::Error;
 
-use crate::api::utils::ApiResponse;
+use crate::api::utils::token::Token;
 
-/// Represents all backend errors.
-#[derive(Debug, Clone, Serialize)]
+#[allow(dead_code)] // FIXME: Remove!
+#[derive(Error, Debug, Serialize)]
 pub enum SpotsError {
-    EmptyUserId,
+    #[error("The provided password was empty")]
     EmptyPassword,
+
+    #[error("Exceeded the maximum password length ({0})")]
     MaxPasswordLengthExceeded(usize),
-    HashingError(String),
-    InvalidHashedPassword,
-    DatabaseError(String),
-    ValidationError(String),
-    InvalidLogin,
-    TokenCreationFailed(String),
-    TokenDecryptionFailed(String),
-}
 
-impl Into<ApiResponse<SpotsError>> for SpotsError {
-    fn into(self) -> ApiResponse<SpotsError> {
-        ApiResponse::failure(self)
-    }
-}
+    #[error("Unable to hash the password: {0}")]
+    PasswordHashError(String),
 
-impl Display for SpotsError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SpotsError::EmptyUserId => f.write_str("The provided user ID was empty"),
-            SpotsError::EmptyPassword => f.write_str("The provided password was empty"),
-            SpotsError::MaxPasswordLengthExceeded(max) => f.write_fmt(format_args!(
-                "The maximum password length was exceed ({})",
-                max
-            )),
-            SpotsError::HashingError(err) => {
-                f.write_fmt(format_args!("Password hashing failed: {}", err))
-            }
-            SpotsError::InvalidHashedPassword => {
-                f.write_str("The provided password hash was an invalid format")
-            }
-            SpotsError::DatabaseError(err) => {
-                f.write_fmt(format_args!("Database operation failed: {}", err))
-            }
-            SpotsError::ValidationError(err) => {
-                f.write_fmt(format_args!("Validation failed: {}", err))
-            }
-            SpotsError::InvalidLogin => f.write_str("Invalid login credentials"),
-            SpotsError::TokenCreationFailed(err) => {
-                f.write_fmt(format_args!("Unable to create auth token: {}", err))
-            }
-            SpotsError::TokenDecryptionFailed(err) => {
-                f.write_fmt(format_args!("Unable to decrypt the auth token: {}", err))
-            }
-        }
-    }
+    #[error("The provided user ID was empty")]
+    EmptyUserId,
+
+    #[error("Unable to parse the auth token: {{ token: {}, error: {} }}", .token_str, .error)]
+    AuthTokenParseError { token_str: String, error: String },
+
+    #[error("Unable to encrypt the auth token: {{ token: {}, error: {} }}", .token, .error)]
+    AuthTokenEncryptError { token: Token, error: String },
+
+    #[error("Unable to serialize the auth token: {{ token: {}, error: {} }}", .token, .error)]
+    AuthTokenSerializeError { token: Token, error: String },
+
+    #[error("Unable to decrypt the auth token: {{ token_str: {}, error: {} }}", .token_str, .error)]
+    AuthTokenDecryptError { token_str: String, error: String },
+
+    #[error("Unable to decode base64 token: {{ token_base64: {}, error: {} }}", .base64_encoded_token, .error)]
+    AuthTokenDecodeError {
+        base64_encoded_token: String,
+        error: String,
+    },
+
+    #[error("Validation failed: {0}")]
+    ValidationError(#[from] validator::ValidationErrors),
+
+    #[error("Database error: {{ database: {}, error: {} }}", .database, .error)]
+    DatabaseError { database: String, error: String },
+
+    #[error("Invalid login credentials provided")]
+    InvalidLoginCredentials,
 }
