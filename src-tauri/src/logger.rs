@@ -13,6 +13,8 @@ pub fn debug(msg: String, data: Option<serde_json::Value>) {
                 msg
             )
         })
+    } else {
+        FRONT_END_SPAN.in_scope(|| tracing::debug!(msg))
     }
 }
 
@@ -25,6 +27,8 @@ pub fn trace(msg: String, data: Option<serde_json::Value>) {
                 msg
             )
         })
+    } else {
+        FRONT_END_SPAN.in_scope(|| tracing::trace!(msg))
     }
 }
 
@@ -37,6 +41,8 @@ pub fn info(msg: String, data: Option<serde_json::Value>) {
                 msg
             )
         })
+    } else {
+        FRONT_END_SPAN.in_scope(|| tracing::info!(msg))
     }
 }
 
@@ -49,6 +55,8 @@ pub fn warn(msg: String, data: Option<serde_json::Value>) {
                 msg
             )
         })
+    } else {
+        FRONT_END_SPAN.in_scope(|| tracing::warn!(msg))
     }
 }
 
@@ -61,5 +69,7 @@ pub fn error(msg: String, data: Option<serde_json::Value>) {
                 msg
             )
         })
+    } else {
+        FRONT_END_SPAN.in_scope(|| tracing::error!(msg))
     }
 }
