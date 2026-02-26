@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::database::{client::DatabaseClient, models::User};
 
+#[allow(dead_code)] // FIXME: REMOVE!
 /// Represents user operations.
 pub trait UserExt {
     /// Gets the specified user.
