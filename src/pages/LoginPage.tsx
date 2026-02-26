@@ -10,6 +10,7 @@ import {
 } from '@/utils/tauriStore';
 import { Shimmer } from '@shimmer-from-structure/solid';
 import { SpotsError } from '@/utils/errors';
+import { ApiErrorAdapter } from '@/api/utils';
 
 /** The login page. */
 export function LoginPage() {
@@ -47,18 +48,24 @@ export function LoginPage() {
       (userId) => {
         Logger.info(`Logged in user: ${userId}`);
       },
-      (err) => {
+      (error) => {
+        let err: SpotsError;
+        if ('_tag' in error) {
+          err = error;
+        } else {
+          err = ApiErrorAdapter.into(error);
+        }
         setServerErrors((prev) => [...prev, err]);
-        const errData = extractError(err);
-        Logger.error(
-          `ServerError: ${errData.kind}: ${errData.message}: ${errData.info}`
-        );
+        Logger.error(`${err.kind}: ${err.message}`, err.info);
       }
     );
   });
 
   // TODO: Add client-side validation (use Zod)
   //  - Check for empty inputs?
+  //
+  // TODO: Add `onInput` like in `SignupPage`
+  //  - Reset the server errors on input
 
   return (
     <Shimmer loading={authToken.loading || authUserId.loading}>

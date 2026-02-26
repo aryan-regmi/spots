@@ -3,6 +3,7 @@ export type SpotsError = {
   kind: string;
   message: string;
   info?: any;
+  _tag: '_SpotsError';
 };
 
 /** Interface that converts other errors into `SpotsError`. */
