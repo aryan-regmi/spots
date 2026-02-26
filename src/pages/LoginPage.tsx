@@ -46,7 +46,7 @@ export function LoginPage() {
   createEffect(async () => {
     formSubmission.result?.match(
       (userId) => {
-        Logger.info(`Logged in user: ${userId}`);
+        Logger.info('Logged in user', userId);
       },
       (error) => {
         let err: SpotsError;

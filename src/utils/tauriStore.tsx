@@ -58,9 +58,9 @@ export function StoreProvider(props: { children: any }) {
   onMount(async () => {
     const opened = await openStore();
     if (opened.isOk()) {
-      Logger.info(`Opened store: ${STORE_PATH}`);
+      Logger.info('Opened store', STORE_PATH);
     } else {
-      Logger.error(`Failed to open store: ${opened.error.kind}`);
+      Logger.error('Failed to open store', opened.error.kind);
     }
   });
 
@@ -68,10 +68,10 @@ export function StoreProvider(props: { children: any }) {
   onCleanup(() => {
     openStore()
       .andThen((store) => saveStore(store).map(() => store))
-      .andTee(() => Logger.info(`Store saved: ${STORE_PATH}`))
+      .andTee(() => Logger.info('Store saved', STORE_PATH))
       .andThen(closeStore)
       .match(
-        (_ok) => Logger.info('Store closed'),
+        (_ok) => Logger.info('Store closed', STORE_PATH),
         (err) => {
           Logger.error(`${err.kind}: ${err.message}`, err.info);
         }
@@ -147,6 +147,7 @@ function openStore(): ResultAsync<Store, SpotsError> {
     kind: 'StoreOpenError',
     message: 'Unable to open the store',
     info: { storePath: STORE_PATH, error: e as Error },
+    _tag: '_SpotsError',
   }));
 }
 
@@ -158,6 +159,7 @@ function addEntry<T>(
     kind: 'StoreAddEntryError',
     message: 'Unable to add entry to the store',
     info: { store, entry, error: e as Error },
+    _tag: '_SpotsError',
   }));
 }
 
@@ -169,6 +171,7 @@ function getValue<T>(
     kind: 'StoreGetValueError',
     message: 'Unable to get value from the store',
     info: { store, key, error: e as Error },
+    _tag: '_SpotsError',
   }));
 }
 
@@ -180,6 +183,7 @@ function removeEntry(
     kind: 'StoreRemoveEntryError',
     message: 'Unable to delete entry from the store',
     info: { store, key, error: e as Error },
+    _tag: '_SpotsError',
   }));
 }
 
@@ -188,6 +192,7 @@ function saveStore(store: Store): ResultAsync<void, SpotsError> {
     kind: 'StoreSaveError',
     message: 'Unable to save the store data',
     info: { store, error: e as Error },
+    _tag: '_SpotsError',
   }));
 }
 
@@ -196,5 +201,6 @@ function closeStore(store: Store): ResultAsync<void, SpotsError> {
     kind: 'StoreCloseError',
     message: 'Unable to close the store',
     info: { store, error: e as Error },
+    _tag: '_SpotsError',
   }));
 }

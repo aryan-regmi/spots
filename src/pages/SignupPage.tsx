@@ -49,7 +49,7 @@ export function SignupPage() {
   createEffect(async () => {
     formSubmission.result?.match(
       (userId) => {
-        Logger.info(`Created user: ${userId}`);
+        Logger.info('Created user', userId);
       },
       (error) => {
         let err: SpotsError;
