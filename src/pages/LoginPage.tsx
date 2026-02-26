@@ -9,7 +9,7 @@ import {
   useStore,
 } from '@/utils/tauriStore';
 import { Shimmer } from '@shimmer-from-structure/solid';
-import { extractError, SpotsError } from '@/utils/errors';
+import { SpotsError } from '@/utils/errors';
 
 /** The login page. */
 export function LoginPage() {

@@ -1,3 +1,5 @@
+import { IntoSpotsError, SpotsError } from '@/utils/errors';
+
 /** The status of an API response. */
 export type ApiResponseStatus =
   | 'Success'
@@ -21,19 +23,131 @@ export type Token = {
 
 /** Represents an error in the API endpoint. */
 export type ApiError =
-  | { kind: 'EmptyPassword'; message: string }
-  | { kind: 'MaxPasswordLengthExceeded'; maxLength: number }
-  | { kind: 'PasswordHashError'; message: string }
-  | { kind: 'EmptyUserId'; message: string }
-  | { kind: 'AuthTokenParseError'; message: string; tokenStr: string }
-  | { kind: 'AuthTokenEncryptError'; message: string; token: Token }
-  | { kind: 'AuthTokenSerializeError'; message: string; token: Token }
-  | { kind: 'AuthTokenDecryptError'; message: string; tokenStr: string }
+  | { kind: 'EmptyPassword'; message: 'The provided password was empty' }
+  | {
+    kind: 'MaxPasswordLengthExceeded';
+    message: 'Exceeded the maximum allowed password length';
+    maxLength: number;
+  }
+  | {
+    kind: 'PasswordHashError';
+    message: 'Unable to hash the password';
+    error: string;
+  }
+  | { kind: 'EmptyUserId'; message: 'The provided user ID was empty' }
+  | {
+    kind: 'AuthTokenParseError';
+    message: 'Unable to parse the auth token';
+    tokenStr: string;
+    error: string;
+  }
+  | {
+    kind: 'AuthTokenEncryptError';
+    message: 'Unable to encrypt the auth token';
+    token: Token;
+    error: string;
+  }
+  | {
+    kind: 'AuthTokenSerializeError';
+    message: 'Unable to serialize the auth token';
+    token: Token;
+    error: string;
+  }
+  | {
+    kind: 'AuthTokenDecryptError';
+    message: 'Unable to decrypt the auth token';
+    tokenStr: string;
+    error: string;
+  }
   | {
     kind: 'AuthTokenDecodeError';
-    message: string;
+    message: 'Unable to decode base64 token';
     base64EncodedToken: string;
+    error: string;
   }
-  | { kind: 'ValidationError'; message: string }
-  | { kind: 'DatabaseError'; message: string; database: string }
-  | { kind: 'InvalidLoginCredentials'; message: string };
+  | { kind: 'ValidationError'; message: 'Validation failed'; error: string }
+  | {
+    kind: 'DatabaseError';
+    message: 'Database error';
+    database: string;
+    error: string;
+  }
+  | {
+    kind: 'InvalidLoginCredentials';
+    message: 'Invalid login credentials provided';
+  };
+
+/** Converts an `ApiError` into a `SpotsError`. */
+export const ApiErrorAdapter: IntoSpotsError<ApiError> = {
+  into: function (self: ApiError): SpotsError {
+    switch (self.kind) {
+      case 'EmptyPassword':
+        return { ...self };
+
+      case 'MaxPasswordLengthExceeded':
+        return {
+          ...self,
+          info: { maxLength: self.maxLength },
+        };
+
+      case 'PasswordHashError':
+        return {
+          ...self,
+          info: { error: self.error },
+        };
+
+      case 'EmptyUserId':
+        return {
+          ...self,
+        };
+
+      case 'AuthTokenParseError':
+        return {
+          ...self,
+          info: { tokenStr: self.tokenStr, error: self.error },
+        };
+
+      case 'AuthTokenEncryptError':
+        return {
+          ...self,
+          info: { token: self.token, error: self.error },
+        };
+
+      case 'AuthTokenSerializeError':
+        return {
+          ...self,
+          info: { token: self.token, error: self.error },
+        };
+
+      case 'AuthTokenDecryptError':
+        return {
+          ...self,
+          info: { tokenStr: self.tokenStr, error: self.error },
+        };
+
+      case 'AuthTokenDecodeError':
+        return {
+          ...self,
+          info: {
+            base64EncodedToken: self.base64EncodedToken,
+            error: self.error,
+          },
+        };
+
+      case 'ValidationError':
+        return {
+          ...self,
+          info: { error: self.error },
+        };
+
+      case 'DatabaseError':
+        return {
+          ...self,
+          info: { database: self.database, error: self.error },
+        };
+
+      case 'InvalidLoginCredentials':
+        return { ...self };
+    }
+  },
+};

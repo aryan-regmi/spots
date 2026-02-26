@@ -4,3 +4,8 @@ export type SpotsError = {
   message: string;
   info?: any;
 };
+
+/** Interface that converts other errors into `SpotsError`. */
+export interface IntoSpotsError<Self> {
+  into: (self: Self) => SpotsError;
+}

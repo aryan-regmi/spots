@@ -15,16 +15,6 @@ import { AUTH_TOKEN_KEY, AUTH_USERID_KEY } from '@/api/auth';
 /** The path of the store. */
 export const STORE_PATH = 'spots-store.json';
 
-// /** Errors returned by the store. */
-// export type StoreError =
-//   | { InvalidStore: 'Store must be initalized' }
-//   | { OpenError: 'Unable to open the store' }
-//   | { AddEntryError: 'Unable to add entry to the store' }
-//   | { GetValueError: 'Unable to get value from the store' }
-//   | { RemoveEntryError: 'Unable to delete entry from the store' }
-//   | { SaveError: 'Unable to save the store data' }
-//   | { CloseError: 'Unable to close the store' };
-
 /** The actual context. */
 export type StoreContext = {
   /** Opens the store. */
