@@ -72,7 +72,7 @@ impl UserExt for DatabaseClient {
                 username,
                 password_hash,
                 created_at,
-                updated_at,
+                updated_at
             ) 
             VALUES ($1, $2, $3, $4, $5) 
             RETURNING 
@@ -80,7 +80,7 @@ impl UserExt for DatabaseClient {
                 username,
                 password_hash,
                 created_at,
-                updated_at,
+                updated_at
             "#,
         )
         .bind(user_id.to_string())
@@ -88,7 +88,6 @@ impl UserExt for DatabaseClient {
         .bind(password_hash.into())
         .bind(created_at.to_string())
         .bind(updated_at.to_string())
-        .bind(false)
         .fetch_one(&self.pool)
         .await?;
 
@@ -111,7 +110,7 @@ impl UserExt for DatabaseClient {
                 username,
                 password_hash,
                 created_at,
-                updated_at,
+                updated_at
             "#,
         )
         .bind(new_username.into())
@@ -139,7 +138,7 @@ impl UserExt for DatabaseClient {
                 username,
                 password_hash,
                 created_at,
-                updated_at,
+                updated_at
             "#,
         )
         .bind(user_id.to_string())

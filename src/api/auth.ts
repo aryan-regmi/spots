@@ -6,7 +6,7 @@ import {
 import { invoke } from '@tauri-apps/api/core';
 import { ApiErrorResponse, ApiResponse } from './utils';
 import { errAsync, okAsync, Result, ResultAsync } from 'neverthrow';
-import { StoreInnerContext, useStore } from '@/utils/tauriStore';
+import { StoreContext, useStore } from '@/utils/tauriStore';
 import { action, redirect } from '@solidjs/router';
 import { createError, SpotsError } from '@/utils/errors';
 
@@ -26,7 +26,7 @@ export type AuthAPIError =
 
 /** Action to register a user, given register user form data. */
 export const registerUserAction = action(
-  async (storeCtx: StoreInnerContext, registerFormData: FormData) => {
+  async (storeCtx: StoreContext, registerFormData: FormData) => {
     const username = registerFormData.get('username')?.toString();
     const password = registerFormData.get('password')?.toString();
     const passwordConfirm = registerFormData.get('passwordConfirm')?.toString();
@@ -55,6 +55,7 @@ export const registerUserAction = action(
     // Redirects to the user's dashboard.
     if (result.isOk()) {
       const user_id = result.value;
+      window.history.replaceState(null, '', `/user/${user_id}/dashboard`);
       throw redirect(`/user/${user_id}/dashboard`);
     }
 
@@ -65,7 +66,7 @@ export const registerUserAction = action(
 
 /** Action to login a user, given login user form data. */
 export const loginUserAction = action(
-  async (storeCtx: StoreInnerContext, loginFormData: FormData) => {
+  async (storeCtx: StoreContext, loginFormData: FormData) => {
     const username = loginFormData.get('username')?.toString();
     const password = loginFormData.get('password')?.toString();
     if (!username || !password) {
@@ -83,6 +84,7 @@ export const loginUserAction = action(
     // Redirects to the user's dashboard.
     if (result.isOk()) {
       const user_id = result.value;
+      window.history.replaceState(null, '', `/user/${user_id}/dashboard`);
       throw redirect(`/user/${user_id}/dashboard`);
     }
 
@@ -98,6 +100,7 @@ export const logoutUserAction = action(async () => {
 
   // Redirects to the login page
   if (result.isOk()) {
+    window.history.replaceState(null, '', '/');
     throw redirect(`/`);
   }
 
@@ -105,7 +108,7 @@ export const logoutUserAction = action(async () => {
 });
 
 /** Registers the user then logs them in. */
-function registerUser(user: RegisterUserDto, storeCtx: StoreInnerContext) {
+function registerUser(user: RegisterUserDto, storeCtx: StoreContext) {
   // Calls the rust command
   const callBackend = ResultAsync.fromPromise(
     registerUserBackend(user),
@@ -122,7 +125,7 @@ function registerUser(user: RegisterUserDto, storeCtx: StoreInnerContext) {
 }
 
 /** Authenticates the user then updates the store with the auth token. */
-function loginUser(user: LoginUserDto, storeCtx: StoreInnerContext) {
+function loginUser(user: LoginUserDto, storeCtx: StoreContext) {
   if (storeCtx === undefined || storeCtx.store() === undefined) {
     return errAsync(createError({ InvalidStore: 'Store must be initalized' }));
   }
@@ -171,7 +174,7 @@ function loginUser(user: LoginUserDto, storeCtx: StoreInnerContext) {
 }
 
 /** Unauthenticates the logged in user. */
-function logoutUser(storeCtx: StoreInnerContext) {
+function logoutUser(storeCtx: StoreContext) {
   if (storeCtx === undefined || storeCtx.store() === undefined) {
     return errAsync(createError({ InvalidStore: 'Store must be initalized' }));
   }

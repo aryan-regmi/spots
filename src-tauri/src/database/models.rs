@@ -36,9 +36,11 @@ impl<'r> FromRow<'r, SqliteRow> for User {
             username,
             password_hash,
             created_at: created_at
-                .map(|t| NaiveDateTime::from_str(&t).expect("Invalid `created at` date")),
+                .map(|t| NaiveDateTime::from_str(&t).ok())
+                .flatten(),
             updated_at: updated_at
-                .map(|t| NaiveDateTime::from_str(&t).expect("Invalid `updated at` date")),
+                .map(|t| NaiveDateTime::from_str(&t).ok())
+                .flatten(),
         })
     }
 }

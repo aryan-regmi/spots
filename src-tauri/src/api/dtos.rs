@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{api::utils::token::Token, database::models::User};
+use crate::database::models::User;
 
 /// The DTO used to register a user.
 #[derive(Debug, Clone, Validate, Deserialize)]
@@ -62,8 +62,8 @@ pub struct LoginUserResponseDto {
 pub struct FilterUserDto {
     pub id: String,
     pub username: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }
 
 impl From<User> for FilterUserDto {
@@ -71,8 +71,8 @@ impl From<User> for FilterUserDto {
         Self {
             id: value.id.to_string(),
             username: value.username,
-            created_at: value.created_at.expect("Invalid `created_at`"),
-            updated_at: value.updated_at.expect("Invalid `updated_at`"),
+            created_at: value.created_at,
+            updated_at: value.updated_at,
         }
     }
 }

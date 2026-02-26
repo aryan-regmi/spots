@@ -21,6 +21,6 @@ export type LoginUserResponseDto = {
 export type FilterUserDto = {
   id: string;
   username: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
