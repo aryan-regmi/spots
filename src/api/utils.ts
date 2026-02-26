@@ -82,47 +82,54 @@ export const ApiErrorAdapter: IntoSpotsError<ApiError> = {
   into: function (self: ApiError): SpotsError {
     switch (self.kind) {
       case 'EmptyPassword':
-        return { ...self };
+        return { ...self, _tag: '_SpotsError' };
 
       case 'MaxPasswordLengthExceeded':
         return {
           ...self,
           info: { maxLength: self.maxLength },
+          _tag: '_SpotsError',
         };
 
       case 'PasswordHashError':
         return {
           ...self,
           info: { error: self.error },
+          _tag: '_SpotsError',
         };
 
       case 'EmptyUserId':
         return {
           ...self,
+          _tag: '_SpotsError',
         };
 
       case 'AuthTokenParseError':
         return {
           ...self,
           info: { tokenStr: self.tokenStr, error: self.error },
+          _tag: '_SpotsError',
         };
 
       case 'AuthTokenEncryptError':
         return {
           ...self,
           info: { token: self.token, error: self.error },
+          _tag: '_SpotsError',
         };
 
       case 'AuthTokenSerializeError':
         return {
           ...self,
           info: { token: self.token, error: self.error },
+          _tag: '_SpotsError',
         };
 
       case 'AuthTokenDecryptError':
         return {
           ...self,
           info: { tokenStr: self.tokenStr, error: self.error },
+          _tag: '_SpotsError',
         };
 
       case 'AuthTokenDecodeError':
@@ -132,22 +139,25 @@ export const ApiErrorAdapter: IntoSpotsError<ApiError> = {
             base64EncodedToken: self.base64EncodedToken,
             error: self.error,
           },
+          _tag: '_SpotsError',
         };
 
       case 'ValidationError':
         return {
           ...self,
           info: { error: self.error },
+          _tag: '_SpotsError',
         };
 
       case 'DatabaseError':
         return {
           ...self,
           info: { database: self.database, error: self.error },
+          _tag: '_SpotsError',
         };
 
       case 'InvalidLoginCredentials':
-        return { ...self };
+        return { ...self, _tag: '_SpotsError' };
     }
   },
 };

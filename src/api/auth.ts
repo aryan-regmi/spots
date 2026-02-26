@@ -24,6 +24,7 @@ export const registerUserAction = action(
         kind: 'InvalidCredentials',
         message:
           '`username`, `password`, and `passwordConfirm` must not be empty',
+        _tag: '_SpotsError',
       });
     }
 
@@ -51,6 +52,7 @@ export const loginUserAction = action(
       return errAsync<void | string, SpotsError | ApiError>({
         kind: 'InvalidCredentials',
         message: '`username` and `password` must not be empty',
+        _tag: '_SpotsError',
       });
     }
 
@@ -119,6 +121,7 @@ function loginUser(user: LoginUserDto, storeCtx: StoreContext) {
         kind: 'ApiRequestFailed',
         message: 'The API responded with a `Failure`',
         info: res.value,
+        _tag: '_SpotsError',
       });
     }
     return okAsync(res.value);
