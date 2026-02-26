@@ -11,6 +11,9 @@ import {
 import { Shimmer } from '@shimmer-from-structure/solid';
 import { SpotsError } from '@/utils/errors';
 import { ApiErrorAdapter } from '@/api/utils';
+import { PasswordSchema, UsernameSchema } from '@/utils/zodSchemas';
+import { createStore } from 'solid-js/store';
+import { ValidationErrors } from '@/components/ValidationErrors';
 
 /** The login page. */
 export function LoginPage() {
@@ -23,6 +26,15 @@ export function LoginPage() {
 
   /** Errors from the server. */
   const [serverErrors, setServerErrors] = createSignal<SpotsError[]>([]);
+
+  /** Validation error messages. */
+  const [errMsgs, setErrMsgs] = createStore<{
+    usernameErrors: string[];
+    passwordErrors: string[];
+  }>({
+    usernameErrors: [],
+    passwordErrors: [],
+  });
 
   /** Determines if the button should be disabled */
   const isBtnDisabled = () =>
@@ -61,11 +73,49 @@ export function LoginPage() {
     );
   });
 
-  // TODO: Add client-side validation (use Zod)
-  //  - Check for empty inputs?
-  //
-  // TODO: Add `onInput` like in `SignupPage`
-  //  - Reset the server errors on input
+  /** Validates the username using `UsernameSchema`.*/
+  async function validateUsername(username: string) {
+    const validation = await UsernameSchema.safeParseAsync(username);
+    if (validation.success) {
+      return;
+    }
+    const errObj = JSON.parse(validation.error.message);
+    setErrMsgs('usernameErrors', (prev) => [
+      ...prev,
+      `Invalid username: ${errObj[errObj.length - 1].message}`,
+    ]);
+  }
+
+  /** Validates the password using `PasswordSchema`.*/
+  async function validatePassword(password: string) {
+    const validation = await PasswordSchema.safeParseAsync(password);
+    if (validation.success) {
+      return;
+    }
+    const errObj = JSON.parse(validation.error.message);
+    setErrMsgs('passwordErrors', (prev) => [
+      ...prev,
+      `Invalid password: ${errObj[errObj.length - 1].message}`,
+    ]);
+  }
+
+  /** Handles username input. */
+  const usernameOnInput: JSX.EventHandler<HTMLInputElement, Event> = async (
+    e
+  ) => {
+    setServerErrors([]);
+    setErrMsgs('usernameErrors', []);
+    await validateUsername(e.currentTarget.value);
+  };
+
+  /** Handles password input. */
+  const passwordOnInput: JSX.EventHandler<HTMLInputElement, Event> = async (
+    e
+  ) => {
+    setServerErrors([]);
+    setErrMsgs('passwordErrors', []);
+    await validatePassword(e.currentTarget.value);
+  };
 
   return (
     <Shimmer loading={authToken.loading || authUserId.loading}>
@@ -87,13 +137,19 @@ export function LoginPage() {
             style={styles.inputStyle}
             type="text"
             placeholder="Username"
+            onInput={usernameOnInput}
           />
+          <ValidationErrors errors={errMsgs.usernameErrors} />
+
           <input
             name="password"
             style={styles.inputStyle}
             type="password"
             placeholder="Password"
+            onInput={passwordOnInput}
           />
+          <ValidationErrors errors={errMsgs.passwordErrors} />
+
           <button
             type="submit"
             disabled={isBtnDisabled()}

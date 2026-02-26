@@ -1,4 +1,3 @@
-import * as z from 'zod';
 import { A, useSubmission } from '@solidjs/router';
 import { ErrorMessages } from '@/components/ErrorMessages';
 import { Logger } from '@/utils/logger';
@@ -8,6 +7,8 @@ import { createStore } from 'solid-js/store';
 import { registerUserAction } from '@/api/auth';
 import { useStore } from '@/utils/tauriStore';
 import { ApiErrorAdapter } from '@/api/utils';
+import { PasswordSchema, UsernameSchema } from '@/utils/zodSchemas';
+import { ValidationErrors } from '@/components/ValidationErrors';
 
 /** Various types of errors. */
 type Errors = {
@@ -19,6 +20,7 @@ type Errors = {
 export function SignupPage() {
   const storeCtx = useStore();
   const formSubmission = useSubmission(registerUserAction);
+  const styles = signupPageStyles();
 
   /** Stores the password input. */
   const [passwordInput, setPasswordInput] = createSignal<string | undefined>();
@@ -127,55 +129,55 @@ export function SignupPage() {
   return (
     <>
       {/* Main contents */}
-      <div class="col" style={SignupPageStyles.containerStyle}>
+      <div class="col" style={styles.containerStyle}>
         {/* Header */}
-        <div style={SignupPageStyles.headerStyle}>
+        <div style={styles.headerStyle}>
           <h1>Spots</h1>
         </div>
 
         {/* Signup form */}
         <form
           class="col"
-          style={SignupPageStyles.formStyle}
+          style={styles.formStyle}
           action={registerUserAction.with(storeCtx)}
           method="post"
         >
           <input
             name="username"
-            style={SignupPageStyles.inputStyle}
+            style={styles.inputStyle}
             type="text"
             placeholder="Username"
             onInput={usernameOnInput}
           />
-          <ValidationError errors={errMsgs.usernameErrors} />
+          <ValidationErrors errors={errMsgs.usernameErrors} />
 
           <input
             name="password"
-            style={SignupPageStyles.inputStyle}
+            style={styles.inputStyle}
             type="password"
             placeholder="Password"
             onInput={passwordOnInput}
           />
-          <ValidationError errors={errMsgs.passwordErrors} />
+          <ValidationErrors errors={errMsgs.passwordErrors} />
 
           <input
             name="passwordConfirm"
-            style={SignupPageStyles.inputStyle}
+            style={styles.inputStyle}
             type="password"
             placeholder="Confirm Password"
             onInput={async (e) =>
               setPasswordConfirmInput(e.currentTarget.value)
             }
           />
-          <ValidationError errors={errMsgs.passwordConfirmErrors} />
+          <ValidationErrors errors={errMsgs.passwordConfirmErrors} />
 
           <button
             type="submit"
             disabled={isBtnDisabled()}
             style={
               isBtnDisabled()
-                ? SignupPageStyles.submitBtnDisabledStyle
-                : SignupPageStyles.submitBtnStyle
+                ? styles.submitBtnDisabledStyle
+                : styles.submitBtnStyle
             }
           >
             {formSubmission.pending ? 'Creating login...' : 'Sign Up'}
@@ -198,114 +200,55 @@ export function SignupPage() {
   );
 }
 
-/** Displays validation errors. */
-function ValidationError(props: { errors: string[] }) {
-  return (
-    <>
-      {props.errors.length > 0 ? (
-        <span
-          style={{
-            color: 'red',
-            'max-width': SignupPageStyles.inputStyle.width,
-            padding: 0,
-            margin: 0,
-            'margin-bottom': '-1em',
-            'margin-top': '-1em',
-            'align-self': 'center',
-          }}
-        >
-          {props.errors[props.errors.length - 1]}
-        </span>
-      ) : null}
-    </>
-  );
-}
-
-/** Schema to parse username. */
-const UsernameSchema = z
-  .string()
-  .max(64, 'Username can be a max of 64 characters')
-  .min(1, 'Username must not be empty')
-  .min(3, 'Username must be at least 3 characters')
-  .regex(
-    /^[a-zA-Z0-9_-]+$/,
-    'Username must not be empty and must be only alpha-numeric characters'
-  );
-
-/** Schema to parse password. */
-const PasswordSchema = z
-  .string()
-  .max(128, 'Password can be a max of 64 characters')
-  .min(8, 'Password must be at least 8 characters long')
-  .refine((value) => {
-    const containsSpecialCharacter = /\W/.test(value);
-    const containsUppercase = /[A-Z]/.test(value);
-    return containsUppercase && containsSpecialCharacter;
-  }, 'Password must contain a special character and and uppercase character');
-
-/** Type of styles in the signup page. */
-type styles = {
-  /** Style for the main container. */
-  containerStyle: JSX.CSSProperties;
-
-  /** Style for the header. */
-  headerStyle: JSX.CSSProperties;
-
-  /** Style for the form. */
-  formStyle: JSX.CSSProperties;
-
-  /** Style for the form inputs. */
-  inputStyle: JSX.CSSProperties;
-
-  /** Style for the signup button. */
-  submitBtnStyle: JSX.CSSProperties;
-
-  /** Style for the disabled signup button. */
-  submitBtnDisabledStyle: JSX.CSSProperties;
-};
-
 /** All styles for the signup page.  */
-const SignupPageStyles: styles = {
-  containerStyle: {
+function signupPageStyles() {
+  const containerStyle: JSX.CSSProperties = {
     padding: '2rem',
     'align-items': 'center',
     'align-content': 'center',
     gap: '7em',
-  },
+  };
 
-  headerStyle: {
+  const headerStyle: JSX.CSSProperties = {
     'background-color': 'rgba(20, 50, 100, 0.8)',
     'border-radius': '1rem',
     width: '95%',
     'margin-top': '10rem',
-  },
+  };
 
-  formStyle: {
+  const formStyle: JSX.CSSProperties = {
     gap: '2rem',
     'font-size': '1.2rem',
     'margin-bottom': '-3rem',
-  },
+  };
 
-  inputStyle: {
+  const inputStyle: JSX.CSSProperties = {
     width: '20rem',
     'background-color': 'black',
     color: 'rgba(200, 200, 255, 0.9)',
     'border-radius': '2rem',
     'box-shadow': '0 1px 1px',
-  },
+  };
 
-  submitBtnStyle: {
+  const submitBtnStyle: JSX.CSSProperties = {
     'background-color': 'rgba(50, 50, 150, 1)',
     'margin-top': '3rem',
     'box-shadow': '0 1px 1px black',
     'border-radius': '1rem',
-  },
+  };
 
-  submitBtnDisabledStyle: {
+  const submitBtnDisabledStyle: JSX.CSSProperties = {
+    ...submitBtnStyle,
     'background-color': 'rgba(50, 50, 55, 1)',
-    'margin-top': '3rem',
-    'box-shadow': '0 1px 1px black',
-    'border-radius': '1rem',
     cursor: 'not-allowed',
-  },
-};
+  };
+
+  return {
+    containerStyle,
+    headerStyle,
+    formStyle,
+    inputStyle,
+    submitBtnStyle,
+    submitBtnDisabledStyle,
+  };
+}
