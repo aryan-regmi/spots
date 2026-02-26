@@ -1,6 +1,6 @@
 import { Logger } from '@/utils/logger';
 import { Shimmer } from '@shimmer-from-structure/solid';
-import { createEffect, JSX, onMount } from 'solid-js';
+import { JSX, onMount } from 'solid-js';
 import { getAuthTokenResource, useStore } from '@/utils/tauriStore';
 import { useNavigate } from '@solidjs/router';
 

@@ -2,11 +2,12 @@ import * as z from 'zod';
 import { A, useSubmission } from '@solidjs/router';
 import { ErrorMessages } from '@/components/ErrorMessages';
 import { Logger } from '@/utils/logger';
+import { SpotsError } from '@/utils/errors';
 import { createEffect, createSignal, JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { extractError, SpotsError } from '@/utils/errors';
 import { registerUserAction } from '@/api/auth';
 import { useStore } from '@/utils/tauriStore';
+import { ApiErrorAdapter } from '@/api/utils';
 
 /** Various types of errors. */
 type Errors = {
@@ -50,12 +51,15 @@ export function SignupPage() {
       (userId) => {
         Logger.info(`Created user: ${userId}`);
       },
-      (err) => {
+      (error) => {
+        let err: SpotsError;
+        if ('_tag' in error) {
+          err = error;
+        } else {
+          err = ApiErrorAdapter.into(error);
+        }
         setServerErrors((prev) => [...prev, err]);
-        const errData = extractError(err);
-        Logger.error(
-          `ServerError: ${errData.kind}: ${errData.message}: ${errData.info}`
-        );
+        Logger.error(`ServerError: ${err.kind}: ${err.message}`, err.info);
       }
     );
   });
