@@ -3,8 +3,8 @@ import { ErrorMessages } from '@/components/ErrorMessages';
 import { extractError, SpotsError } from '@/utils/errors';
 import { Logger } from '@/utils/logger';
 import { useStore } from '@/utils/tauriStore';
-import { A, useNavigate, useSubmission } from '@solidjs/router';
-import { createEffect, createSignal, ErrorBoundary, JSX } from 'solid-js';
+import { A, useSubmission } from '@solidjs/router';
+import { createEffect, createSignal, JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import * as z from 'zod';
 
@@ -25,24 +25,28 @@ export function SignupPage() {
     return;
   }
 
-  const [passwordData, setPasswordData] = createSignal('');
+  /** Stores the password input. */
+  const [passwordInput, setPasswordInput] = createSignal<string | undefined>();
 
-  /** Determines if the login page is in a busy state. */
-  const [isBusy, setIsBusy] = createSignal(false);
+  /** Stores the confirm password input. */
+  const [passwordConfirmInput, setPasswordConfirmInput] = createSignal<
+    string | undefined
+  >();
 
-  /** List of validation errors. */
+  /** Validation error messages. */
   const [errMsgs, setErrMsgs] = createStore<Errors>({
     usernameErrors: [],
     passwordErrors: [],
     passwordConfirmErrors: [],
   });
 
+  /** Server error messages. */
   const [serverErrors, setServerErrors] = createSignal<SpotsError[]>([]);
 
   /** Determines if the button should be disabled */
   const isBtnDisabled = () =>
-    isBusy() ||
     serverErrors().length > 0 ||
+    formSubmission.pending ||
     errMsgs.passwordErrors.length > 0 ||
     errMsgs.usernameErrors.length > 0;
 
@@ -60,6 +64,18 @@ export function SignupPage() {
         );
       }
     );
+  });
+
+  /** Makes sure password confirm data matches password. */
+  createEffect(async () => {
+    if (passwordInput() !== passwordConfirmInput()) {
+      setErrMsgs('passwordConfirmErrors', (prev) => [
+        ...prev,
+        `Passwords must match`,
+      ]);
+    } else {
+      setErrMsgs('passwordConfirmErrors', []);
+    }
   });
 
   /** Validates the username using `UsernameSchema`.*/
@@ -91,15 +107,28 @@ export function SignupPage() {
     return false;
   }
 
+  /** Handles username input. */
+  const usernameOnInput: JSX.EventHandler<HTMLInputElement, Event> = async (
+    e
+  ) => {
+    setServerErrors([]);
+    setErrMsgs('usernameErrors', []);
+    await validateUsername(e.currentTarget.value);
+  };
+
+  /** Handles password input. */
+  const passwordOnInput: JSX.EventHandler<HTMLInputElement, Event> = async (
+    e
+  ) => {
+    setServerErrors([]);
+    setPasswordInput(e.currentTarget.value);
+    setErrMsgs('passwordErrors', []);
+    await validatePassword(e.currentTarget.value);
+  };
+
   return (
-    <ErrorBoundary
-      fallback={(error, reset) => (
-        <div>
-          <p>{error.message}</p>
-          <button onClick={reset}>Try Again</button>
-        </div>
-      )}
-    >
+    <>
+      {/* Main contents */}
       <div class="col" style={SignupPageStyles.containerStyle}>
         {/* Header */}
         <div style={SignupPageStyles.headerStyle}>
@@ -118,39 +147,29 @@ export function SignupPage() {
             style={SignupPageStyles.inputStyle}
             type="text"
             placeholder="Username"
-            oninput={async (e) => {
-              setErrMsgs('usernameErrors', []);
-              await validateUsername(e.currentTarget.value);
-            }}
+            onInput={usernameOnInput}
           />
+          <ValidationError errors={errMsgs.usernameErrors} />
 
           <input
             name="password"
             style={SignupPageStyles.inputStyle}
             type="password"
             placeholder="Password"
-            oninput={async (e) => {
-              setErrMsgs('passwordErrors', []);
-              await validatePassword(e.currentTarget.value);
-              setPasswordData(e.currentTarget.value);
-            }}
+            onInput={passwordOnInput}
           />
+          <ValidationError errors={errMsgs.passwordErrors} />
 
           <input
             name="passwordConfirm"
             style={SignupPageStyles.inputStyle}
             type="password"
             placeholder="Confirm Password"
-            oninput={async (e) => {
-              setErrMsgs('passwordConfirmErrors', []);
-              if (passwordData() != e.currentTarget.value) {
-                setErrMsgs('passwordConfirmErrors', (prev) => [
-                  ...prev,
-                  `Passwords must match`,
-                ]);
-              }
-            }}
+            onInput={async (e) =>
+              setPasswordConfirmInput(e.currentTarget.value)
+            }
           />
+          <ValidationError errors={errMsgs.passwordConfirmErrors} />
 
           <button
             type="submit"
@@ -161,7 +180,7 @@ export function SignupPage() {
                 : SignupPageStyles.submitBtnStyle
             }
           >
-            {isBusy() ? 'Creating login...' : 'Sign Up'}
+            {formSubmission.pending ? 'Creating login...' : 'Sign Up'}
           </button>
         </form>
 
@@ -177,7 +196,30 @@ export function SignupPage() {
 
       {/* Error Messages */}
       <ErrorMessages errors={serverErrors} setErrors={setServerErrors} />
-    </ErrorBoundary>
+    </>
+  );
+}
+
+/** Displays validation errors. */
+function ValidationError(props: { errors: string[] }) {
+  return (
+    <>
+      {props.errors.length > 0 ? (
+        <span
+          style={{
+            color: 'red',
+            'max-width': SignupPageStyles.inputStyle.width,
+            padding: 0,
+            margin: 0,
+            'margin-bottom': '-1em',
+            'margin-top': '-1em',
+            'align-self': 'center',
+          }}
+        >
+          {props.errors[props.errors.length - 1]}
+        </span>
+      ) : null}
+    </>
   );
 }
 
@@ -186,6 +228,7 @@ const UsernameSchema = z
   .string()
   .max(64, 'Username can be a max of 64 characters')
   .min(1, 'Username must not be empty')
+  .min(3, 'Username must be at least 3 characters')
   .regex(
     /^[a-zA-Z0-9_-]+$/,
     'Username must not be empty and must be only alpha-numeric characters'
