@@ -8,26 +8,29 @@ import {
   ResourceReturn,
   useContext,
 } from 'solid-js';
-import { createError, extractError, SpotsError } from '@/utils/errors';
+import { SpotsError } from '@/utils/errors';
 import { load, Store } from '@tauri-apps/plugin-store';
 import { AUTH_TOKEN_KEY, AUTH_USERID_KEY } from '@/api/auth';
 
 /** The path of the store. */
 export const STORE_PATH = 'spots-store.json';
 
-/** Errors returned by the store. */
-export type StoreError =
-  | { InvalidStore: 'Store must be initalized' }
-  | { OpenError: 'Unable to open the store' }
-  | { AddEntryError: 'Unable to add entry to the store' }
-  | { GetValueError: 'Unable to get value from the store' }
-  | { RemoveEntryError: 'Unable to delete entry from the store' }
-  | { SaveError: 'Unable to save the store data' }
-  | { CloseError: 'Unable to close the store' };
+// /** Errors returned by the store. */
+// export type StoreError =
+//   | { InvalidStore: 'Store must be initalized' }
+//   | { OpenError: 'Unable to open the store' }
+//   | { AddEntryError: 'Unable to add entry to the store' }
+//   | { GetValueError: 'Unable to get value from the store' }
+//   | { RemoveEntryError: 'Unable to delete entry from the store' }
+//   | { SaveError: 'Unable to save the store data' }
+//   | { CloseError: 'Unable to close the store' };
 
 /** The actual context. */
 export type StoreContext = {
+  /** Opens the store. */
   openStore: () => ResultAsync<Store, SpotsError>;
+
+  /** Sets a value in the store. */
   addEntry: <T>(
     store: Store,
     entry: {
@@ -35,12 +38,24 @@ export type StoreContext = {
       value: T;
     }
   ) => ResultAsync<void, SpotsError>;
+
+  /** Gets the value for the given key. */
   getValue: <T>(
     store: Store,
     key: string
   ) => ResultAsync<T | undefined, SpotsError>;
+
+  /**
+   * Removes the entry with the given key from the store.
+   *
+   * Returns `true` if there was an entry to delete, else `false`.
+   * */
   removeEntry: (store: Store, key: string) => ResultAsync<boolean, SpotsError>;
+
+  /** Saves the store. */
   saveStore: (store: Store) => ResultAsync<void, SpotsError>;
+
+  /** Closes the store. */
   closeStore: (store: Store) => ResultAsync<void, SpotsError>;
 };
 
@@ -68,8 +83,7 @@ export function StoreProvider(props: { children: any }) {
       .match(
         (_ok) => Logger.info('Store closed'),
         (err) => {
-          const errData = extractError(err);
-          Logger.error(`${errData.kind}: ${errData.message}: ${errData.info}`);
+          Logger.error(`${err.kind}: ${err.message}`, err.info);
         }
       );
   });
@@ -109,10 +123,7 @@ export function getAuthTokenResource(
         .match(
           (token) => token,
           (err) => {
-            const errData = extractError(err);
-            Logger.error(
-              `${errData.kind}: ${errData.message}: ${errData.info}`
-            );
+            Logger.error(`${err.kind}: ${err.message}`, err.info);
             return undefined;
           }
         );
@@ -133,10 +144,7 @@ export function getAuthUserIdResource(
         .match(
           (token) => token,
           (err) => {
-            const errData = extractError(err);
-            Logger.error(
-              `${errData.kind}: ${errData.message}: ${errData.info}`
-            );
+            Logger.error(`${err.kind}: ${err.message}`, err.info);
             return undefined;
           }
         );
@@ -144,69 +152,59 @@ export function getAuthUserIdResource(
   );
 }
 
-/** Opens the store. */
-function openStore() {
-  return ResultAsync.fromPromise(load(STORE_PATH), (e) =>
-    createError(
-      { OpenError: 'Unable to open the store' },
-      {
-        store: STORE_PATH,
-        error: e,
-      }
-    )
-  );
+function openStore(): ResultAsync<Store, SpotsError> {
+  return ResultAsync.fromPromise(load(STORE_PATH), (e) => ({
+    kind: 'StoreOpenError',
+    message: 'Unable to open the store',
+    info: { storePath: STORE_PATH, error: e as Error },
+  }));
 }
 
-/** Sets a value in the store. */
-function addEntry<T>(store: Store, entry: { key: string; value: T }) {
-  return ResultAsync.fromPromise(store.set(entry.key, entry.value), (e) =>
-    createError(
-      { AddEntryError: 'Unable to add entry to the store' },
-      { store, key: entry.key, error: e }
-    )
-  );
+function addEntry<T>(
+  store: Store,
+  entry: { key: string; value: T }
+): ResultAsync<void, SpotsError> {
+  return ResultAsync.fromPromise(store.set(entry.key, entry.value), (e) => ({
+    kind: 'StoreAddEntryError',
+    message: 'Unable to add entry to the store',
+    info: { store, entry, error: e as Error },
+  }));
 }
 
-/** Gets the value for the given key. */
-function getValue<T>(store: Store, key: string) {
-  return ResultAsync.fromPromise(store.get<T>(key), (e) =>
-    createError(
-      { GetValueError: 'Unable to get value from the store' },
-      { store, key, error: e }
-    )
-  );
+function getValue<T>(
+  store: Store,
+  key: string
+): ResultAsync<T | undefined, SpotsError> {
+  return ResultAsync.fromPromise(store.get<T>(key), (e) => ({
+    kind: 'StoreGetValueError',
+    message: 'Unable to get value from the store',
+    info: { store, key, error: e as Error },
+  }));
 }
 
-/**
- * Removes the entry with the given key from the store.
- *
- * Returns `true` if there was an entry to delete, else `false`.
- * */
-function removeEntry(store: Store, key: string) {
-  return ResultAsync.fromPromise(store.delete(key), (e) =>
-    createError(
-      { RemoveEntryError: 'Unable to delete entry from the store' },
-      { store, key, error: e }
-    )
-  );
+function removeEntry(
+  store: Store,
+  key: string
+): ResultAsync<boolean, SpotsError> {
+  return ResultAsync.fromPromise(store.delete(key), (e) => ({
+    kind: 'StoreRemoveEntryError',
+    message: 'Unable to delete entry from the store',
+    info: { store, key, error: e as Error },
+  }));
 }
 
-/** Saves the store. */
-function saveStore(store: Store) {
-  return ResultAsync.fromPromise(store.save(), (e) =>
-    createError(
-      { SaveError: 'Unable to save the store data' },
-      { store, error: e }
-    )
-  );
+function saveStore(store: Store): ResultAsync<void, SpotsError> {
+  return ResultAsync.fromPromise(store.save(), (e) => ({
+    kind: 'StoreSaveError',
+    message: 'Unable to save the store data',
+    info: { store, error: e as Error },
+  }));
 }
 
-/** Closes the store. */
-function closeStore(store: Store) {
-  return ResultAsync.fromPromise(store.close(), (e) =>
-    createError(
-      { CloseError: 'Unable to close the store' },
-      { store, error: e }
-    )
-  );
+function closeStore(store: Store): ResultAsync<void, SpotsError> {
+  return ResultAsync.fromPromise(store.close(), (e) => ({
+    kind: 'StoreCloseError',
+    message: 'Unable to close the store',
+    info: { store, error: e as Error },
+  }));
 }
