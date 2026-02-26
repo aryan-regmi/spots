@@ -51,7 +51,6 @@ pub async fn login_user(
 ) -> ApiResult<LoginUserResponseDto> {
     // Validate user
     user.validate()?;
-    // .map_err(|e| SpotsError::ValidationError(e))?;
 
     // Get user from DB
     let db = state.db.lock().await;

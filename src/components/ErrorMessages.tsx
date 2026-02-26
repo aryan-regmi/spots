@@ -1,4 +1,4 @@
-import { extractError, SpotsError } from '@/utils/errors';
+import { SpotsError } from '@/utils/errors';
 import { Accessor, For, JSX, Setter } from 'solid-js';
 
 /** Component to display error messages. */
@@ -56,10 +56,9 @@ export function ErrorMessages(props: {
       <For each={uniqueErrors()}>
         {(errorString) => {
           const error: SpotsError = JSON.parse(errorString);
-          const errorData = extractError(error);
           return (
             <div style={errorStyle} onClick={dismissError}>
-              <strong>{errorData.kind}</strong>: {errorData.message}
+              <strong>{error.kind}</strong>: {error.message}
               <span style={{ 'margin-left': '1rem' }}>❌</span>
             </div>
           );
