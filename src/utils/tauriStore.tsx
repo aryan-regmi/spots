@@ -1,9 +1,8 @@
 import { Logger } from '@/utils/logger';
-import { ResultAsync } from 'neverthrow';
+import { okAsync, ResultAsync } from 'neverthrow';
 import {
   Accessor,
   createContext,
-  createEffect,
   createResource,
   createSignal,
   onCleanup,
@@ -67,9 +66,22 @@ export function StoreProvider(props: { children: any }) {
 
   /** Saves the store when unmounted. */
   onCleanup(async () => {
-    await store()?.save();
-    store()?.close();
-    Logger.info('Closed store');
+    if (store()) {
+      await saveStore(store()!)
+        .andThen(() => {
+          Logger.info(`Store saved: ${STORE_PATH}`);
+          return closeStore(store()!);
+        })
+        .match(
+          (_ok) => Logger.info('Store closed'),
+          (err) => {
+            const errData = extractError(err);
+            Logger.error(
+              `${errData.kind}: ${errData.message}: ${errData.info}`
+            );
+          }
+        );
+    }
   });
 
   /** Create services for the provider. */

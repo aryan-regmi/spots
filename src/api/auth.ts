@@ -16,11 +16,11 @@ export const AUTH_USERID_KEY = 'auth-user-id';
 /** Errors returned by the auth API. */
 export type AuthAPIError =
   | {
-      InvalidRegisterUserFormData: 'The `username`, `password`, and `passwordConfirm` fields must not be empty';
-    }
+    InvalidRegisterUserFormData: 'The `username`, `password`, and `passwordConfirm` fields must not be empty';
+  }
   | {
-      InvalidLoginUserFormData: 'The `username` and `password` fields must not be empty';
-    }
+    InvalidLoginUserFormData: 'The `username` and `password` fields must not be empty';
+  }
   | { RegisterUserError: 'Unable to register user' }
   | { LoginUserError: 'Invalid user login' };
 
@@ -154,18 +154,10 @@ function loginUser(user: LoginUserDto, storeCtx: StoreContext) {
 
   // Sets the auth token and user ID in the store
   const setAuthToken = (data: LoginUserResponseDto) => {
-    return storeCtx
-      .addEntry(store, {
-        key: AUTH_TOKEN_KEY,
-        value: data.token,
-      })
-      .andThen(() => {
-        storeCtx.addEntry(store, {
-          key: AUTH_USERID_KEY,
-          value: data.user.id,
-        });
-        return okAsync(data.user.id);
-      });
+    return ResultAsync.combine([
+      storeCtx.addEntry(store, { key: AUTH_TOKEN_KEY, value: data.token }),
+      storeCtx.addEntry(store, { key: AUTH_USERID_KEY, value: data.user.id }),
+    ]).andThen(() => storeCtx.saveStore(store));
   };
 
   return callBackend
@@ -180,11 +172,11 @@ function logoutUser(storeCtx: StoreContext) {
   }
   const store = storeCtx.store()!;
 
-  // Remove auth entries from store
-  storeCtx.removeEntry(store, AUTH_TOKEN_KEY);
-  storeCtx.removeEntry(store, AUTH_USERID_KEY);
-
-  return okAsync<void, SpotsError>();
+  // Remove auth entries from store, then save it
+  return ResultAsync.combine([
+    storeCtx.removeEntry(store, AUTH_TOKEN_KEY),
+    storeCtx.removeEntry(store, AUTH_USERID_KEY),
+  ]).andThen(() => storeCtx.saveStore(store));
 }
 
 /** Calls the backend `login_user` command. */
