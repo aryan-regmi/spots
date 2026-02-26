@@ -15,9 +15,9 @@ function App() {
         <Router>
           <Route path={'/'} component={LoginPage} />
           <Route path={'/signup'} component={SignupPage} />
-          {/* <Route path="/user/:id" component={NavMusicLayout}> */}
-          {/*   <Route path="/dashboard" component={DashboardPage} /> */}
-          {/* </Route> */}
+          <Route path="/user/:id" component={NavMusicLayout}>
+            <Route path="/dashboard" component={DashboardPage} />
+          </Route>
         </Router>
       </StoreProvider>
     </main>
