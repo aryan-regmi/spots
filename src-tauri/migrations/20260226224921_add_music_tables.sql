@@ -84,6 +84,6 @@ CREATE TABLE pinned_playlists (
 -- Track Genres Table
 CREATE TABLE track_genres (
     track_id TEXT REFERENCES tracks(id) ON DELETE CASCADE,
-    genre_id TEXT REFERENCES genres(id) ON DELETE SET NULL,
-    PRIMARY KEY (track_id, genre_id)
+    genre TEXT REFERENCES genres(name) ON DELETE SET NULL,
+    PRIMARY KEY (track_id, genre)
 );
