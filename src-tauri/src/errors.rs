@@ -36,6 +36,9 @@ pub enum SpotsError {
         error: String,
     },
 
+    #[error("The auth token has expired and is invalid")]
+    AuthTokenExpired,
+
     #[error("Validation failed: {0}")]
     ValidationError(#[from] validator::ValidationErrors),
 
