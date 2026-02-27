@@ -1,4 +1,5 @@
 import { getAuthUserIdResource, useStore } from '@/utils/tauriStore';
+import { Shimmer } from '@shimmer-from-structure/solid';
 import { useNavigate } from '@solidjs/router';
 import { JSX } from 'solid-js';
 
@@ -8,9 +9,6 @@ export function Navbar(props: { currentPath?: string }) {
   const navigate = useNavigate();
   const [authUserId] = getAuthUserIdResource(storeCtx);
   const styles = navbarStyles();
-  if (authUserId.loading) {
-    return;
-  }
 
   //  TODO: Add actual nav icons
   //
@@ -22,47 +20,49 @@ export function Navbar(props: { currentPath?: string }) {
   ];
 
   return (
-    <nav style={styles.containerStyle}>
-      {navItems.map((item, index) => (
-        <>
-          <div
-            style={styles.buttonWrapperStyle}
-            onMouseEnter={(e) => {
-              const button = e.currentTarget.querySelector('button');
-              if (button) {
-                button.style.transform = 'scale(1.05)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              const button = e.currentTarget.querySelector('button');
-              if (button) {
-                button.style.transform = 'scale(1)';
-              }
-            }}
-          >
-            <button
-              style={styles.navButtonStyle(props.currentPath === item.path)}
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(item.path);
+    <Shimmer loading={authUserId.loading}>
+      <nav style={styles.containerStyle}>
+        {navItems.map((item, index) => (
+          <>
+            <div
+              style={styles.buttonWrapperStyle}
+              onMouseEnter={(e) => {
+                const button = e.currentTarget.querySelector('button');
+                if (button) {
+                  button.style.transform = 'scale(1.05)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                const button = e.currentTarget.querySelector('button');
+                if (button) {
+                  button.style.transform = 'scale(1)';
+                }
               }}
             >
-              <span>{item.icon}</span>
-              <span style={styles.labelStyle}>{item.label}</span>
-            </button>
-          </div>
-          {index < navItems.length - 1 && (
-            <div
-              style={{
-                width: '1px',
-                height: '2rem',
-                'background-color': 'rgba(100, 100, 100, 0.2)',
-              }}
-            ></div>
-          )}
-        </>
-      ))}
-    </nav>
+              <button
+                style={styles.navButtonStyle(props.currentPath === item.path)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(item.path);
+                }}
+              >
+                <span>{item.icon}</span>
+                <span style={styles.labelStyle}>{item.label}</span>
+              </button>
+            </div>
+            {index < navItems.length - 1 && (
+              <div
+                style={{
+                  width: '1px',
+                  height: '2rem',
+                  'background-color': 'rgba(100, 100, 100, 0.2)',
+                }}
+              ></div>
+            )}
+          </>
+        ))}
+      </nav>
+    </Shimmer>
   );
 }
 

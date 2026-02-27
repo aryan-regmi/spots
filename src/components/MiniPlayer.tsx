@@ -5,7 +5,14 @@ export function MiniPlayer() {
   const styles = miniPlayerStyles();
 
   return (
-    <div class="row" style={styles.containerStyle}>
+    <div class="col" style={styles.containerStyle}>
+      {/* TODO: Add the following:
+          - Current track image
+          - Current track name
+          - Current track artist
+          - Current track position + total duration
+          - Play/Pause & Prev/Next buttons
+       */}
       <p>hi</p>
       <p>bye</p>
     </div>
@@ -20,7 +27,6 @@ function miniPlayerStyles() {
     left: 0,
     right: 0,
     display: 'flex',
-    padding: '3rem 0',
     margin: '8.25rem 2rem',
     'backdrop-filter': 'blur(10px)',
     'background-color': 'rgba(20, 20, 20, 0.7)',
