@@ -43,6 +43,15 @@ pub fn run() {
             logger::error,
             api::auth::register_user,
             api::auth::login_user,
+            api::music::get_playlist,
+            api::music::get_playlist_tracks,
+            api::music::get_pinned_playlists,
+            api::music::get_all_playlists,
+            api::music::get_track,
+            api::music::get_favorited_tracks,
+            api::music::get_track_artists,
+            api::music::get_track_genres,
+            api::music::get_all_tracks,
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {

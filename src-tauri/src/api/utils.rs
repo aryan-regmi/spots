@@ -121,14 +121,16 @@ pub mod password {
 
 pub mod token {
 
-    use std::fmt::Display;
+    use std::{fmt::Display, str::FromStr};
 
     use base64::{prelude::BASE64_STANDARD, Engine};
     use chrono::{DateTime, Duration, NaiveDateTime, Utc};
     use ring::aead::{Aad, BoundKey, Nonce, NonceSequence, UnboundKey, AES_256_GCM, NONCE_LEN};
     use serde::{Deserialize, Serialize};
+    use tauri::State;
+    use uuid::Uuid;
 
-    use crate::{api::utils::ApiConfig, errors::SpotsError};
+    use crate::{api::utils::ApiConfig, errors::SpotsError, AppState};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Token {
@@ -186,22 +188,22 @@ pub mod token {
         }
 
         /// Gets the user ID from the encrypted token.
-        pub fn get_user_id(&self) -> &str {
-            &self.user_id
+        pub fn get_user_id(&self) -> Uuid {
+            Uuid::from_str(&self.user_id).expect("Invalid user ID")
         }
 
         /// Makes sure the token is valid (not expired).
-        pub fn is_valid(&self) -> Result<bool, SpotsError> {
+        pub fn is_valid(&self) -> bool {
             let now = Utc::now();
             let expires_at: DateTime<Utc> =
                 match DateTime::from_timestamp(self.expires_at as i64, 0) {
                     Some(t) => t,
-                    None => return Ok(false),
+                    None => return false,
                 };
             if now >= expires_at {
-                Ok(false)
+                false
             } else {
-                Ok(true)
+                true
             }
         }
 
@@ -291,6 +293,19 @@ pub mod token {
             self.counter += 1;
             Ok(Nonce::assume_unique_for_key(nonce))
         }
+    }
+
+    /// Verifies the auth token.
+    pub async fn verify_token(
+        state: &State<'_, AppState>,
+        auth_token: String,
+    ) -> Result<Token, SpotsError> {
+        let config = state.api_config.lock().await.clone();
+        let token = Token::from_encrypted(config, auth_token)?;
+        if !token.is_valid() {
+            return Err(SpotsError::AuthTokenExpired);
+        }
+        Ok(token)
     }
 
     #[cfg(test)]
