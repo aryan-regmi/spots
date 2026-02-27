@@ -51,7 +51,7 @@ pub mod music_library {
 
     use chrono::NaiveDateTime;
     use serde::{Deserialize, Serialize};
-    use sqlx::{sqlite::SqliteRow, FromRow, Row};
+    use sqlx::{sqlite::SqliteRow, Decode, FromRow, Row, Sqlite};
     use uuid::Uuid;
 
     /// Represents an audio track.
@@ -234,6 +234,53 @@ pub mod music_library {
                 last_played_at: last_played_at
                     .map(|t| NaiveDateTime::from_str(t).ok())
                     .flatten(),
+            })
+        }
+    }
+
+    /// Represents a track in a playlist (keeps track of order).
+    #[derive(Debug, Serialize, Deserialize, Clone)]
+    pub struct PlaylistTrack {
+        order: i64,
+        track: Track,
+    }
+
+    impl<'r> FromRow<'r, SqliteRow> for PlaylistTrack {
+        fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
+            let order: i64 = row.try_get("track_order")?;
+            let id: &str = row.try_get("id")?;
+            let user_id: Option<&str> = row.try_get("user_id")?;
+            let title: String = row.try_get("title")?;
+            let album_id: Option<&str> = row.try_get("album_id")?;
+            let track_number: Option<i64> = row.try_get("track_number")?;
+            let release_year: Option<i64> = row.try_get("release_year")?;
+            let duration_secs: Option<i64> = row.try_get("duration_secs")?;
+            let file_path: String = row.try_get("file_path")?;
+            let thumbnail_path: String = row.try_get("thumbnail_path")?;
+            let created_at: &str = row.try_get("created_at")?;
+            let updated_at: &str = row.try_get("updated_at")?;
+            let last_played_at: Option<&str> = row.try_get("last_played_at")?;
+
+            Ok(Self {
+                order,
+                track: Track {
+                    id: Uuid::from_str(id).map_err(|e| sqlx::Error::Decode(e.into()))?,
+                    user_id: user_id.map(|id| Uuid::from_str(id).ok()).flatten(),
+                    title,
+                    album_id: album_id.map(|id| Uuid::from_str(id).ok()).flatten(),
+                    track_number,
+                    release_year,
+                    duration_secs,
+                    file_path,
+                    thumbnail_path,
+                    created_at: NaiveDateTime::from_str(created_at)
+                        .map_err(|e| sqlx::Error::Decode(e.into()))?,
+                    updated_at: NaiveDateTime::from_str(updated_at)
+                        .map_err(|e| sqlx::Error::Decode(e.into()))?,
+                    last_played_at: last_played_at
+                        .map(|t| NaiveDateTime::from_str(t).ok())
+                        .flatten(),
+                },
             })
         }
     }

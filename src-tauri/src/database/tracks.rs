@@ -9,12 +9,15 @@ use crate::database::{
 };
 
 #[allow(dead_code)] // FIXME: REMOVE!
-/// Database operations for [Track]
+/// Database operations for [Track].
 pub trait TrackExt {
     /// Gets the specified track from the DB.
     async fn get_track(&self, track_id: Uuid) -> Result<Option<Track>, sqlx::Error>;
 
-    /// Gets the user's favorited tracks
+    /// Gets the user's favorited tracks.
+    ///
+    /// # Note
+    /// The tracks are all streamed to the `channel`.
     async fn get_favorited_tracks(
         &self,
         user_id: Uuid,
@@ -54,10 +57,13 @@ impl TrackExt for DatabaseClient {
         .fetch(&self.pool);
 
         // Stream track to the channel
-        while let Some(Ok(track)) = favorited_tracks.next().await {
-            channel
-                .send(track)
-                .map_err(|e| sqlx::Error::Decode(e.into()))?
+        while let Some(row) = favorited_tracks.next().await {
+            match row {
+                Ok(track) => channel
+                    .send(track)
+                    .map_err(|e| sqlx::Error::Decode(e.into()))?,
+                Err(err) => return Err(err),
+            }
         }
 
         Ok(())
