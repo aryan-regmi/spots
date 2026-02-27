@@ -1,3 +1,6 @@
+use futures_util::stream::StreamExt;
+use sqlx::Sqlite;
+use tauri::ipc::Channel;
 use uuid::Uuid;
 
 use crate::database::{
@@ -5,13 +8,18 @@ use crate::database::{
     models::music_library::{Artist, Genre, Track},
 };
 
+#[allow(dead_code)] // FIXME: REMOVE!
 /// Database operations for [Track]
 pub trait TrackExt {
     /// Gets the specified track from the DB.
     async fn get_track(&self, track_id: Uuid) -> Result<Option<Track>, sqlx::Error>;
 
     /// Gets the user's favorited tracks
-    async fn get_favorited_tracks(&self, user_id: Uuid) -> Result<Vec<Track>, sqlx::Error>;
+    async fn get_favorited_tracks(
+        &self,
+        user_id: Uuid,
+        channel: Channel<Track>,
+    ) -> Result<(), sqlx::Error>;
 
     /// Gets all of the artists for the specified track.
     async fn get_track_artists(&self, track_id: Uuid) -> Result<Vec<Artist>, sqlx::Error>;
@@ -22,28 +30,66 @@ pub trait TrackExt {
 
 impl TrackExt for DatabaseClient {
     async fn get_track(&self, track_id: Uuid) -> Result<Option<Track>, sqlx::Error> {
-        let track: Option<Track> = sqlx::query_as(
-            "
-        SELECT *
-        FROM tracks
-        WHERE id = $1
-            ",
-        )
-        .bind(track_id.to_string())
-        .fetch_optional(&self.pool)
-        .await?;
-        todo!()
+        let track: Option<Track> = sqlx::query_as("SELECT * FROM tracks WHERE id = $1")
+            .bind(track_id.to_string())
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(track)
     }
 
-    async fn get_favorited_tracks(&self, user_id: Uuid) -> Result<Vec<Track>, sqlx::Error> {
-        todo!()
+    async fn get_favorited_tracks(
+        &self,
+        user_id: Uuid,
+        channel: Channel<Track>,
+    ) -> Result<(), sqlx::Error> {
+        let mut favorited_tracks = sqlx::query_as::<Sqlite, Track>(
+            "
+            SELECT t.*
+            FROM tracks t
+            LEFT JOIN favorited_tracks ft ON t.id = ft.track_id
+            WHERE ft.user_id = $1
+            ",
+        )
+        .bind(user_id.to_string())
+        .fetch(&self.pool);
+
+        // Stream track to the channel
+        while let Some(Ok(track)) = favorited_tracks.next().await {
+            channel
+                .send(track)
+                .map_err(|e| sqlx::Error::Decode(e.into()))?
+        }
+
+        Ok(())
     }
 
     async fn get_track_artists(&self, track_id: Uuid) -> Result<Vec<Artist>, sqlx::Error> {
-        todo!()
+        let track_artists: Vec<Artist> = sqlx::query_as(
+            "
+            SELECT a.*
+            FROM artists a
+            LEFT JOIN track_artists ta ON a.id = ta.artist_id
+            WHERE ta.track_id = $1
+            ",
+        )
+        .bind(track_id.to_string())
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(track_artists)
     }
 
     async fn get_track_genres(&self, track_id: Uuid) -> Result<Vec<Genre>, sqlx::Error> {
-        todo!()
+        let track_genres: Vec<Genre> = sqlx::query_as(
+            "
+            SELECT g.*
+            FROM genres g
+            LEFT JOIN track_genres tg ON g.name = tg.genre
+            WHERE tg.track_id = $1
+            ",
+        )
+        .bind(track_id.to_string())
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(track_genres)
     }
 }
