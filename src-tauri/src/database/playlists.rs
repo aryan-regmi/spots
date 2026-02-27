@@ -29,6 +29,9 @@ pub trait PlaylistExt {
 
     /// Gets all of the user's pinned playlists.
     async fn get_pinned_playlists(&self, user_id: Uuid) -> DBResult<Vec<Playlist>>;
+
+    /// Gets all of the user's playlists.
+    async fn get_all_playlists(&self, user_id: Uuid, channel: Channel<Playlist>) -> DBResult<()>;
 }
 
 impl PlaylistExt for DatabaseClient {
@@ -83,5 +86,29 @@ impl PlaylistExt for DatabaseClient {
         .await?;
 
         Ok(pinned_playlists)
+    }
+
+    async fn get_all_playlists(&self, user_id: Uuid, channel: Channel<Playlist>) -> DBResult<()> {
+        let mut playlists = sqlx::query_as::<Sqlite, Playlist>(
+            "
+            SELECT *
+            FROM playlists 
+            WHERE user_id = $1
+            ",
+        )
+        .bind(user_id.to_string())
+        .fetch(&self.pool);
+
+        // Stream track to the channel
+        while let Some(row) = playlists.next().await {
+            match row {
+                Ok(playlist) => channel
+                    .send(playlist)
+                    .map_err(|e| sqlx::Error::Decode(e.into()))?,
+                Err(err) => return Err(err),
+            }
+        }
+
+        Ok(())
     }
 }
