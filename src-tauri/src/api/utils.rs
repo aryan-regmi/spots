@@ -10,6 +10,8 @@ pub enum ApiResponseStatus {
     Completed,
 }
 
+// FIXME: Remove this -> Just return types directly!
+
 /// An API response.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ApiResponse<T> {
@@ -122,7 +124,7 @@ pub mod token {
     use std::fmt::Display;
 
     use base64::{prelude::BASE64_STANDARD, Engine};
-    use chrono::{Duration, Utc};
+    use chrono::{DateTime, Duration, NaiveDateTime, Utc};
     use ring::aead::{Aad, BoundKey, Nonce, NonceSequence, UnboundKey, AES_256_GCM, NONCE_LEN};
     use serde::{Deserialize, Serialize};
 
@@ -169,19 +171,38 @@ pub mod token {
             Token::encrypt(config, token)
         }
 
-        /// Gets the user ID from the encrypted token.
-        pub fn get_user_id(
-            &self,
+        /// Extracts a token from the encrypted token string.
+        pub fn from_encrypted(
             config: ApiConfig,
             encrypted_token: String,
-        ) -> Result<String, SpotsError> {
+        ) -> Result<Self, SpotsError> {
             let token_str = Token::decrypt(config, encrypted_token)?;
             let token: Token =
                 serde_json::from_str(&token_str).map_err(|e| SpotsError::AuthTokenParseError {
                     token_str,
                     error: e.to_string(),
                 })?;
-            Ok(token.user_id)
+            Ok(token)
+        }
+
+        /// Gets the user ID from the encrypted token.
+        pub fn get_user_id(&self) -> &str {
+            &self.user_id
+        }
+
+        /// Makes sure the token is valid (not expired).
+        pub fn is_valid(&self) -> Result<bool, SpotsError> {
+            let now = Utc::now();
+            let expires_at: DateTime<Utc> =
+                match DateTime::from_timestamp(self.expires_at as i64, 0) {
+                    Some(t) => t,
+                    None => return Ok(false),
+                };
+            if now >= expires_at {
+                Ok(false)
+            } else {
+                Ok(true)
+            }
         }
 
         /// Encrypts the given token.
@@ -252,10 +273,6 @@ pub mod token {
                 .trim_matches(|c: char| c.is_control())
                 .to_string())
         }
-
-        // TODO: Make sure token isn't expired
-        //  - Guard all necessary endpoints by the token
-        //      - Iff there is a valid token, the API can be called
     }
 
     /// Generates a `NonceSequence`.
