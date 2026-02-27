@@ -1,19 +1,24 @@
+import { getAuthUserIdResource, useStore } from '@/utils/tauriStore';
 import { useNavigate } from '@solidjs/router';
 import { JSX } from 'solid-js';
 
 /** The navbar component. */
 export function Navbar(props: { currentPath?: string }) {
+  const storeCtx = useStore();
   const navigate = useNavigate();
-
+  const [authUserId] = getAuthUserIdResource(storeCtx);
   const styles = navbarStyles();
+  if (authUserId.loading) {
+    return;
+  }
 
   //  TODO: Add actual nav icons
   //
   /** The navigation bar content. */
   const navItems = [
-    { label: 'Home', path: '/user/dashboard', icon: '🏠' },
-    { label: 'Search', path: '/user/search', icon: '🔍' },
-    { label: 'Library', path: '/user/library', icon: '📚' },
+    { label: 'Home', path: `/user/${authUserId()}/dashboard`, icon: '🏠' },
+    { label: 'Search', path: `/user/${authUserId()}/search`, icon: '🔍' },
+    { label: 'Library', path: `/user/${authUserId()}/library`, icon: '📚' },
   ];
 
   return (
