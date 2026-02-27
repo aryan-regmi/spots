@@ -1,12 +1,14 @@
 use futures_util::stream::StreamExt;
 use sqlx::Sqlite;
-use tauri::ipc::Channel;
 use uuid::Uuid;
 
-use crate::database::{
-    client::DatabaseClient,
-    models::music_library::{Artist, Genre, Track},
-    DBResult,
+use crate::{
+    api::utils::{signal_stream_end, signal_stream_start, ApiResponse, ResponseChannel},
+    database::{
+        client::DatabaseClient,
+        models::music_library::{Artist, Genre, Track},
+        DBResult,
+    },
 };
 
 /// Database operations for [Track].
@@ -21,7 +23,7 @@ pub trait TrackExt {
     async fn get_favorited_tracks(
         &self,
         user_id: Uuid,
-        channel: Channel<Track>,
+        channel: ResponseChannel<Track>,
     ) -> Result<(), sqlx::Error>;
 
     /// Gets all of the artists for the specified track.
@@ -31,7 +33,13 @@ pub trait TrackExt {
     async fn get_track_genres(&self, track_id: Uuid) -> DBResult<Vec<Genre>>;
 
     /// Gets all of the tracks in the DB.
-    async fn get_all_tracks(&self, channel: Channel<Track>) -> DBResult<()>;
+    async fn get_all_tracks(&self, channel: ResponseChannel<Track>) -> DBResult<()>;
+
+    /// Streams the specified track.
+    async fn stream_audio(&self, track_id: Uuid, channel: ResponseChannel<Vec<u8>>)
+        -> DBResult<()>;
+
+    // TODO: Add `get_last_played` for Tracks and Playlists!
 }
 
 impl TrackExt for DatabaseClient {
@@ -43,7 +51,11 @@ impl TrackExt for DatabaseClient {
         Ok(track)
     }
 
-    async fn get_favorited_tracks(&self, user_id: Uuid, channel: Channel<Track>) -> DBResult<()> {
+    async fn get_favorited_tracks(
+        &self,
+        user_id: Uuid,
+        channel: ResponseChannel<Track>,
+    ) -> DBResult<()> {
         let mut favorited_tracks = sqlx::query_as::<Sqlite, Track>(
             "
             SELECT t.*
@@ -56,14 +68,21 @@ impl TrackExt for DatabaseClient {
         .fetch(&self.pool);
 
         // Stream track to the channel
+        signal_stream_start(&channel);
         while let Some(row) = favorited_tracks.next().await {
             match row {
                 Ok(track) => channel
-                    .send(track)
+                    .send(ApiResponse::pending(Some(track)))
                     .map_err(|e| sqlx::Error::Decode(e.into()))?,
-                Err(err) => return Err(err),
+                Err(err) => {
+                    channel
+                        .send(ApiResponse::failure(None))
+                        .map_err(|e| sqlx::Error::Decode(e.into()))?;
+                    return Err(err);
+                }
             }
         }
+        signal_stream_end(&channel);
 
         Ok(())
     }
@@ -98,19 +117,32 @@ impl TrackExt for DatabaseClient {
         Ok(track_genres)
     }
 
-    async fn get_all_tracks(&self, channel: Channel<Track>) -> DBResult<()> {
+    async fn get_all_tracks(&self, channel: ResponseChannel<Track>) -> DBResult<()> {
         let mut tracks = sqlx::query_as::<Sqlite, Track>("SELECT * FROM tracks").fetch(&self.pool);
 
         // Stream track to the channel
+        signal_stream_start(&channel);
         while let Some(row) = tracks.next().await {
             match row {
                 Ok(track) => channel
-                    .send(track)
+                    .send(ApiResponse::pending(Some(track)))
                     .map_err(|e| sqlx::Error::Decode(e.into()))?,
                 Err(err) => return Err(err),
             }
         }
+        signal_stream_end(&channel);
 
         Ok(())
+    }
+
+    async fn stream_audio(
+        &self,
+        track_id: Uuid,
+        channel: ResponseChannel<Vec<u8>>,
+    ) -> DBResult<()> {
+        // TODO: Get track from db
+        //  - read track file
+        //  - stream the bytes back
+        todo!()
     }
 }

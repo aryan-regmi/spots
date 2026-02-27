@@ -51,7 +51,7 @@ pub mod music_library {
 
     use chrono::NaiveDateTime;
     use serde::{Deserialize, Serialize};
-    use sqlx::{sqlite::SqliteRow, Decode, FromRow, Row, Sqlite};
+    use sqlx::{sqlite::SqliteRow, FromRow, Row};
     use uuid::Uuid;
 
     /// Represents an audio track.

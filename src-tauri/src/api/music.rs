@@ -2,7 +2,7 @@ use tauri::{ipc::Channel, State};
 use uuid::Uuid;
 
 use crate::{
-    api::utils::{token::verify_token, ApiResponse, ApiResult},
+    api::utils::{token::verify_token, ApiResponse, ApiResult, ResponseChannel},
     database::{
         albums::AlbumExt,
         models::music_library::{Artist, Genre, Playlist, PlaylistTrack, Track},
@@ -132,7 +132,7 @@ pub async fn get_track(
 pub async fn get_favorited_tracks(
     state: State<'_, AppState>,
     auth_token: String,
-    channel: Channel<Track>,
+    channel: ResponseChannel<Track>,
 ) -> ApiResult<()> {
     // Verify auth token
     let token = verify_token(&state, auth_token).await?;
@@ -198,7 +198,7 @@ pub async fn get_track_genres(
 pub async fn get_all_tracks(
     state: State<'_, AppState>,
     auth_token: String,
-    channel: Channel<Track>,
+    channel: ResponseChannel<Track>,
 ) -> ApiResult<()> {
     // Verify auth token
     verify_token(&state, auth_token).await?;
