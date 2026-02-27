@@ -9,7 +9,6 @@ use crate::database::{
     DBResult,
 };
 
-#[allow(dead_code)] // FIXME: REMOVE!
 /// Database operations for [Playlist].
 pub trait PlaylistExt {
     /// Gets the specified playlist from the DB.

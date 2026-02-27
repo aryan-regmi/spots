@@ -3,7 +3,6 @@ use thiserror::Error;
 
 use crate::api::utils::token::Token;
 
-#[allow(dead_code)] // FIXME: Remove!
 #[derive(Error, Debug, Serialize)]
 pub enum SpotsError {
     #[error("The provided password was empty")]

@@ -9,7 +9,6 @@ use crate::database::{
     DBResult,
 };
 
-#[allow(dead_code)] // FIXME: REMOVE!
 /// Database operations for [Track].
 pub trait TrackExt {
     /// Gets the specified track from the DB.

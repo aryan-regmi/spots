@@ -9,7 +9,6 @@ use crate::database::{
     DBResult,
 };
 
-#[allow(dead_code)] // FIXME: REMOVE!
 /// Database operations for [Album].
 pub trait AlbumExt {
     /// Gets the tracks for the album.

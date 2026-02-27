@@ -4,6 +4,7 @@ use uuid::Uuid;
 use crate::{
     api::utils::{token::verify_token, ApiResponse, ApiResult},
     database::{
+        albums::AlbumExt,
         models::music_library::{Artist, Genre, Playlist, PlaylistTrack, Track},
         playlists::PlaylistExt,
         tracks::TrackExt,
@@ -205,6 +206,56 @@ pub async fn get_all_tracks(
     // Get tracks from DB
     let db = state.db.lock().await;
     db.get_all_tracks(channel)
+        .await
+        .map(|track| ApiResponse::success(track))
+        .map_err(|e| SpotsError::DatabaseError {
+            database: db.path.clone(),
+            error: e.to_string(),
+        })
+}
+
+/// Gets the all of the tracks in the album.
+///
+/// # Note
+/// The tracks are all streamed to the `channel`.
+#[tauri::command]
+pub async fn get_album_tracks(
+    state: State<'_, AppState>,
+    auth_token: String,
+    album_id: Uuid,
+    channel: Channel<Track>,
+) -> ApiResult<()> {
+    // Verify auth token
+    verify_token(&state, auth_token).await?;
+
+    // Get tracks from DB
+    let db = state.db.lock().await;
+    db.get_album_tracks(album_id, channel)
+        .await
+        .map(|track| ApiResponse::success(track))
+        .map_err(|e| SpotsError::DatabaseError {
+            database: db.path.clone(),
+            error: e.to_string(),
+        })
+}
+
+/// Gets the all of the artists in the album.
+///
+/// # Note
+/// The artists are all streamed to the `channel`.
+#[tauri::command]
+pub async fn get_album_artists(
+    state: State<'_, AppState>,
+    auth_token: String,
+    album_id: Uuid,
+    channel: Channel<Artist>,
+) -> ApiResult<()> {
+    // Verify auth token
+    verify_token(&state, auth_token).await?;
+
+    // Get tracks from DB
+    let db = state.db.lock().await;
+    db.get_album_artists(album_id, channel)
         .await
         .map(|track| ApiResponse::success(track))
         .map_err(|e| SpotsError::DatabaseError {
