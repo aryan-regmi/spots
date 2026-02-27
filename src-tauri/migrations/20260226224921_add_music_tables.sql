@@ -18,7 +18,7 @@ CREATE TABLE tracks (
 -- Artists Table
 CREATE TABLE artists (
     id TEXT PRIMARY KEY NOT NULL,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL
 );
 
 
@@ -32,7 +32,7 @@ CREATE TABLE genres (
 CREATE TABLE albums (
     id TEXT PRIMARY KEY NOT NULL,
     title VARCHAR(255) NOT NULL,
-    thumbnail_path TEXT NOT NULL,
+    thumbnail_path TEXT NOT NULL
 );
 
 
