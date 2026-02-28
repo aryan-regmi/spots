@@ -22,6 +22,8 @@ export type Token = {
 };
 
 // FIXME: Keep ApiError in sync with backend `SpotsError`
+//
+// TODO: Test APIs with invalid data to check error handling
 
 /** Represents an error in the API endpoint. */
 export type ApiError =
@@ -71,12 +73,22 @@ export type ApiError =
   | {
       kind: 'DatabaseError';
       message: 'Database error';
-      database: string;
       error: string;
     }
   | {
       kind: 'InvalidLoginCredentials';
       message: 'Invalid login credentials provided';
+    }
+  | {
+      kind: 'ChannelError';
+      message: 'Error occured in the channel';
+      channelId: number;
+      error: string;
+    }
+  | {
+      kind: 'IOError';
+      message: 'IO error';
+      error: string;
     };
 
 /** Converts an `ApiError` into a `SpotsError`. */
@@ -154,12 +166,26 @@ export const ApiErrorAdapter: IntoSpotsError<ApiError> = {
       case 'DatabaseError':
         return {
           ...self,
-          info: { database: self.database, error: self.error },
+          info: { error: self.error },
           _tag: '_SpotsError',
         };
 
       case 'InvalidLoginCredentials':
         return { ...self, _tag: '_SpotsError' };
+
+      case 'ChannelError':
+        return {
+          ...self,
+          info: { channelId: self.channelId, error: self.error },
+          _tag: '_SpotsError',
+        };
+
+      case 'IOError':
+        return {
+          ...self,
+          info: { error: self.error },
+          _tag: '_SpotsError',
+        };
     }
   },
 };
