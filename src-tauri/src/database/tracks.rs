@@ -35,8 +35,7 @@ pub trait TrackExt {
     async fn get_all_tracks(&self, channel: ResponseChannel<Track>) -> DBResult<()>;
 
     /// Streams the specified track.
-    async fn stream_audio(&self, track_id: Uuid, channel: ResponseChannel<Vec<u8>>)
-        -> DBResult<()>;
+    async fn get_audio_data(&self, track_id: Uuid) -> DBResult<Vec<u8>>;
 
     // TODO: Add `get_last_played` for Tracks and Playlists!
 }
@@ -111,17 +110,12 @@ impl TrackExt for DatabaseClient {
         Ok(())
     }
 
-    async fn stream_audio(
-        &self,
-        track_id: Uuid,
-        channel: ResponseChannel<Vec<u8>>,
-    ) -> DBResult<()> {
-        let track = self.get_track(track_id).await?;
-        if let Some(track) = track {}
-
-        // TODO: Get track from db
-        //  - read track file
-        //  - stream the bytes back
-        todo!()
+    async fn get_audio_data(&self, track_id: Uuid) -> DBResult<Vec<u8>> {
+        let filepath = self
+            .get_track(track_id)
+            .await?
+            .ok_or_else(|| sqlx::Error::RowNotFound)?
+            .file_path;
+        std::fs::read(filepath).map_err(|e| sqlx::Error::Decode(e.into()))
     }
 }
