@@ -64,7 +64,7 @@ impl TrackExt for DatabaseClient {
             ",
         )
         .bind(user_id.to_string())
-        .fetch(self.leak_pool());
+        .fetch(&self.pool);
 
         // Stream track to the channel
         stream_rows(favorited_tracks, channel).await?;
@@ -103,8 +103,7 @@ impl TrackExt for DatabaseClient {
     }
 
     async fn get_all_tracks(&self, channel: ResponseChannel<Track>) -> DBResult<()> {
-        let tracks =
-            sqlx::query_as::<Sqlite, Track>("SELECT * FROM tracks").fetch(self.leak_pool());
+        let tracks = sqlx::query_as::<Sqlite, Track>("SELECT * FROM tracks").fetch(&self.pool);
 
         // Stream track to the channel
         stream_rows(tracks, channel).await?;
@@ -117,6 +116,9 @@ impl TrackExt for DatabaseClient {
         track_id: Uuid,
         channel: ResponseChannel<Vec<u8>>,
     ) -> DBResult<()> {
+        let track = self.get_track(track_id).await?;
+        if let Some(track) = track {}
+
         // TODO: Get track from db
         //  - read track file
         //  - stream the bytes back

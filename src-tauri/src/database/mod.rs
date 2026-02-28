@@ -1,5 +1,3 @@
-use std::pin::Pin;
-
 use futures_util::{Stream, StreamExt};
 use serde::Serialize;
 
@@ -16,7 +14,8 @@ pub(crate) type DBResult<T> = Result<T, sqlx::Error>;
 
 /// Streams the rows to the given channel.
 pub async fn stream_rows<T>(
-    mut rows: Pin<Box<dyn Stream<Item = Result<T, sqlx::Error>> + Send>>,
+    // mut rows: Pin<Box<dyn Stream<Item = Result<T, sqlx::Error>> + Send>>,
+    mut rows: impl Stream<Item = Result<T, sqlx::Error>> + Send + Unpin,
     channel: ResponseChannel<T>,
 ) -> Result<(), sqlx::Error>
 where

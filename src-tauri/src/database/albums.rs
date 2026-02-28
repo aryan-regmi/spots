@@ -55,7 +55,7 @@ impl AlbumExt for DatabaseClient {
             ",
         )
         .bind(album_id.to_string())
-        .fetch(self.leak_pool());
+        .fetch(&self.pool);
 
         // Stream track to the channel
         stream_rows(album_tracks, channel).await?;
@@ -79,7 +79,7 @@ impl AlbumExt for DatabaseClient {
         ",
         )
         .bind(album_id.to_string())
-        .fetch(self.leak_pool());
+        .fetch(&self.pool);
 
         stream_rows(artists, channel).await?;
 
@@ -87,8 +87,7 @@ impl AlbumExt for DatabaseClient {
     }
 
     async fn get_all_albums(&self, channel: ResponseChannel<Album>) -> DBResult<()> {
-        let albums =
-            sqlx::query_as::<Sqlite, Album>("SELECT * FROM albums").fetch(self.leak_pool());
+        let albums = sqlx::query_as::<Sqlite, Album>("SELECT * FROM albums").fetch(&self.pool);
         stream_rows(albums, channel).await?;
         Ok(())
     }

@@ -61,7 +61,7 @@ impl PlaylistExt for DatabaseClient {
             ",
         )
         .bind(playlist_id.to_string())
-        .fetch(self.leak_pool());
+        .fetch(&self.pool);
 
         // Stream track to the channel
         stream_rows(playlist_tracks, channel).await?;
@@ -98,7 +98,7 @@ impl PlaylistExt for DatabaseClient {
             ",
         )
         .bind(user_id.to_string())
-        .fetch(self.leak_pool());
+        .fetch(&self.pool);
 
         // Stream track to the channel
         stream_rows(playlists, channel).await?;
