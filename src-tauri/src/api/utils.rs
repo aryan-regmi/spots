@@ -1,4 +1,3 @@
-use serde::Serialize;
 use tauri::ipc::Channel;
 
 use crate::errors::SpotsError;
@@ -57,32 +56,6 @@ pub type ApiResult<T> = Result<ApiResponse<T>, SpotsError>;
 
 /// The response from a channel.
 pub type ResponseChannel<T> = Channel<ApiResponse<Option<T>>>;
-
-/// Signals the start of the stream.
-pub fn signal_stream_start<T>(channel: &ResponseChannel<T>)
-where
-    T: Serialize,
-{
-    channel
-        .send(ApiResponse {
-            status: ApiResponseStatus::Started,
-            value: None,
-        })
-        .expect("Failed to send `start` signal to channel");
-}
-
-/// Signals the end of the stream.
-pub fn signal_stream_end<T>(channel: &ResponseChannel<T>)
-where
-    T: Serialize,
-{
-    channel
-        .send(ApiResponse {
-            status: ApiResponseStatus::Completed,
-            value: None,
-        })
-        .expect("Failed to send `start` signal to channel");
-}
 
 /// API configurations.
 #[derive(Debug, Clone)]

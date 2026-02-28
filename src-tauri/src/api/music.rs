@@ -1,4 +1,4 @@
-use tauri::{ipc::Channel, State};
+use tauri::State;
 use uuid::Uuid;
 
 use crate::{
@@ -43,7 +43,7 @@ pub async fn get_playlist_tracks(
     state: State<'_, AppState>,
     auth_token: String,
     playlist_id: Uuid,
-    channel: Channel<PlaylistTrack>,
+    channel: ResponseChannel<PlaylistTrack>,
 ) -> ApiResult<()> {
     // Verify auth token
     verify_token(&state, auth_token).await?;
@@ -87,7 +87,7 @@ pub async fn get_pinned_playlists(
 pub async fn get_all_playlists(
     state: State<'_, AppState>,
     auth_token: String,
-    channel: Channel<Playlist>,
+    channel: ResponseChannel<Playlist>,
 ) -> ApiResult<()> {
     // Verify auth token
     let token = verify_token(&state, auth_token).await?;
@@ -223,7 +223,7 @@ pub async fn get_album_tracks(
     state: State<'_, AppState>,
     auth_token: String,
     album_id: Uuid,
-    channel: Channel<Track>,
+    channel: ResponseChannel<Track>,
 ) -> ApiResult<()> {
     // Verify auth token
     verify_token(&state, auth_token).await?;
@@ -248,7 +248,7 @@ pub async fn get_album_artists(
     state: State<'_, AppState>,
     auth_token: String,
     album_id: Uuid,
-    channel: Channel<Artist>,
+    channel: ResponseChannel<Artist>,
 ) -> ApiResult<()> {
     // Verify auth token
     verify_token(&state, auth_token).await?;

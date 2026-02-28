@@ -1,26 +1,53 @@
-use futures_util::StreamExt;
 use sqlx::Sqlite;
-use tauri::ipc::Channel;
 use uuid::Uuid;
 
-use crate::database::{
-    client::DatabaseClient,
-    models::music_library::{Artist, Track},
-    DBResult,
+use crate::{
+    api::utils::ResponseChannel,
+    database::{
+        client::DatabaseClient,
+        models::music_library::{Album, Artist, Track},
+        stream_rows, DBResult,
+    },
 };
 
 /// Database operations for [Album].
 pub trait AlbumExt {
+    /// Gets the specified album.
+    async fn get_album(&self, album_id: Uuid) -> DBResult<Option<Album>>;
+
     /// Gets the tracks for the album.
-    async fn get_album_tracks(&self, album_id: Uuid, channel: Channel<Track>) -> DBResult<()>;
+    async fn get_album_tracks(
+        &self,
+        album_id: Uuid,
+        channel: ResponseChannel<Track>,
+    ) -> DBResult<()>;
 
     /// Gets the artists for the album.
-    async fn get_album_artists(&self, album_id: Uuid, channel: Channel<Artist>) -> DBResult<()>;
+    async fn get_album_artists(
+        &self,
+        album_id: Uuid,
+        channel: ResponseChannel<Artist>,
+    ) -> DBResult<()>;
+
+    /// Gets all the album in the DB.
+    async fn get_all_albums(&self, channel: ResponseChannel<Album>) -> DBResult<()>;
 }
 
 impl AlbumExt for DatabaseClient {
-    async fn get_album_tracks(&self, album_id: Uuid, channel: Channel<Track>) -> DBResult<()> {
-        let mut album_tracks = sqlx::query_as::<Sqlite, Track>(
+    async fn get_album(&self, album_id: Uuid) -> DBResult<Option<Album>> {
+        let album: Option<Album> = sqlx::query_as("SELECT * FROM albums WHERE id = $1")
+            .bind(album_id.to_string())
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(album)
+    }
+
+    async fn get_album_tracks(
+        &self,
+        album_id: Uuid,
+        channel: ResponseChannel<Track>,
+    ) -> DBResult<()> {
+        let album_tracks = sqlx::query_as::<Sqlite, Track>(
             "
             SELECT t.*
             FROM tracks t
@@ -28,23 +55,20 @@ impl AlbumExt for DatabaseClient {
             ",
         )
         .bind(album_id.to_string())
-        .fetch(&self.pool);
+        .fetch(self.leak_pool());
 
         // Stream track to the channel
-        while let Some(row) = album_tracks.next().await {
-            match row {
-                Ok(track) => channel
-                    .send(track)
-                    .map_err(|e| sqlx::Error::Decode(e.into()))?,
-                Err(err) => return Err(err),
-            }
-        }
+        stream_rows(album_tracks, channel).await?;
 
         Ok(())
     }
 
-    async fn get_album_artists(&self, album_id: Uuid, channel: Channel<Artist>) -> DBResult<()> {
-        let mut artists = sqlx::query_as::<Sqlite, Artist>(
+    async fn get_album_artists(
+        &self,
+        album_id: Uuid,
+        channel: ResponseChannel<Artist>,
+    ) -> DBResult<()> {
+        let artists = sqlx::query_as::<Sqlite, Artist>(
             "
         SELECT DISTINCT a.*
         FROM albums al
@@ -55,17 +79,17 @@ impl AlbumExt for DatabaseClient {
         ",
         )
         .bind(album_id.to_string())
-        .fetch(&self.pool);
+        .fetch(self.leak_pool());
 
-        while let Some(row) = artists.next().await {
-            match row {
-                Ok(artist) => channel
-                    .send(artist)
-                    .map_err(|e| sqlx::Error::Decode(e.into()))?,
-                Err(err) => return Err(err),
-            }
-        }
+        stream_rows(artists, channel).await?;
 
+        Ok(())
+    }
+
+    async fn get_all_albums(&self, channel: ResponseChannel<Album>) -> DBResult<()> {
+        let albums =
+            sqlx::query_as::<Sqlite, Album>("SELECT * FROM albums").fetch(self.leak_pool());
+        stream_rows(albums, channel).await?;
         Ok(())
     }
 }

@@ -1,12 +1,13 @@
-use futures_util::StreamExt;
 use sqlx::Sqlite;
-use tauri::ipc::Channel;
 use uuid::Uuid;
 
-use crate::database::{
-    client::DatabaseClient,
-    models::music_library::{Playlist, PlaylistTrack, Track},
-    DBResult,
+use crate::{
+    api::utils::ResponseChannel,
+    database::{
+        client::DatabaseClient,
+        models::music_library::{Playlist, PlaylistTrack},
+        stream_rows, DBResult,
+    },
 };
 
 /// Database operations for [Playlist].
@@ -23,14 +24,18 @@ pub trait PlaylistExt {
     async fn get_playlist_tracks(
         &self,
         playlist_id: Uuid,
-        channel: Channel<PlaylistTrack>,
+        channel: ResponseChannel<PlaylistTrack>,
     ) -> DBResult<()>;
 
     /// Gets all of the user's pinned playlists.
     async fn get_pinned_playlists(&self, user_id: Uuid) -> DBResult<Vec<Playlist>>;
 
     /// Gets all of the user's playlists.
-    async fn get_all_playlists(&self, user_id: Uuid, channel: Channel<Playlist>) -> DBResult<()>;
+    async fn get_all_playlists(
+        &self,
+        user_id: Uuid,
+        channel: ResponseChannel<Playlist>,
+    ) -> DBResult<()>;
 }
 
 impl PlaylistExt for DatabaseClient {
@@ -45,9 +50,9 @@ impl PlaylistExt for DatabaseClient {
     async fn get_playlist_tracks(
         &self,
         playlist_id: Uuid,
-        channel: Channel<PlaylistTrack>,
+        channel: ResponseChannel<PlaylistTrack>,
     ) -> DBResult<()> {
-        let mut playlist_tracks = sqlx::query_as::<Sqlite, PlaylistTrack>(
+        let playlist_tracks = sqlx::query_as::<Sqlite, PlaylistTrack>(
             "
             SELECT pt.track_order, t.*
             FROM tracks t
@@ -56,17 +61,10 @@ impl PlaylistExt for DatabaseClient {
             ",
         )
         .bind(playlist_id.to_string())
-        .fetch(&self.pool);
+        .fetch(self.leak_pool());
 
         // Stream track to the channel
-        while let Some(row) = playlist_tracks.next().await {
-            match row {
-                Ok(track) => channel
-                    .send(track)
-                    .map_err(|e| sqlx::Error::Decode(e.into()))?,
-                Err(err) => return Err(err),
-            }
-        }
+        stream_rows(playlist_tracks, channel).await?;
 
         Ok(())
     }
@@ -87,8 +85,12 @@ impl PlaylistExt for DatabaseClient {
         Ok(pinned_playlists)
     }
 
-    async fn get_all_playlists(&self, user_id: Uuid, channel: Channel<Playlist>) -> DBResult<()> {
-        let mut playlists = sqlx::query_as::<Sqlite, Playlist>(
+    async fn get_all_playlists(
+        &self,
+        user_id: Uuid,
+        channel: ResponseChannel<Playlist>,
+    ) -> DBResult<()> {
+        let playlists = sqlx::query_as::<Sqlite, Playlist>(
             "
             SELECT *
             FROM playlists 
@@ -96,17 +98,10 @@ impl PlaylistExt for DatabaseClient {
             ",
         )
         .bind(user_id.to_string())
-        .fetch(&self.pool);
+        .fetch(self.leak_pool());
 
         // Stream track to the channel
-        while let Some(row) = playlists.next().await {
-            match row {
-                Ok(playlist) => channel
-                    .send(playlist)
-                    .map_err(|e| sqlx::Error::Decode(e.into()))?,
-                Err(err) => return Err(err),
-            }
-        }
+        stream_rows(playlists, channel).await?;
 
         Ok(())
     }

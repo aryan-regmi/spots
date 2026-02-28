@@ -1,13 +1,12 @@
-use futures_util::stream::StreamExt;
 use sqlx::Sqlite;
 use uuid::Uuid;
 
 use crate::{
-    api::utils::{signal_stream_end, signal_stream_start, ApiResponse, ResponseChannel},
+    api::utils::ResponseChannel,
     database::{
         client::DatabaseClient,
         models::music_library::{Artist, Genre, Track},
-        DBResult,
+        stream_rows, DBResult,
     },
 };
 
@@ -56,7 +55,7 @@ impl TrackExt for DatabaseClient {
         user_id: Uuid,
         channel: ResponseChannel<Track>,
     ) -> DBResult<()> {
-        let mut favorited_tracks = sqlx::query_as::<Sqlite, Track>(
+        let favorited_tracks = sqlx::query_as::<Sqlite, Track>(
             "
             SELECT t.*
             FROM tracks t
@@ -65,24 +64,10 @@ impl TrackExt for DatabaseClient {
             ",
         )
         .bind(user_id.to_string())
-        .fetch(&self.pool);
+        .fetch(self.leak_pool());
 
         // Stream track to the channel
-        signal_stream_start(&channel);
-        while let Some(row) = favorited_tracks.next().await {
-            match row {
-                Ok(track) => channel
-                    .send(ApiResponse::pending(Some(track)))
-                    .map_err(|e| sqlx::Error::Decode(e.into()))?,
-                Err(err) => {
-                    channel
-                        .send(ApiResponse::failure(None))
-                        .map_err(|e| sqlx::Error::Decode(e.into()))?;
-                    return Err(err);
-                }
-            }
-        }
-        signal_stream_end(&channel);
+        stream_rows(favorited_tracks, channel).await?;
 
         Ok(())
     }
@@ -118,19 +103,11 @@ impl TrackExt for DatabaseClient {
     }
 
     async fn get_all_tracks(&self, channel: ResponseChannel<Track>) -> DBResult<()> {
-        let mut tracks = sqlx::query_as::<Sqlite, Track>("SELECT * FROM tracks").fetch(&self.pool);
+        let tracks =
+            sqlx::query_as::<Sqlite, Track>("SELECT * FROM tracks").fetch(self.leak_pool());
 
         // Stream track to the channel
-        signal_stream_start(&channel);
-        while let Some(row) = tracks.next().await {
-            match row {
-                Ok(track) => channel
-                    .send(ApiResponse::pending(Some(track)))
-                    .map_err(|e| sqlx::Error::Decode(e.into()))?,
-                Err(err) => return Err(err),
-            }
-        }
-        signal_stream_end(&channel);
+        stream_rows(tracks, channel).await?;
 
         Ok(())
     }
