@@ -23,7 +23,7 @@ pub trait TrackExt {
         &self,
         user_id: Uuid,
         channel: ResponseChannel<Track>,
-    ) -> Result<(), sqlx::Error>;
+    ) -> DBResult<()>;
 
     /// Gets all of the artists for the specified track.
     async fn get_track_artists(&self, track_id: Uuid) -> DBResult<Vec<Artist>>;
@@ -116,6 +116,6 @@ impl TrackExt for DatabaseClient {
             .await?
             .ok_or_else(|| sqlx::Error::RowNotFound)?
             .file_path;
-        std::fs::read(filepath).map_err(|e| sqlx::Error::Decode(e.into()))
+        Ok(std::fs::read(filepath)?)
     }
 }

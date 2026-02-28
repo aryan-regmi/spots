@@ -21,61 +21,63 @@ export type Token = {
   expiresAt: number;
 };
 
+// FIXME: Keep ApiError in sync with backend `SpotsError`
+
 /** Represents an error in the API endpoint. */
 export type ApiError =
   | { kind: 'EmptyPassword'; message: 'The provided password was empty' }
   | {
-    kind: 'MaxPasswordLengthExceeded';
-    message: 'Exceeded the maximum allowed password length';
-    maxLength: number;
-  }
+      kind: 'MaxPasswordLengthExceeded';
+      message: 'Exceeded the maximum allowed password length';
+      maxLength: number;
+    }
   | {
-    kind: 'PasswordHashError';
-    message: 'Unable to hash the password';
-    error: string;
-  }
+      kind: 'PasswordHashError';
+      message: 'Unable to hash the password';
+      error: string;
+    }
   | { kind: 'EmptyUserId'; message: 'The provided user ID was empty' }
   | {
-    kind: 'AuthTokenParseError';
-    message: 'Unable to parse the auth token';
-    tokenStr: string;
-    error: string;
-  }
+      kind: 'AuthTokenParseError';
+      message: 'Unable to parse the auth token';
+      tokenStr: string;
+      error: string;
+    }
   | {
-    kind: 'AuthTokenEncryptError';
-    message: 'Unable to encrypt the auth token';
-    token: Token;
-    error: string;
-  }
+      kind: 'AuthTokenEncryptError';
+      message: 'Unable to encrypt the auth token';
+      token: Token;
+      error: string;
+    }
   | {
-    kind: 'AuthTokenSerializeError';
-    message: 'Unable to serialize the auth token';
-    token: Token;
-    error: string;
-  }
+      kind: 'AuthTokenSerializeError';
+      message: 'Unable to serialize the auth token';
+      token: Token;
+      error: string;
+    }
   | {
-    kind: 'AuthTokenDecryptError';
-    message: 'Unable to decrypt the auth token';
-    tokenStr: string;
-    error: string;
-  }
+      kind: 'AuthTokenDecryptError';
+      message: 'Unable to decrypt the auth token';
+      tokenStr: string;
+      error: string;
+    }
   | {
-    kind: 'AuthTokenDecodeError';
-    message: 'Unable to decode base64 token';
-    base64EncodedToken: string;
-    error: string;
-  }
+      kind: 'AuthTokenDecodeError';
+      message: 'Unable to decode base64 token';
+      base64EncodedToken: string;
+      error: string;
+    }
   | { kind: 'ValidationError'; message: 'Validation failed'; error: string }
   | {
-    kind: 'DatabaseError';
-    message: 'Database error';
-    database: string;
-    error: string;
-  }
+      kind: 'DatabaseError';
+      message: 'Database error';
+      database: string;
+      error: string;
+    }
   | {
-    kind: 'InvalidLoginCredentials';
-    message: 'Invalid login credentials provided';
-  };
+      kind: 'InvalidLoginCredentials';
+      message: 'Invalid login credentials provided';
+    };
 
 /** Converts an `ApiError` into a `SpotsError`. */
 export const ApiErrorAdapter: IntoSpotsError<ApiError> = {

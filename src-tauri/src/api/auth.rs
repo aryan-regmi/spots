@@ -7,7 +7,7 @@ use crate::{
         utils::{
             password::{compare_password, hash_password},
             token::Token,
-            ApiResponse, ApiResponseStatus, ApiResult,
+            ApiResponse, ApiResult,
         },
     },
     database::users::UserExt,
@@ -29,18 +29,7 @@ pub async fn register_user(state: State<'_, AppState>, user: RegisterUserDto) ->
     let db = state.db.lock().await;
     let create_user_result = db.create_user(user.username, hashed_password).await;
 
-    create_user_result
-        .map(|_| ApiResponse {
-            status: ApiResponseStatus::Success,
-            value: (),
-        })
-        .map_err(|e| {
-            let db_path = db.path.clone();
-            SpotsError::DatabaseError {
-                database: db_path,
-                error: e.to_string(),
-            }
-        })
+    Ok(create_user_result.map(|_| ApiResponse::success(()))?)
 }
 
 /// Logs in the specified user.
@@ -56,11 +45,7 @@ pub async fn login_user(
     let db = state.db.lock().await;
     let existing_user = db
         .get_user(None, Some(&user.username))
-        .await
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })?
+        .await?
         .ok_or_else(|| SpotsError::InvalidLoginCredentials)?;
 
     // Compare passwords

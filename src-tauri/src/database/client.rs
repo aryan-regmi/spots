@@ -5,7 +5,6 @@ use tracing::{error, info, span, Level};
 /// The database client.
 #[derive(Clone)]
 pub struct DatabaseClient {
-    pub(crate) path: String,
     pub(crate) pool: Pool<Sqlite>,
 }
 
@@ -50,9 +49,6 @@ impl DatabaseClient {
             .map_err(|e| e.to_string())?;
         info!(database = db_url, "Migrations applied");
 
-        Ok(Self {
-            path: db_url.into(),
-            pool,
-        })
+        Ok(Self { pool })
     }
 }

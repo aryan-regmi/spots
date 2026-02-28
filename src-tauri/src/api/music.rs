@@ -9,7 +9,6 @@ use crate::{
         playlists::PlaylistExt,
         tracks::TrackExt,
     },
-    errors::SpotsError,
     AppState,
 };
 
@@ -28,10 +27,6 @@ pub async fn get_playlist(
     db.get_playlist(playlist_id)
         .await
         .map(|playlist| ApiResponse::success(playlist))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
 }
 
 /// Gets all tracks in the playlist.
@@ -53,10 +48,6 @@ pub async fn get_playlist_tracks(
     db.get_playlist_tracks(playlist_id, channel)
         .await
         .map(|playlist| ApiResponse::success(playlist))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
 }
 
 /// Gets all of the authenticated user's pinned playlists.
@@ -73,10 +64,6 @@ pub async fn get_pinned_playlists(
     db.get_pinned_playlists(token.get_user_id())
         .await
         .map(|playlist| ApiResponse::success(playlist))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
 }
 
 /// Gets all of the authenticated user's playlists.
@@ -97,10 +84,6 @@ pub async fn get_all_playlists(
     db.get_all_playlists(token.get_user_id(), channel)
         .await
         .map(|_| ApiResponse::success(()))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
 }
 
 /// Gets the specified track.
@@ -118,10 +101,6 @@ pub async fn get_track(
     db.get_track(track_id)
         .await
         .map(|track| ApiResponse::success(track))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
 }
 
 /// Gets the user's favorited tracks.
@@ -141,11 +120,7 @@ pub async fn get_favorited_tracks(
     let db = state.db.lock().await;
     db.get_favorited_tracks(token.get_user_id(), channel)
         .await
-        .map(|track| ApiResponse::success(track))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
+        .map(|_| ApiResponse::success(()))
 }
 
 /// Gets the artists for the specified track.
@@ -163,10 +138,6 @@ pub async fn get_track_artists(
     db.get_track_artists(track_id)
         .await
         .map(|artists| ApiResponse::success(artists))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
 }
 
 /// Gets the genres for the specified track.
@@ -184,10 +155,6 @@ pub async fn get_track_genres(
     db.get_track_genres(track_id)
         .await
         .map(|genres| ApiResponse::success(genres))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
 }
 
 /// Gets the all of the tracks in the music library.
@@ -207,11 +174,7 @@ pub async fn get_all_tracks(
     let db = state.db.lock().await;
     db.get_all_tracks(channel)
         .await
-        .map(|track| ApiResponse::success(track))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
+        .map(|_| ApiResponse::success(()))
 }
 
 /// Gets the all of the tracks in the album.
@@ -232,11 +195,7 @@ pub async fn get_album_tracks(
     let db = state.db.lock().await;
     db.get_album_tracks(album_id, channel)
         .await
-        .map(|track| ApiResponse::success(track))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
+        .map(|_| ApiResponse::success(()))
 }
 
 /// Gets the all of the artists in the album.
@@ -258,8 +217,4 @@ pub async fn get_album_artists(
     db.get_album_artists(album_id, channel)
         .await
         .map(|track| ApiResponse::success(track))
-        .map_err(|e| SpotsError::DatabaseError {
-            database: db.path.clone(),
-            error: e.to_string(),
-        })
 }

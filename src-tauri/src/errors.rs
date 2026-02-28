@@ -41,9 +41,37 @@ pub enum SpotsError {
     #[error("Validation failed: {0}")]
     ValidationError(#[from] validator::ValidationErrors),
 
-    #[error("Database error: {{ database: {}, error: {} }}", .database, .error)]
-    DatabaseError { database: String, error: String },
+    #[error("Database error: {0}")]
+    DatabaseError(
+        #[from]
+        #[serde(serialize_with = "sqlx_error_serializer")]
+        sqlx::Error,
+    ),
 
     #[error("Invalid login credentials provided")]
     InvalidLoginCredentials,
+
+    #[error("Error occured in the channel: {{ channel: {}, error: {} }}", .channel_id, .error)]
+    ChannelError { channel_id: u32, error: String },
+
+    #[error("IO error: {0}")]
+    IoError(
+        #[from]
+        #[serde(serialize_with = "io_error_serializer")]
+        std::io::Error,
+    ),
+}
+
+fn sqlx_error_serializer<S: serde::Serializer>(
+    error: &sqlx::Error,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    serializer.serialize_str(&error.to_string())
+}
+
+fn io_error_serializer<S: serde::Serializer>(
+    error: &std::io::Error,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    serializer.serialize_str(&error.to_string())
 }
