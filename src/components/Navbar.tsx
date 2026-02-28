@@ -1,12 +1,13 @@
 import { getAuthUserIdResource, useStore } from '@/utils/tauriStore';
 import { Shimmer } from '@shimmer-from-structure/solid';
-import { useNavigate } from '@solidjs/router';
+import { useLocation, useNavigate } from '@solidjs/router';
 import { JSX } from 'solid-js';
 
 /** The navbar component. */
-export function Navbar(props: { currentPath?: string }) {
+export function Navbar() {
   const storeCtx = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [authUserId] = getAuthUserIdResource(storeCtx);
   const styles = navbarStyles();
 
@@ -40,7 +41,7 @@ export function Navbar(props: { currentPath?: string }) {
               }}
             >
               <button
-                style={styles.navButtonStyle(props.currentPath === item.path)}
+                style={styles.navButtonStyle(location.pathname === item.path)}
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(item.path);
