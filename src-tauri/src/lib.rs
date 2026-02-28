@@ -52,8 +52,11 @@ pub fn run() {
             api::music::get_track_artists,
             api::music::get_track_genres,
             api::music::get_all_tracks,
+            api::music::get_audio_data,
+            api::music::get_album,
             api::music::get_album_tracks,
             api::music::get_album_artists,
+            api::music::get_all_albums,
         ])
         .setup(|app| {
             tauri::async_runtime::block_on(async move {

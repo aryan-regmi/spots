@@ -34,7 +34,7 @@ pub trait TrackExt {
     /// Gets all of the tracks in the DB.
     async fn get_all_tracks(&self, channel: ResponseChannel<Track>) -> DBResult<()>;
 
-    /// Streams the specified track.
+    /// Gets the audio data of the track as bytes.
     async fn get_audio_data(&self, track_id: Uuid) -> DBResult<Vec<u8>>;
 
     // TODO: Add `get_last_played` for Tracks and Playlists!

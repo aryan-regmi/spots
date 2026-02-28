@@ -5,7 +5,7 @@ use crate::{
     api::utils::{token::verify_token, ApiResponse, ApiResult, ResponseChannel},
     database::{
         albums::AlbumExt,
-        models::music_library::{Artist, Genre, Playlist, PlaylistTrack, Track},
+        models::music_library::{Album, Artist, Genre, Playlist, PlaylistTrack, Track},
         playlists::PlaylistExt,
         tracks::TrackExt,
     },
@@ -47,7 +47,7 @@ pub async fn get_playlist_tracks(
     let db = state.db.lock().await;
     db.get_playlist_tracks(playlist_id, channel)
         .await
-        .map(|playlist| ApiResponse::success(playlist))
+        .map(|_| ApiResponse::success(()))
 }
 
 /// Gets all of the authenticated user's pinned playlists.
@@ -63,7 +63,7 @@ pub async fn get_pinned_playlists(
     let db = state.db.lock().await;
     db.get_pinned_playlists(token.get_user_id())
         .await
-        .map(|playlist| ApiResponse::success(playlist))
+        .map(|playlists| ApiResponse::success(playlists))
 }
 
 /// Gets all of the authenticated user's playlists.
@@ -177,6 +177,40 @@ pub async fn get_all_tracks(
         .map(|_| ApiResponse::success(()))
 }
 
+/// Gets the audio data of the track as bytes.
+#[tauri::command]
+pub async fn get_audio_data(
+    state: State<'_, AppState>,
+    auth_token: String,
+    track_id: Uuid,
+) -> ApiResult<Vec<u8>> {
+    // Verify auth token
+    verify_token(&state, auth_token).await?;
+
+    // Get audio data
+    let db = state.db.lock().await;
+    db.get_audio_data(track_id)
+        .await
+        .map(|bytes| ApiResponse::success(bytes))
+}
+
+/// Gets the specified album.
+#[tauri::command]
+pub async fn get_album(
+    state: State<'_, AppState>,
+    auth_token: String,
+    album_id: Uuid,
+) -> ApiResult<Option<Album>> {
+    // Verify auth token
+    verify_token(&state, auth_token).await?;
+
+    // Get tracks from DB
+    let db = state.db.lock().await;
+    db.get_album(album_id)
+        .await
+        .map(|album| ApiResponse::success(album))
+}
+
 /// Gets the all of the tracks in the album.
 ///
 /// # Note
@@ -216,5 +250,25 @@ pub async fn get_album_artists(
     let db = state.db.lock().await;
     db.get_album_artists(album_id, channel)
         .await
-        .map(|track| ApiResponse::success(track))
+        .map(|_| ApiResponse::success(()))
+}
+
+/// Gets the all of the albums in the music library.
+///
+/// # Note
+/// The albums are all streamed to the `channel`.
+#[tauri::command]
+pub async fn get_all_albums(
+    state: State<'_, AppState>,
+    auth_token: String,
+    channel: ResponseChannel<Album>,
+) -> ApiResult<()> {
+    // Verify auth token
+    verify_token(&state, auth_token).await?;
+
+    // Get tracks from DB
+    let db = state.db.lock().await;
+    db.get_all_albums(channel)
+        .await
+        .map(|_| ApiResponse::success(()))
 }
