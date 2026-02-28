@@ -55,4 +55,9 @@ impl DatabaseClient {
             pool,
         })
     }
+
+    /// Returns a static version of the DB pool.
+    pub fn leak_pool(&self) -> &'static Pool<Sqlite> {
+        Box::leak(Box::new(self.pool.clone()))
+    }
 }
