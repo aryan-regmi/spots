@@ -52,6 +52,7 @@ pub fn run() {
             api::music::get_track_artists,
             api::music::get_track_genres,
             api::music::get_all_tracks,
+            api::music::get_last_played_track,
             api::music::get_audio_data,
             api::music::get_album,
             api::music::get_album_tracks,

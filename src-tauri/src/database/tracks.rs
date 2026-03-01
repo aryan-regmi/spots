@@ -37,7 +37,8 @@ pub trait TrackExt {
     /// Gets the audio data of the track as bytes.
     async fn get_audio_data(&self, track_id: Uuid) -> DBResult<Vec<u8>>;
 
-    // TODO: Add `get_last_played` for Tracks and Playlists!
+    /// Gets the last played track.
+    async fn get_last_played_track(&self) -> DBResult<Option<Track>>;
 }
 
 impl TrackExt for DatabaseClient {
@@ -117,5 +118,19 @@ impl TrackExt for DatabaseClient {
             .ok_or_else(|| sqlx::Error::RowNotFound)?
             .file_path;
         Ok(std::fs::read(filepath)?)
+    }
+
+    async fn get_last_played_track(&self) -> DBResult<Option<Track>> {
+        let last_played_track = sqlx::query_as::<Sqlite, Track>(
+            "
+            SELECT *
+            FROM tracks
+            ORDER BY last_played_at DESC
+            LIMIT 1;
+            ",
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+        Ok(last_played_track)
     }
 }

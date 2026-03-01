@@ -194,6 +194,20 @@ pub async fn get_audio_data(
         .map(|bytes| ApiResponse::success(bytes))
 }
 
+/// Gets the last played track.
+#[tauri::command]
+pub async fn get_last_played_track(
+    state: State<'_, AppState>,
+    auth_token: String,
+) -> ApiResult<Option<Track>> {
+    // Verify auth token
+    verify_token(&state, auth_token).await?;
+
+    // Get audio data
+    let db = state.db.lock().await;
+    db.get_last_played_track().await.map(ApiResponse::success)
+}
+
 /// Gets the specified album.
 #[tauri::command]
 pub async fn get_album(
